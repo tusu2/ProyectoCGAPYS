@@ -10,72 +10,81 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - ProyectoCGAPYS</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 
-   
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
           crossorigin="" />
-  
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-
-        <style>
-
-
-        </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <header>
         <nav class="sidebar">
             <div class="sidebar-header">
-                <h3>Gestión CGAPYS</h3>
+                <h3><span class="link-text">Gestión CGAPYS</span></h3>
+                <button id="sidebar-toggle" class="sidebar-toggle-btn" title="Contraer menú">
+                    <i class="bi bi-arrow-left"></i>
+                </button>
             </div>
             <ul class="lista-menu">
-
                 <li>
                     <a asp-area="" asp-controller="Dashboard" asp-action="Index"
-                       class="menu-link @(currentController == "Dashboard" && currentAction == "Index" ? "active" : "")">
-                        <i class="icon">📊</i> Dashboard
+                       class="menu-link @(currentController == "Dashboard" && currentAction == "Index" ? "active" : "")" title="Dashboard">
+                        <i class="bi bi-grid-1x2-fill"></i> <span class="link-text">Dashboard</span>
                     </a>
                 </li>
                 <li class="menu-titulo"><span>PROYECTOS</span></li>
                 <li>
                     <a asp-area="" asp-controller="Proyecto" asp-action="Index"
-                       class="menu-link @(currentController == "Proyecto" && currentAction == "Index" ? "active" : "")">
-                        <i class="icon">🗺️</i> Ver Proyectos
+                       class="menu-link @(currentController == "Proyecto" && currentAction == "Index" ? "active" : "")" title="Ver Proyectos">
+                        <i class="bi bi-map-fill"></i> <span class="link-text">Ver Proyectos</span>
                     </a>
                 </li>
                 <li>
                     <a asp-area="" asp-controller="Registro" asp-action="Crear"
-                       class="menu-link @(currentController == "Registro" && currentAction == "Crear" ? "active" : "")">
-                        <i class="icon">➕</i> Registro
+                       class="menu-link @(currentController == "Registro" && currentAction == "Crear" ? "active" : "")" title="Registro">
+                        <i class="bi bi-plus-square-fill"></i> <span class="link-text">Registro</span>
                     </a>
                 </li>
                 <li class="menu-titulo"><span>FINANZAS</span></li>
-                <li><a href="#" class="menu-link" data-target="catalogo-conceptos"><i class="icon">📖</i> Catálogo de Conceptos</a></li>
-                <li><a href="#" class="menu-link" data-target="reportes-financieros"><i class="icon">📄</i> Reportes Financieros</a></li>
-
+                <li>
+                    <a href="#" class="menu-link" data-target="catalogo-conceptos" title="Catálogo de Conceptos">
+                        <i class="bi bi-book-fill"></i> <span class="link-text">Catálogo de Conceptos</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="menu-link" data-target="reportes-financieros" title="Reportes Financieros">
+                        <i class="bi bi-file-earmark-text-fill"></i> <span class="link-text">Reportes Financieros</span>
+                    </a>
+                </li>
                 <li class="menu-titulo"><span>SUPERVISIÓN</span></li>
-                <li><a href="#" class="menu-link" data-target="reporte-fotografico"><i class="icon">📸</i> Reporte Fotográfico</a></li>
-               
-
+                <li>
+                    <a href="#" class="menu-link" data-target="reporte-fotografico" title="Reporte Fotográfico">
+                        <i class="bi bi-camera-fill"></i> <span class="link-text">Reporte Fotográfico</span>
+                    </a>
+                </li>
                 <li class="menu-titulo"><span>ADMINISTRACIÓN</span></li>
-                <li><a href="#" class="menu-link" data-target="gestionar-usuarios"><i class="icon">👥</i> Gestionar Usuarios</a></li>
-                <li><a href="#" class="menu-link" data-target="gestionar-campus"><i class="icon">🏢</i> Gestionar Campus</a></li>
+                <li>
+                    <a href="#" class="menu-link" data-target="gestionar-usuarios" title="Gestionar Usuarios">
+                        <i class="bi bi-people-fill"></i> <span class="link-text">Gestionar Usuarios</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="menu-link" data-target="gestionar-campus" title="Gestionar Campus">
+                        <i class="bi bi-building-fill"></i> <span class="link-text">Gestionar Campus</span>
+                    </a>
+                </li>
             </ul>
         </nav>
     </header>
-   
-        <main role="main" class="pb-3">
+
+    <main role="main" class="pb-3">
         <div class="contenido-principal">
             @RenderBody()
         </div>
-        </main>
-   
-
-
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -83,33 +92,37 @@
             crossorigin=""></script>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
-        // Espera a que todo el contenido de la página se cargue
         document.addEventListener('DOMContentLoaded', function () {
+            const sidebar = document.querySelector('.sidebar');
+            const toggleButton = document.getElementById('sidebar-toggle');
+            const mainContent = document.querySelector('.contenido-principal');
+            const toggleIcon = toggleButton.querySelector('i'); // Seleccionamos la etiqueta <i>
 
-            // 1. Selecciona todos los enlaces del menú
-            const menuLinks = document.querySelectorAll('.menu-link');
-
-            // 2. Define la función que manejará el clic
-            function setActiveLink(event) {
-                // Primero, busca si ya hay un enlace activo y le quita la clase
-                const currentActive = document.querySelector('.menu-link.active');
-                if (currentActive) {
-                    currentActive.classList.remove('active');
+            // Función para actualizar el icono
+            function updateIcon() {
+                if (sidebar.classList.contains('collapsed')) {
+                    toggleIcon.className = 'bi bi-list'; // Ícono de menú (hamburguesa)
+                    toggleButton.title = 'Expandir menú';
+                } else {
+                    toggleIcon.className = 'bi bi-arrow-left'; // Ícono de flecha
+                    toggleButton.title = 'Contraer menú';
                 }
-
-                // Luego, añade la clase 'active' al enlace que fue clickeado
-                // 'event.currentTarget' se refiere al elemento que disparó el evento
-                event.currentTarget.classList.add('active');
             }
 
-            // 3. Agrega un 'escuchador' de clics a cada enlace del menú
-            menuLinks.forEach(link => {
-                link.addEventListener('click', setActiveLink);
+            // Evento de clic
+            toggleButton.addEventListener('click', function () {
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('collapsed');
+                updateIcon(); // Llamamos a la función para que cambie el ícono
             });
 
+            // Asegurarse de que el ícono sea el correcto al cargar la página
+            updateIcon();
         });
     </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

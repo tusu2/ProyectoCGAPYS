@@ -71,6 +71,10 @@ body {
     padding: 0 20px 20px 20px;
     margin-bottom: 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between; /* Coloca el título a la izq. y el botón a la der. */
+    align-items: center;
+    padding: 0 15px 20px 25px; /* Ajustamos el padding para que se vea bien */
 }
 
     .sidebar-header h3 {
@@ -109,6 +113,12 @@ body {
             margin-right: 15px;
             font-style: normal;
             font-size: 1.2em;
+        }
+        .lista-menu .menu-link i {
+            margin-right: 15px;
+            font-style: normal;
+            font-size: 1.2em;
+            line-height: 1; /* Añadido para mejor alineación vertical */
         }
 
         .lista-menu .menu-link:hover {
@@ -170,3 +180,105 @@ body {
     /* Más ajustes si es necesario para pantallas muy pequeñas */
 }
 /* Estilo para el enlace del menú cuando está activo */
+/* --- ESTILOS PARA LA FUNCIONALIDAD DE CONTRAER/EXPANDIR --- */
+
+/* Transiciones suaves */
+.sidebar, .contenido-principal {
+    transition: all 0.3s ease-in-out;
+}
+
+.sidebar-toggle-btn {
+    /* 1. Dimensiones y forma del botón */
+    width: 38px;
+    height: 38px;
+    border-radius: 50%; /* ¡Esto lo convierte en un círculo! */
+    /* 2. Color y borde */
+    background-color: rgba(255, 255, 255, 0.08); /* Fondo muy sutil */
+    border: 1px solid rgba(255, 255, 255, 0.15); /* Borde casi invisible */
+    color: var(--color-acento-neutral-elegante); /* Color del ícono */
+    /* 3. Alineación del ícono (la flecha o las barras) */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* 4. Estilos generales y transición */
+    font-size: 1.5em;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+    .sidebar-toggle-btn:hover {
+        background-color: var(--color-acento-tecnologico);
+        border-color: var(--color-acento-tecnologico);
+        color: var(--color-blanco);
+        transform: rotate(180deg) scale(1.1); /* Efecto de rotación y escala */
+    }
+
+/* --- ESTADO CONTRAÍDO (COLLAPSED) --- */
+
+/* 1. Sidebar contraído */
+.sidebar.collapsed {
+    width: 80px; /* Ancho reducido */
+}
+
+    /* 2. Ocultar texto y ajustar elementos internos */
+    .sidebar.collapsed .link-text,
+    .sidebar.collapsed .sidebar-header h3,
+    .sidebar.collapsed .lista-menu .menu-titulo span {
+        display: none; /* Ocultamos todo el texto */
+    }
+
+    /* 3. Centrar los iconos y títulos */
+    .sidebar.collapsed .menu-link {
+        justify-content: center; /* Centramos el icono */
+        padding: 15px 10px;
+    }
+
+        .sidebar.collapsed .menu-link .icon {
+            margin-right: 0; /* Quitamos el margen del icono */
+            font-size: 1.4em;
+        }
+
+    .sidebar.collapsed .lista-menu .menu-titulo {
+        padding: 25px 0 10px 0;
+        text-align: center;
+    }
+        /* Después de contraer el título, dejamos un separador visual */
+        .sidebar.collapsed .lista-menu .menu-titulo::after {
+            content: '• • •';
+            color: var(--color-acento-neutral-elegante);
+            font-size: 0.8em;
+            letter-spacing: 3px;
+        }
+
+
+/* 4. Ajustar el contenido principal */
+.contenido-principal.collapsed {
+    margin-left: 80px; /* Reducimos el margen para que ocupe el espacio */
+    width: calc(100% - 80px);
+}
+
+
+
+/* --- MEJORAS AL ESTADO CONTRAÍDO --- */
+
+/* 1. Reemplazar los puntos por una línea divisoria elegante */
+.sidebar.collapsed .lista-menu .menu-titulo::after {
+    content: ''; /* Quitamos el contenido de texto */
+    display: block;
+    width: 30px; /* Ancho de la línea .sidebar-toggle-btn
+    margin: 8px auto 0; /* Centramos la línea */
+    border-bottom: 1px solid var(--color-acento-neutral-elegante); /* Creamos la línea */
+}
+
+/* 2. Ajustar el estilo del enlace activo para que se vea más limpio */
+.sidebar.collapsed .menu-link.active {
+    background-color: var(--oro); /* Un fondo más sutil */
+}
+
+    .sidebar.collapsed .menu-link.active .icon {
+        transform: scale(1.1); /* Hacemos el icono un poco más grande */
+    }
+.sidebar.collapsed .sidebar-header {
+    justify-content: center; /* Centra el botón cuando el título desaparece */
+    padding: 0 0 20px 0; /* Ajustamos el padding para el estado contraído */
+}
