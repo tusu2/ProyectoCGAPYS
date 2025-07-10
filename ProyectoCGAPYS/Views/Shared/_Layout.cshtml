@@ -1,0 +1,115 @@
+﻿@{
+    // Obtenemos el nombre del controlador y la acción de la página actual
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ProyectoCGAPYS</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+   
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin="" />
+  
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+        <style>
+
+
+        </style>
+</head>
+<body>
+    <header>
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h3>Gestión CGAPYS</h3>
+            </div>
+            <ul class="lista-menu">
+
+                <li>
+                    <a asp-area="" asp-controller="Dashboard" asp-action="Index"
+                       class="menu-link @(currentController == "Dashboard" && currentAction == "Index" ? "active" : "")">
+                        <i class="icon">📊</i> Dashboard
+                    </a>
+                </li>
+                <li class="menu-titulo"><span>PROYECTOS</span></li>
+                <li>
+                    <a asp-area="" asp-controller="Proyecto" asp-action="Index"
+                       class="menu-link @(currentController == "Proyecto" && currentAction == "Index" ? "active" : "")">
+                        <i class="icon">🗺️</i> Ver Proyectos
+                    </a>
+                </li>
+                <li>
+                    <a asp-area="" asp-controller="Registro" asp-action="Crear"
+                       class="menu-link @(currentController == "Registro" && currentAction == "Crear" ? "active" : "")">
+                        <i class="icon">➕</i> Registro
+                    </a>
+                </li>
+                <li class="menu-titulo"><span>FINANZAS</span></li>
+                <li><a href="#" class="menu-link" data-target="catalogo-conceptos"><i class="icon">📖</i> Catálogo de Conceptos</a></li>
+                <li><a href="#" class="menu-link" data-target="reportes-financieros"><i class="icon">📄</i> Reportes Financieros</a></li>
+
+                <li class="menu-titulo"><span>SUPERVISIÓN</span></li>
+                <li><a href="#" class="menu-link" data-target="reporte-fotografico"><i class="icon">📸</i> Reporte Fotográfico</a></li>
+               
+
+                <li class="menu-titulo"><span>ADMINISTRACIÓN</span></li>
+                <li><a href="#" class="menu-link" data-target="gestionar-usuarios"><i class="icon">👥</i> Gestionar Usuarios</a></li>
+                <li><a href="#" class="menu-link" data-target="gestionar-campus"><i class="icon">🏢</i> Gestionar Campus</a></li>
+            </ul>
+        </nav>
+    </header>
+   
+        <main role="main" class="pb-3">
+        <div class="contenido-principal">
+            @RenderBody()
+        </div>
+        </main>
+   
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Espera a que todo el contenido de la página se cargue
+        document.addEventListener('DOMContentLoaded', function () {
+
+            // 1. Selecciona todos los enlaces del menú
+            const menuLinks = document.querySelectorAll('.menu-link');
+
+            // 2. Define la función que manejará el clic
+            function setActiveLink(event) {
+                // Primero, busca si ya hay un enlace activo y le quita la clase
+                const currentActive = document.querySelector('.menu-link.active');
+                if (currentActive) {
+                    currentActive.classList.remove('active');
+                }
+
+                // Luego, añade la clase 'active' al enlace que fue clickeado
+                // 'event.currentTarget' se refiere al elemento que disparó el evento
+                event.currentTarget.classList.add('active');
+            }
+
+            // 3. Agrega un 'escuchador' de clics a cada enlace del menú
+            menuLinks.forEach(link => {
+                link.addEventListener('click', setActiveLink);
+            });
+
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

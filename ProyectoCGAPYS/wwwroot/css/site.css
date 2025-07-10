@@ -1,0 +1,172 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --color-fondo-pagina: #EFF2F5;
+    --color-texto-principal: #222B36;
+    --color-primario-corporativo: #0B2D48;
+    --color-primario-corporativo-hover: #071E30;
+    --color-acento-tecnologico: #00AEEF;
+    --color-acento-tecnologico-hover: #008BC7;
+    --color-acento-neutral-elegante: #AEB6BF;
+    --color-blanco: #FFFFFF;
+    --fuente-principal: 'Poppins', sans-serif;
+    --radio-borde-general: 0.3rem;
+    --sombra-suave: 0 6px 18px rgba(11, 45, 72, 0.08);
+    --sidebar-bg: #1A2C42;
+    /* Paleta Heráldica */
+    --oro: #D4AF37;
+    --plata: #C0C0C0;
+    --gules-rojo: #DC143C;
+    --sinople-verde: #009B4D;
+    /* Colores base del tema */
+    --main-bg: #F0F2F5; /* Lo mantenemos para el glassmorphism */
+    --card-bg: #FFFFFF;
+    --text-primary: #333748;
+    --text-secondary: #8A92A6;
+    --sidebar-text: #E0E0E0;
+    /* ¡NUEVO COLOR DE ACENTO HERÁLDICO! */
+    --accent-color: var(--oro);
+    --border-color: #E2E8F0;
+}
+
+
+body {
+    font-family: var(--fuente-principal);
+    margin: 0;
+    background-color: var(--color-fondo-pagina);
+    color: var(--color-texto-principal);
+    line-height: 1.6;
+    padding: 0; /* Aseguramos que el body no tenga padding que empuje el contenido */
+    /* Las siguientes líneas pueden ser eliminadas o ajustadas si el contenido ya se centra con .contenido-principal .container */
+    /* flex-direction: column; */
+    /* align-items: center; */
+    /* padding: 20px; */ /* Este padding es el que probablemente causa el problema si el contenido principal ya tiene su propio margen/padding */
+    min-height: 100vh;
+    box-sizing: border-box;
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background-size: cover;
+    background-position: center;
+    min-height: 100vh;
+    background-color: #f0f2f5; /* Un color base por si la imagen no carga */
+    background-image: url('/svg/blob-scene-haikei (2).svg'); /* Centra la imagen */
+    background-attachment: fixed; /* El fondo no se mueve con el scroll */
+}
+
+.sidebar {
+    width: 260px;
+    position: fixed; /* Fijo en la pantalla */
+    top: 0;
+    left: 0;
+    height: 100vh; /* Ocupa toda la altura */
+    background-color: var(--color-primario-corporativo);
+    color: var(--color-blanco);
+    padding: 20px 0;
+    box-shadow: 4px 0px 15px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+}
+
+.sidebar-header {
+    text-align: center;
+    padding: 0 20px 20px 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+    .sidebar-header h3 {
+        margin: 0;
+        font-size: 1.5em;
+        color: var(--color-acento-tecnologico);
+    }
+
+.lista-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+    .lista-menu .menu-titulo {
+        font-size: 0.7em;
+        color: var(--color-acento-neutral-elegante);
+        text-transform: uppercase;
+        padding: 25px 20px 10px 20px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .lista-menu .menu-link {
+        display: flex;
+        align-items: center;
+        padding: 12px 25px;
+        color: #E0E0E0;
+        text-decoration: none;
+        font-weight: 500;
+        transition: background-color 0.2s ease, color 0.2s ease;
+        border-left: 4px solid transparent;
+    }
+
+        .lista-menu .menu-link .icon {
+            margin-right: 15px;
+            font-style: normal;
+            font-size: 1.2em;
+        }
+
+        .lista-menu .menu-link:hover {
+            background-color: var(--color-acento-tecnologico-hover);
+            color: var(--color-blanco);
+        }
+
+        .lista-menu .menu-link.active {
+            background-color: var(--oro);
+            color: var(--color-blanco);
+            border-left: 4px solid var(--color-acento-tecnologico);
+            font-weight: 600;
+        }
+
+.contenido-principal {
+    margin-left: 260px; /* Esto empuja el contenido para dejar espacio al sidebar */
+    padding: 20px; /* Mantenemos el padding interno del contenido */
+    width: calc(100% - 260px); /* El ancho se calcula restando el del sidebar */
+    box-sizing: border-box;
+}
+
+    /* Ajuste para que el container no ocupe toda la página ahora */
+    .contenido-principal .container {
+        max-width: 1400px;
+        margin: 0 auto; /* Esto centra el contenedor dentro del contenido-principal */
+    }
+
+
+@media (max-width: 992px) {
+    /* En pantallas más pequeñas, es común que el sidebar se oculte o cambie de posición.
+       Aquí se mantendría, pero si quisieras ocultarlo o ponerlo arriba, esta sería la sección.
+       Para este layout, lo mantendríamos fijo pero el contenido principal reacciona. */
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 15px;
+    }
+
+    .contenido-principal {
+        margin-left: 0; /* En pantallas pequeñas, no necesitamos margen a la izquierda si el sidebar cambia de lugar o se oculta */
+        width: 100%; /* El contenido principal ocupa todo el ancho */
+        padding: 15px; /* Ajusta el padding para móviles si es necesario */
+    }
+
+    .container { /* Re-aplicamos el ancho para pantallas pequeñas */
+        width: 100%;
+        padding: 20px 15px;
+        margin-top: 10px;
+    }
+
+
+    /* Aquí irían las reglas para hacer el sidebar responsive, por ejemplo, ocultarlo y mostrarlo con un botón,
+       o cambiarlo a un diseño de "overlay" para pantallas pequeñas. Como no tienes ese HTML/JS,
+       solo ajustamos el contenido principal. */
+}
+
+@media (max-width: 480px) {
+    /* Más ajustes si es necesario para pantallas muy pequeñas */
+}
+/* Estilo para el enlace del menú cuando está activo */

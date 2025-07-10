@@ -1,0 +1,685 @@
+﻿/* style.css (para Busqueda.html - Paleta Corporativo Tecnológico Premium) */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --color-fondo-pagina: #EFF2F5;
+    --color-fondo-container: #FFFFFF;
+    --color-texto-principal: #222B36;
+    --color-texto-secundario: #5F6B7A;
+    --color-borde: #D1D9E2;
+    --color-primario-corporativo: #0B2D48;
+    --color-primario-corporativo-hover: #071E30;
+    --color-acento-tecnologico: #00AEEF;
+    --color-acento-tecnologico-hover: #008BC7;
+    --color-acento-neutral-elegante: #AEB6BF;
+    --color-blanco: #FFFFFF;
+    --fuente-principal: 'Poppins', sans-serif;
+    --radio-borde-general: 0.3rem;
+    --radio-borde-inputs: 0.25rem;
+    --sombra-suave: 0 6px 18px rgba(11, 45, 72, 0.08);
+    --sombra-hover-items: 0 8px 24px rgba(11, 45, 72, 0.12);
+    --sombra-modal: 0 10px 30px rgba(11, 45, 72, 0.15);
+}
+
+body {
+    font-family: var(--fuente-principal);
+    margin: 0;
+    background-color: var(--color-fondo-pagina);
+    color: var(--color-texto-principal);
+    line-height: 1.6;
+    padding: 0; /* Quitamos el padding para que el sidebar ocupe toda la altura */
+    margin: 0;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+
+
+
+.contenido-principal {
+    margin-left: 260px; /* Dejamos espacio para el sidebar */
+    padding: 20px;
+    width: calc(100% - 260px); /* Ajustamos el ancho del contenido */
+    box-sizing: border-box;
+}
+
+    /* Ajuste para que el container no ocupe toda la página ahora */
+    .contenido-principal .container {
+        max-width: 1400px; /* Puedes ajustar este valor */
+        margin: 0 auto;
+    }
+
+.container {
+    width: 95%;
+    max-width: 1200px; /* Más ancho para acomodar mapa y lista */
+    margin: 20px auto;
+    background-color: var(--color-fondo-container);
+    padding: 30px 35px;
+    border-radius: calc(var(--radio-borde-general) * 1.5);
+    box-shadow: var(--sombra-suave);
+    border: 1px solid var(--color-borde);
+}
+
+h1 {
+    color: var(--color-primario-corporativo);
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 30px;
+    font-weight: 700;
+    font-size: 2em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Nuevo Layout para Mapa y Lista */
+.layout-container {
+    display: flex;
+    gap: 25px; /* Espacio entre el mapa y la lista */
+    align-items: flex-start; /* Alinear items al inicio */
+}
+
+#mapa-principal-container {
+    flex: 3; /* El mapa ocupa más espacio */
+    height: 600px; /* Altura fija para el contenedor del mapa */
+    border-radius: var(--radio-borde-general);
+    overflow: hidden; /* Para que el borde redondeado afecte al mapa */
+    border: 1px solid var(--color-borde);
+    box-shadow: var(--sombra-suave);
+}
+
+#mapa-principal {
+    height: 100%;
+    width: 100%;
+}
+
+#lista-proyectos-container {
+    flex: 2; /* La lista ocupa menos espacio */
+    background-color: var(--color-fondo-container);
+    padding: 20px;
+    border-radius: var(--radio-borde-general);
+    border: 1px solid var(--color-borde);
+    box-shadow: var(--sombra-suave);
+    max-height: 600px; /* Altura máxima igual al mapa */
+    overflow-y: auto; /* Scroll si la lista es muy larga */
+}
+
+    #lista-proyectos-container h2 {
+        color: var(--color-primario-corporativo);
+        font-size: 1.3em;
+        margin-top: 0;
+        margin-bottom: 15px;
+        border-bottom: 2px solid var(--color-acento-tecnologico);
+        padding-bottom: 8px;
+    }
+
+
+#lista-proyectos {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+    #lista-proyectos li {
+        background-color: var(--color-blanco); /* Fondo blanco para items de lista */
+        border: 1px solid var(--color-borde);
+        margin-bottom: 12px;
+        padding: 15px 20px;
+        cursor: pointer;
+        border-radius: var(--radio-borde-inputs);
+        transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s ease-out;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+        #lista-proyectos li:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--sombra-hover-items);
+            border-left: 4px solid var(--color-acento-tecnologico); /* Indicador en hover */
+            padding-left: 16px;
+        }
+
+        #lista-proyectos li .project-info {
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+
+        #lista-proyectos li .project-name {
+            font-weight: 600;
+            color: var(--color-primario-corporativo);
+            font-size: 1.05em;
+            margin-bottom: 4px;
+        }
+
+        #lista-proyectos li .project-id {
+            font-size: 0.8em;
+            color: var(--color-texto-secundario);
+        }
+
+        #lista-proyectos li .view-details-icon {
+            font-size: 1.4em;
+            color: var(--color-acento-tecnologico);
+            opacity: 0.6;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        #lista-proyectos li:hover .view-details-icon {
+            opacity: 1;
+            transform: translateX(2px);
+        }
+
+
+/* Estilos del Modal (pueden necesitar ligeros ajustes) */
+.modal {
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(11, 45, 72, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0s 0.3s linear;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+    .modal.show {
+        opacity: 1;
+        visibility: visible;
+        transition: opacity 0.3s ease, visibility 0s 0s linear;
+    }
+
+.modal-contenido {
+    background-color: var(--color-fondo-container);
+    padding: 0;
+    border: none;
+    width: 100%;
+    max-width: 1000px; /* Modal puede ser un poco más pequeño si no tiene mapa interno */
+    border-radius: calc(var(--radio-borde-general) * 1.5);
+    box-shadow: var(--sombra-modal);
+    overflow: hidden;
+    transform: translateY(-20px) scale(0.98);
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease;
+    opacity: 0;
+}
+
+.modal.show .modal-contenido {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+.modal-header {
+    background-color: var(--color-primario-corporativo);
+    color: var(--color-blanco);
+    padding: 18px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+    .modal-header h2 {
+        margin: 0;
+        font-size: 1.4em;
+        font-weight: 600;
+    }
+
+.cerrar-modal {
+    color: var(--color-blanco);
+    font-size: 26px;
+    font-weight: normal;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    line-height: 1;
+    opacity: 0.7;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+    .cerrar-modal:hover {
+        opacity: 1;
+        transform: rotate(90deg);
+    }
+
+.modal-body {
+    padding: 25px;
+    max-height: calc(100vh - 180px); /* Ajustar altura máxima */
+    overflow-y: auto;
+}
+    /* Scrollbar styling */
+    .modal-body::-webkit-scrollbar, #lista-proyectos-container::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .modal-body::-webkit-scrollbar-track, #lista-proyectos-container::-webkit-scrollbar-track {
+        background: var(--color-fondo-pagina);
+        border-radius: 4px;
+    }
+
+    .modal-body::-webkit-scrollbar-thumb, #lista-proyectos-container::-webkit-scrollbar-thumb {
+        background-color: var(--color-acento-neutral-elegante);
+        border-radius: 4px;
+        border: 2px solid var(--color-fondo-pagina);
+    }
+
+        .modal-body::-webkit-scrollbar-thumb:hover, #lista-proyectos-container::-webkit-scrollbar-thumb:hover {
+            background-color: var(--color-texto-secundario);
+        }
+
+#modal-detalles {
+    display: grid; /* Activamos el layout de rejilla (Grid) */
+    grid-template-columns: 1fr 1fr; /* Creamos dos columnas de igual tamaño */
+    gap: 10px 25px; /* Espacio vertical de 10px y horizontal de 25px */
+}
+
+    #modal-detalles p {
+        margin: 0 0 8px 0; /* Reducimos el margen inferior */
+        line-height: 1.65;
+        font-size: 0.95em;
+        background-color: #f8f9fa; /* Damos un fondo sutil a cada item */
+        padding: 8px 12px; /* Añadimos padding interno */
+        border-radius: var(--radio-borde-inputs);
+        border-left: 3px solid var(--color-acento-tecnologico-hover); /* Un acento de color */
+        display: flex; /* Usamos flex para alinear el texto */
+        flex-wrap: wrap;
+    }
+
+    #modal-detalles strong {
+        color: var(--color-primario-corporativo);
+        font-weight: 600;
+        margin-right: 8px; /* Espacio entre la etiqueta y el valor */
+        /* Ya no necesitamos un ancho mínimo gracias a Grid */
+    }
+
+/* El mapa individual en el modal ya no se usa, así que se puede comentar o eliminar */
+/* #mapa {
+    height: 350px;
+    width: 100%;
+    border-radius: var(--radio-borde-inputs);
+    border: 1px solid var(--color-borde);
+    margin-top: 25px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);
+} */
+
+/* Estilos para cuando no hay proyectos */
+#lista-proyectos li.no-projects {
+    justify-content: center;
+    text-align: center;
+    color: var(--color-texto-secundario);
+    font-style: italic;
+    padding: 25px;
+    font-size: 1em;
+    border: 1px dashed var(--color-borde);
+    box-shadow: none;
+}
+
+    #lista-proyectos li.no-projects:hover {
+        transform: none;
+        box-shadow: none;
+        border-color: var(--color-borde);
+        border-left: 1px dashed var(--color-borde); /* Mantener consistencia */
+        padding-left: 25px;
+    }
+
+/* Responsive adjustments */
+@media (max-width: 992px) { /* Ajuste para tablets y layouts más pequeños */
+    .layout-container {
+        flex-direction: column; /* Apilar mapa y lista */
+        height: auto;
+    }
+
+    #mapa-principal-container {
+        height: 450px; /* Altura del mapa en modo apilado */
+        margin-bottom: 20px; /* Espacio debajo del mapa */
+    }
+
+    #lista-proyectos-container {
+        max-height: 400px; /* Altura máxima de la lista */
+        width: 100%;
+        box-sizing: border-box;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 15px;
+    }
+
+    .container {
+        width: 100%;
+        padding: 20px 15px;
+        margin-top: 10px;
+    }
+
+    h1 {
+        font-size: 1.7em;
+        margin-bottom: 25px;
+    }
+
+    #mapa-principal-container {
+        height: 350px;
+    }
+
+    #lista-proyectos-container h2 {
+        font-size: 1.15em;
+    }
+
+    #lista-proyectos li {
+        padding: 12px 15px;
+    }
+
+        #lista-proyectos li .project-name {
+            font-size: 1em;
+        }
+
+        #lista-proyectos li .project-id {
+            font-size: 0.75em;
+        }
+
+    .modal-contenido {
+        width: 95%;
+        max-width: none;
+        margin: 10px;
+    }
+
+    .modal-header {
+        padding: 15px 20px;
+    }
+
+        .modal-header h2 {
+            font-size: 1.2em;
+        }
+
+    .cerrar-modal {
+        font-size: 24px;
+    }
+
+    .modal-body {
+        padding: 20px;
+        max-height: calc(90vh - 110px);
+    }
+
+    #modal-detalles strong {
+        min-width: auto;
+        display: block;
+        margin-bottom: 2px;
+    }
+
+    #modal-detalles p {
+        font-size: 0.88em;
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.5em;
+    }
+
+    #mapa-principal-container {
+        height: 300px;
+    }
+}
+
+/* Estilos para los Filtros */
+.filtros-container {
+    background-color: var(--color-fondo-container);
+    padding: 20px 25px;
+    margin-bottom: 25px;
+    border-radius: var(--radio-borde-general);
+    box-shadow: var(--sombra-suave);
+    border: 1px solid var(--color-borde);
+}
+
+    .filtros-container h2 {
+        color: var(--color-primario-corporativo);
+        font-size: 1.4em;
+        margin-top: 0;
+        margin-bottom: 20px;
+        border-bottom: 2px solid var(--color-acento-tecnologico);
+        padding-bottom: 10px;
+    }
+
+#filtros-form {
+    display: flex; /* Usamos Flexbox en lugar de Grid */
+    flex-wrap: wrap; /* Permitimos que los items pasen a la siguiente línea si no hay espacio */
+    align-items: flex-end; /* ¡Esta es la clave! Alinea todos los items por su base */
+    gap: 20px; /* Mantenemos el espacio entre elementos */
+}
+
+.filtro-item {
+    display: flex;
+    flex-direction: column;
+}
+
+    .filtro-item label {
+        font-weight: 500;
+        color: var(--color-texto-principal);
+        margin-bottom: 8px;
+        font-size: 0.9em;
+    }
+
+    .filtro-item input[type="text"],
+    .filtro-item select,
+    .filtro-item input[type="date"] {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--color-borde);
+        border-radius: var(--radio-borde-inputs);
+        font-family: var(--fuente-principal);
+        font-size: 0.95em;
+        box-sizing: border-box;
+        background-color: #F8F9FA; /* Fondo ligero para inputs */
+        color: var(--color-texto-principal);
+    }
+
+        .filtro-item input[type="text"]:focus,
+        .filtro-item select:focus,
+        .filtro-item input[type="date"]:focus {
+            outline: none;
+            border-color: var(--color-acento-tecnologico);
+            box-shadow: 0 0 0 2px rgba(0, 174, 239, 0.2);
+        }
+
+    .filtro-item.filtro-rango-fechas .fecha-inputs {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .filtro-item.filtro-rango-fechas .fecha-inputs span {
+            color: var(--color-texto-secundario);
+        }
+
+.filtro-botones {
+    display: flex;
+    gap: 10px;
+    /* Ya no necesitamos la alineación compleja de antes, el contenedor padre se encarga de todo */
+}
+
+    .filtro-botones button {
+        padding: 10px 20px;
+        font-family: var(--fuente-principal);
+        font-weight: 500;
+        font-size: 0.95em;
+        border-radius: var(--radio-borde-inputs);
+        cursor: pointer;
+        transition: background-color 0.2s ease, box-shadow 0.2s ease;
+        border: none;
+    }
+
+#aplicar-filtros-btn {
+    background-color: var(--color-acento-tecnologico);
+    color: var(--color-blanco);
+}
+
+    #aplicar-filtros-btn:hover {
+        background-color: var(--color-acento-tecnologico-hover);
+        box-shadow: 0 2px 8px rgba(0, 174, 239, 0.3);
+    }
+
+#limpiar-filtros-btn {
+    background-color: var(--color-texto-secundario);
+    color: var(--color-blanco);
+}
+
+    #limpiar-filtros-btn:hover {
+        background-color: #495057; /* Un poco más oscuro */
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+
+/* Ajustes responsivos para filtros */
+@media (max-width: 768px) {
+    #filtros-form {
+        grid-template-columns: 1fr; /* Una columna en móviles */
+    }
+
+    .filtro-botones {
+        flex-direction: column; /* Botones en columna */
+        width: 100%;
+    }
+
+        .filtro-botones button {
+            width: 100%; /* Botones ocupan todo el ancho */
+        }
+}
+
+.modal-acciones {
+    text-align: center;
+    margin: 25px 0;
+    border-top: 1px solid var(--color-borde);
+    padding-top: 25px;
+}
+
+.boton-costos {
+    background-color: var(--color-primario-corporativo);
+    color: var(--color-blanco);
+    padding: 12px 25px;
+    font-family: var(--fuente-principal);
+    font-weight: 600;
+    font-size: 1em;
+    border-radius: var(--radio-borde-inputs);
+    cursor: pointer;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    border: none;
+}
+
+    .boton-costos:hover {
+        background-color: var(--color-primario-corporativo-hover);
+        box-shadow: 0 4px 12px rgba(11, 45, 72, 0.2);
+    }
+
+#seccion-costos h3 {
+    color: var(--color-primario-corporativo);
+    border-bottom: 2px solid var(--color-acento-tecnologico);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.form-costos {
+    display: grid;
+    grid-template-columns: 1fr 1fr 120px;
+    gap: 15px;
+    align-items: end;
+    margin-bottom: 25px;
+}
+
+.form-grupo.full-width {
+    grid-column: 1 / -1; /* Hacemos que este grupo ocupe todas las columnas */
+}
+
+.form-grupo {
+    display: flex;
+    flex-direction: column;
+}
+
+    .form-grupo label {
+        font-weight: 500;
+        color: var(--color-texto-principal);
+        margin-bottom: 8px;
+        font-size: 0.85em;
+    }
+
+    .form-grupo select,
+    .form-grupo input {
+        width: 100%;
+        padding: 9px 12px;
+        border: 1px solid var(--color-borde);
+        border-radius: var(--radio-borde-inputs);
+        font-family: var(--fuente-principal);
+        font-size: 0.9em;
+        box-sizing: border-box;
+    }
+
+    .form-grupo button {
+        padding: 9px 20px;
+        background-color: var(--color-acento-tecnologico);
+        color: var(--color-blanco);
+        border: none;
+        border-radius: var(--radio-borde-inputs);
+        cursor: pointer;
+        font-weight: 500;
+        transition: background-color 0.2s ease;
+    }
+
+        .form-grupo button:hover {
+            background-color: var(--color-acento-tecnologico-hover);
+        }
+
+#tabla-costos {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+    #tabla-costos th, #tabla-costos td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid var(--color-borde);
+    }
+
+    #tabla-costos thead th {
+        background-color: var(--color-fondo-pagina);
+        font-weight: 600;
+        color: var(--color-primario-corporativo);
+    }
+
+    #tabla-costos tbody tr:hover {
+        background-color: #f9f9fa;
+    }
+
+    #tabla-costos tfoot td {
+        font-weight: 700;
+        font-size: 1.1em;
+        color: var(--color-primario-corporativo);
+    }
+
+    #tabla-costos .accion-borrar {
+        color: #E74C3C;
+        cursor: pointer;
+        font-size: 1.2em;
+        text-align: center;
+    }
+
+        #tabla-costos .accion-borrar:hover {
+            color: #C0392B;
+        }
+
+@media (max-width: 992px) {
+    .form-costos {
+        grid-template-columns: 1fr 1fr;
+    }
+
+        .form-costos .form-grupo:last-child {
+            grid-column: 1 / -1; /* Botón ocupa todo el ancho */
+        }
+}

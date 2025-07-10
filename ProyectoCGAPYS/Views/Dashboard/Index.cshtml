@@ -1,0 +1,384 @@
+﻿@* Primero, declaramos el modelo que esta vista espera recibir del controlador. *@
+@model ProyectoCGAPYS.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard de Control y Seguimiento";
+}
+<style>
+    /* --- Paleta de Colores con Glassmorphism Blanco --- */
+    :root {
+        --color-text-primary: #0A2240;
+        --color-text-secondary: #555555;
+        --color-gold-accent: #efb810;
+        --color-blue-accent: #3A7CA5;
+        --font-family-sans-serif: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    /* --- Estilos Generales del Contenido --- */
+    .dashboard-title {
+        color: black;
+        font-weight: 300;
+        text-align: center;
+        margin-bottom: 2.5rem;
+        font-size: 2.5rem;
+        text-shadow: 0px 1px 5px rgba(0,0,0,0.2);
+    }
+
+    /* --- Estilo Base para las Tarjetas con Gradiente Sutil (Recomendado) --- */
+    .glass-card {
+        /* Usamos un gradiente sutil para dar profundidad sin usar imágenes */
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.65) 100%);
+        /* Propiedades del Glassmorphism */
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
+        /* Propiedades de Flexbox y transición */
+        padding: 2rem;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        transition: box-shadow 0.3s ease, background 0.3s ease;
+    }
+
+        .glass-card:hover {
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.7) 100%);
+        }
+
+    /* --- Estilos para las Tarjetas de KPIs (sin cambios) --- */
+    .kpi-card {
+        text-align: center;
+    }
+
+    .kpi-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--color-text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 0.5rem;
+    }
+
+    .kpi-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        line-height: 1.2;
+        color: var(--color-gold-accent);
+    }
+
+        .kpi-number.currency {
+            font-size: 2.2rem;
+        }
+
+    /* --- Estilos para los Contenedores de Gráficas (sin cambios) --- */
+    .chart-container h5 {
+        color: var(--color-text-primary);
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+
+        .chart-container h5 > i {
+            color: var(--color-gold-accent);
+        }
+
+    /* --- Estilos para las Listas de Alertas (sin cambios) --- */
+    .alert-list .list-group-item {
+        background-color: transparent;
+        border: none;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        padding: 1rem 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+        .alert-list .list-group-item:last-child {
+            border-bottom: none;
+        }
+
+        .alert-list .list-group-item a {
+            color: var(--color-text-primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+            .alert-list .list-group-item a:hover {
+                color: var(--color-gold-accent);
+            }
+
+    .alert-list .badge {
+        font-size: 0.8rem;
+        padding: 0.5em 0.8em;
+        font-weight: 600;
+        border: 1px solid var(--color-gold-accent);
+        background-color: transparent;
+        color: var(--color-gold-accent);
+    }
+</style>
+<h2 class="dashboard-title">@ViewData["Title"]</h2>
+
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="glass-card kpi-card">
+            <div class="kpi-title">Proyectos Totales (2025)</div>
+            <div class="kpi-number">@Model.KPIs.ProyectosTotales</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="glass-card kpi-card">
+            <div class="kpi-title">Proyectos Activos</div>
+            <div class="kpi-number">@Model.KPIs.ProyectosActivos</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="glass-card kpi-card">
+            <div class="kpi-title">Presupuesto Autorizado</div>
+            <div class="kpi-number currency">@Model.KPIs.PresupuestoTotalAutorizado.ToString("C")</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="glass-card kpi-card">
+            <div class="kpi-title">Monto Ejercido</div>
+            <div class="kpi-number currency">@Model.KPIs.MontoTotalEjercido.ToString("C")</div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-lg-8 mb-4">
+        <div class="glass-card chart-container">
+            <h5>Distribución y Uso del Presupuesto General</h5>
+            <canvas id="donaPresupuesto" style="max-height: 350px;"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-4 mb-4">
+        <div class="glass-card chart-container">
+            <h5>Proyectos por Fase</h5>
+            <canvas id="barrasProyectosFase" style="max-height: 350px;"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12 mb-4">
+        <div class="glass-card chart-container">
+            <h5>Estado por Fuente de Financiamiento</h5>
+            <canvas id="barrasEstadoFondos" style="max-height: 300px;"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="glass-card alert-list">
+            <h5><i class="fas fa-exclamation-triangle"></i> Proyectos por Vencer (Próximos 30 días)</h5>
+            <ul class="list-group list-group-flush">
+                @if (!Model.ProyectosPorVencer.Any())
+                {
+                    <li class="list-group-item" style="color: var(--color-text-secondary);">¡Felicidades! No hay proyectos próximos a vencer.</li>
+                }
+                else
+                {
+                    @foreach (var item in Model.ProyectosPorVencer)
+                    {
+                        <li class="list-group-item">
+                            <a asp-controller="Proyectos" asp-action="Details" asp-route-id="@item.Id">@item.NombreProyecto</a>
+                            <span class="badge">Vence: @item.FechaVencimiento?.ToString("dd/MM/yyyy")</span>
+                        </li>
+                    }
+                }
+            </ul>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="glass-card alert-list">
+            <h5><i class="fas fa-file-invoice-dollar"></i> Estimaciones Pendientes de Pago</h5>
+            <ul class="list-group list-group-flush">
+                @if (!Model.EstimacionesPendientes.Any())
+                {
+                    <li class="list-group-item" style="color: var(--color-text-secondary);">¡Excelente! No hay estimaciones pendientes.</li>
+                }
+                else
+                {
+                    @foreach (var item in Model.EstimacionesPendientes)
+                    {
+                        <li class="list-group-item">
+                            <a asp-controller="Proyectos" asp-action="Details" asp-route-id="@item.Id">@item.NombreProyecto</a>
+                            <span class="badge">Retraso: @item.DiasTranscurridos días</span>
+                        </li>
+                    }
+                }
+            </ul>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            // --- Configuración Global de Chart.js para un look premium ---
+            Chart.defaults.color = '#0A2240';
+            Chart.defaults.font.family = "'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif";
+            Chart.defaults.animation.duration = 1000; // Animación de carga más suave
+
+            // --- Colores y Gradientes ---
+            const colorGold = 'rgba(212, 175, 55, 1)';
+            const colorBlue = 'rgba(58, 124, 165, 1)';
+
+            // Función para crear gradientes verticales
+            const createGradient = (ctx, colorStart, colorEnd) => {
+                const gradient = ctx.createLinearGradient(0, 0, 0, 400); // Gradiente vertical
+                gradient.addColorStop(0, colorStart);
+                gradient.addColorStop(1, colorEnd);
+                return gradient;
+            };
+
+            // --- Tooltip Personalizado ---
+            // NUEVO: Creamos un objeto de configuración para los tooltips que reutilizaremos
+            const customTooltip = {
+                backgroundColor: 'rgba(10, 34, 64, 0.9)', // Fondo azul oscuro
+                titleColor: 'rgba(255, 255, 255, 0.9)',
+                bodyColor: 'rgba(255, 255, 255, 0.8)',
+                borderColor: 'rgba(212, 175, 55, 0.5)',
+                borderWidth: 1,
+                padding: 10,
+                cornerRadius: 8,
+                displayColors: false, // Ocultamos el cuadrito de color
+            };
+
+
+            // --- 1. GRÁFICO DE DONA: Presupuesto General ---
+            const ctxDona = document.getElementById('donaPresupuesto').getContext('2d');
+
+            // NUEVO: Creación de gradientes para la dona
+            const gradientGold = createGradient(ctxDona, 'rgba(212, 175, 55, 1)', 'rgba(212, 175, 55, 0.7)');
+            const gradientBlue = createGradient(ctxDona, 'rgba(58, 124, 165, 1)', 'rgba(58, 124, 165, 0.7)');
+
+            new Chart(ctxDona, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Monto Ejercido', 'Balance Disponible'],
+                    datasets: [{
+                        label: 'Presupuesto General',
+                        data: [
+        @Json.Serialize(Model.KPIs.MontoTotalEjercido),
+        @Json.Serialize(Model.KPIs.BalanceGeneralDisponible)
+                                ],
+                        backgroundColor: [gradientGold, gradientBlue],
+                        borderColor: 'rgba(248, 249, 250, 1)',
+                        borderWidth: 4,
+                        borderRadius: 15, // NUEVO: Bordes redondeados
+                        spacing: 10,       // NUEVO: Espacio entre segmentos
+                        hoverOffset: 15    // NUEVO: Efecto al pasar el cursor
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    cutout: '70%', // Hacemos el hueco del centro más grande
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: {
+                            ...customTooltip, // NUEVO: Aplicamos el tooltip personalizado
+                            callbacks: {
+                                label: function (context) {
+                                    let value = context.raw;
+                                    return context.label + ': ' + value.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // --- 2. GRÁFICO DE BARRAS: Estado por Fondos ---
+            const ctxBarrasFondos = document.getElementById('barrasEstadoFondos').getContext('2d');
+
+            new Chart(ctxBarrasFondos, {
+                type: 'bar',
+                data: {
+                    labels: @Json.Serialize(Model.EstadoPorFondo.Select(f => f.NombreFondo)),
+                    datasets: [
+                        {
+                            label: 'Monto Ejercido',
+                            data: @Json.Serialize(Model.EstadoPorFondo.Select(f => f.MontoEjercido)),
+                            backgroundColor: createGradient(ctxBarrasFondos, 'rgba(212, 175, 55, 0.9)', 'rgba(212, 175, 55, 0.6)'), // NUEVO: Gradiente
+                            borderRadius: 8 // NUEVO: Bordes redondeados
+                        },
+                        {
+                            label: 'Monto Disponible',
+                            data: @Json.Serialize(Model.EstadoPorFondo.Select(f => f.MontoAutorizado - f.MontoEjercido)),
+                            backgroundColor: createGradient(ctxBarrasFondos, 'rgba(58, 124, 165, 0.9)', 'rgba(58, 124, 165, 0.6)'), // NUEVO: Gradiente
+                            borderRadius: 8 // NUEVO: Bordes redondeados
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            ...customTooltip, // NUEVO: Aplicamos el tooltip personalizado
+                            mode: 'index'
+                        }
+                    },
+                    scales: {
+                        x: { stacked: true, grid: { display: false } }, // NUEVO: Ocultamos la cuadrícula
+                        y: {
+                            stacked: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)', // NUEVO: Cuadrícula muy sutil si se necesita
+                                drawBorder: false
+                            },
+                            ticks: {
+                                callback: function (value) {
+                                    return (value / 1000) + 'k'; // Formato más corto (ej: 50k)
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // --- 3. GRÁFICO DE BARRAS HORIZONTALES: Proyectos por Fase ---
+            const ctxBarrasFase = document.getElementById('barrasProyectosFase').getContext('2d');
+
+            new Chart(ctxBarrasFase, {
+                type: 'bar',
+                data: {
+                    labels: @Json.Serialize(Model.ProyectosPorFase.Select(f => f.Fase)),
+                    datasets: [{
+                        label: 'Nº de Proyectos',
+                        data: @Json.Serialize(Model.ProyectosPorFase.Select(f => f.TotalProyectos)),
+                        backgroundColor: createGradient(ctxBarrasFase, 'rgba(120, 120, 120, 0.8)', 'rgba(120, 120, 120, 0.5)'), // NUEVO: Gradiente de gris
+                        borderRadius: 8 // NUEVO: Bordes redondeados
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', // <-- Se mantiene horizontal
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            ...customTooltip // NUEVO: Aplicamos el tooltip personalizado
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false }, // NUEVO: Ocultamos la cuadrícula
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 }
+                        },
+                        y: {
+                            grid: { display: false } // NUEVO: Ocultamos la cuadrícula
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}

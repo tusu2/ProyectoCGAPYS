@@ -1,0 +1,336 @@
+﻿/* EstiloPrincipal.css (Paleta Corporativo Tecnológico Premium - CORREGIDO) */
+
+:root {
+    --color-fondo-pagina: #EFF2F5; /* Gris muy claro, aspecto limpio */
+    --color-fondo-container: #FFFFFF;
+    --color-texto-principal: #222B36; /* Negro azulado, muy profesional */
+    --color-texto-secundario: #5F6B7A; /* Gris azulado para textos secundarios */
+    --color-borde: #D1D9E2; /* Borde gris claro, más suave */
+    /* --- Paleta Corporativo Tecnológico Premium --- */
+    --color-primario-corporativo: #0B2D48; /* Azul Medianoche o Carbón Oscuro */
+    --color-primario-corporativo-hover: #071E30; /* Más oscuro para hover */
+
+    --color-acento-tecnologico: #00AEEF; /* Azul Eléctrico/Cian Vibrante */
+    --color-acento-tecnologico-hover: #008BC7; /* Más oscuro y menos saturado para hover */
+
+    --color-acento-neutral-elegante: #AEB6BF; /* Gris Metálico Claro para detalles sutiles */
+    --color-borde-activo-sutil: #9FB3C8; /* Un azul grisáceo para bordes de focus o activos */
+    --color-focus-sombra: rgba(0, 174, 239, 0.25); /* Sombra de focus con el acento tecnológico */
+
+
+    --fuente-principal: 'Poppins', sans-serif;
+    --radio-borde-general: 0.3rem; /* Bordes ligeramente más redondeados pero definidos */
+    --radio-borde-inputs: 0.25rem;
+    --sombra-suave: 0 6px 18px rgba(11, 45, 72, 0.08); /* Sombra más orientada al azul primario */
+    --sombra-hover: 0 8px 24px rgba(11, 45, 72, 0.12);
+}
+
+body {
+    font-family: var(--fuente-principal);
+    background-color: var(--color-fondo-pagina);
+    color: var(--color-texto-principal);
+    line-height: 1.6;
+}
+
+.container.custom-form-container { /* Asumiendo que tienes esta clase en tu HTML como se sugirió */
+    max-width: 900px;
+    background-color: var(--color-fondo-container);
+    padding: 2.5rem 3rem;
+    border-radius: calc(var(--radio-borde-general) * 1.5);
+    box-shadow: var(--sombra-suave);
+    margin-top: 2.5rem;
+    margin-bottom: 3.5rem;
+    border: 1px solid #E0E6EC;
+}
+/* Si no usaste .custom-form-container y estilizaste .container directamente:
+.container {
+    max-width: 900px;
+    background-color: var(--color-fondo-container);
+    padding: 2.5rem 3rem;
+    border-radius: calc(var(--radio-borde-general) * 1.5);
+    box-shadow: var(--sombra-suave);
+    margin-top: 2.5rem;
+    margin-bottom: 3.5rem;
+    border: 1px solid #E0E6EC;
+}
+*/
+
+h3.mb-4 {
+    color: var(--color-primario-corporativo);
+    font-weight: 700;
+    text-align: center;
+    padding-bottom: 0.85rem;
+    margin-bottom: 3rem !important;
+    border-bottom: 3px solid var(--color-acento-tecnologico);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-size: 1.8rem;
+}
+
+/* Barra de Progreso */
+.progress {
+    height: 10px;
+    border-radius: 5px;
+    background-color: #DDE4EC;
+    margin-bottom: 3rem !important;
+    overflow: visible;
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, var(--color-acento-tecnologico) 0%, var(--color-primario-corporativo) 100%);
+    transition: width 0.7s cubic-bezier(0.65, 0, 0.35, 1);
+    font-weight: 600;
+    font-size: 0.7rem;
+    line-height: 10px;
+    color: white;
+    border-radius: 5px;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0, 174, 239, 0.3);
+}
+
+/* Pestañas */
+.nav-tabs {
+    border-bottom: 2px solid var(--color-borde); /* Mantener este borde para la línea base de pestañas no activas */
+    margin-bottom: 0; /* AJUSTE: Eliminar margen inferior para que el tab-content se pegue */
+}
+
+    .nav-tabs .nav-link {
+        color: var(--color-texto-secundario);
+        border: none;
+        border-top-left-radius: var(--radio-borde-general);
+        border-top-right-radius: var(--radio-borde-general);
+        padding: 0.85rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.25s ease-out;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.8px;
+        position: relative;
+        /* margin-bottom: -2px;  AJUSTE: Se manejará con el borde del tab-content */
+    }
+
+        .nav-tabs .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px; /* Se alinea con el border-bottom del .nav-tabs */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 3px;
+            background-color: var(--color-acento-neutral-elegante);
+            transition: width 0.3s ease;
+        }
+
+        .nav-tabs .nav-link:hover,
+        .nav-tabs .nav-link:focus {
+            color: var(--color-primario-corporativo);
+            background-color: #f8f9fa;
+        }
+
+            .nav-tabs .nav-link:hover::after {
+                width: 70%;
+            }
+
+        .nav-tabs .nav-link.active {
+            color: var(--color-acento-tecnologico);
+            background-color: var(--color-fondo-container); /* Fondo del contenido */
+            font-weight: 700;
+            border-top-left-radius: var(--radio-borde-general); /* Mantener el radio aquí */
+            border-top-right-radius: var(--radio-borde-general); /* Mantener el radio aquí */
+            border-bottom-color: transparent !important; /* Hacer transparente el borde inferior de la pestaña activa */
+            position: relative;
+            z-index: 2; /* Asegurar que la pestaña activa esté por encima del borde del tab-content */
+            /* La línea ::after se encargará del indicador visual inferior */
+        }
+
+            .nav-tabs .nav-link.active::after {
+                content: '';
+                position: absolute;
+                bottom: -2px; /* Alinear con el border-bottom del .nav-tabs */
+                left: 0; /* CORRECCIÓN: Alinear al inicio para que cubra todo el ancho */
+                transform: translateX(0); /* CORRECCIÓN: Sin traslación X */
+                width: 100%;
+                height: 3px;
+                background-color: var(--color-acento-tecnologico);
+                transition: width 0.3s ease;
+                z-index: 3; /* Por encima del borde del .tab-content */
+            }
+
+
+        .nav-tabs .nav-link.disabled {
+            color: #adb5bd;
+            background-color: transparent;
+        }
+
+            .nav-tabs .nav-link.disabled::after {
+                width: 0 !important;
+            }
+
+.tab-content {
+    padding: 2rem 1.5rem; /* Ajustar padding según sea necesario */
+    background-color: var(--color-fondo-container); /* Asegurar fondo */
+    border: 2px solid var(--color-borde); /* Borde alrededor del contenido */
+    border-top-color: transparent; /* AJUSTE IMPORTANTE: El borde superior es transparente para unirse con la pestaña */
+    border-radius: 0 0 var(--radio-borde-general) var(--radio-borde-general); /* Radios solo abajo */
+    /* box-shadow: var(--sombra-suave); Podrías añadir una sombra aquí si quieres */
+    position: relative; /* Para el contexto de z-index */
+    z-index: 1; /* Detrás de la pestaña activa */
+    margin-top: -2px; /* AJUSTE: Solapar ligeramente con el nav-tabs para cerrar el hueco */
+}
+
+
+/* Inputs del Formulario y Selects */
+.form-label {
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+    color: var(--color-texto-principal);
+    font-size: 0.9rem;
+}
+
+.form-control,
+.form-select {
+    border-radius: var(--radio-borde-inputs);
+    border: 1px solid var(--color-borde);
+    padding: 0.75rem 1.1rem;
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    font-size: 0.95rem;
+    background-color: #FCFDFE;
+}
+
+    .form-control::placeholder, .form-select::placeholder {
+        color: var(--color-texto-secundario);
+        opacity: 0.8;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--color-acento-tecnologico);
+        box-shadow: 0 0 0 0.25rem var(--color-focus-sombra);
+        background-color: var(--color-fondo-container);
+    }
+
+    .form-control[readonly] {
+        background-color: #e9ecef;
+        opacity: 0.7;
+        border-style: dashed;
+    }
+
+
+/* Mapa */
+#mapa {
+    height: 350px;
+    border-radius: var(--radio-borde-inputs);
+    border: 1px solid var(--color-borde);
+    margin-bottom: 0.5rem;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);
+}
+
+    #mapa.is-invalid {
+        border: 1px solid #dc3545;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+
+
+/* Botones */
+.btn {
+    border-radius: var(--radio-borde-inputs);
+    padding: 0.75rem 1.8rem;
+    font-weight: 600;
+    transition: all 0.2s ease-in-out, transform 0.15s ease-out;
+    text-transform: uppercase;
+    letter-spacing: 0.75px;
+    font-size: 0.9rem;
+    box-shadow: 0 3px 7px rgba(11, 45, 72, 0.1);
+    border: 1px solid transparent;
+}
+
+    .btn:hover {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: var(--sombra-hover);
+    }
+
+    .btn:active {
+        transform: translateY(-1px) scale(0.99);
+        box-shadow: 0 1px 3px rgba(11, 45, 72, 0.15);
+    }
+
+.btn-primary {
+    background-color: var(--color-primario-corporativo);
+    border-color: var(--color-primario-corporativo);
+    color: white;
+}
+
+    .btn-primary:hover {
+        background-color: var(--color-primario-corporativo-hover);
+        border-color: var(--color-primario-corporativo-hover);
+        color: white;
+    }
+
+.btn-success {
+    background-color: var(--color-acento-tecnologico);
+    border-color: var(--color-acento-tecnologico);
+    color: white;
+}
+
+    .btn-success:hover {
+        background-color: var(--color-acento-tecnologico-hover);
+        border-color: var(--color-acento-tecnologico-hover);
+        color: white;
+    }
+
+.btn-secondary {
+    background-color: var(--color-texto-secundario);
+    border-color: var(--color-texto-secundario);
+    color: white;
+}
+
+    .btn-secondary:hover {
+        background-color: #495057;
+        border-color: #495057;
+        color: white;
+    }
+
+.invalid-feedback {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #dc3545;
+}
+
+    .invalid-feedback.d-block {
+        display: block !important;
+        width: 100%;
+        margin-top: .25rem;
+    }
+
+@media (max-width: 768px) {
+    .container.custom-form-container, .container { /* Aplicar a ambos por si acaso */
+        padding: 1.5rem 1rem;
+        margin-top: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    h3.mb-4 {
+        font-size: 1.5rem;
+        margin-bottom: 2rem !important;
+    }
+
+    .btn {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.85rem;
+    }
+
+    .nav-tabs .nav-link {
+        padding: 0.7rem 1rem;
+        font-size: 0.75rem;
+    }
+
+    .progress {
+        margin-bottom: 2rem !important;
+    }
+
+    .tab-content {
+        padding: 1.5rem; /* Ajustar padding para móvil */
+    }
+}
+/* --- CSS para placeholder en inputs de tipo date --- */
+

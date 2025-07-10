@@ -1,0 +1,151 @@
+﻿@model ProyectoCGAPYS.ViewModels.CrearProyectoViewModel
+
+@{
+    ViewData["Title"] = "Registro de Nuevo Proyecto";
+}
+<link rel="stylesheet" href="~/css/Crear.css" asp-append-version="true" />
+<div class="container">
+    <h3 class="mb-4">Registro de Nuevo Proyecto de Obras</h3>
+
+    <div class="progress mb-4">
+        <div id="barraProgreso" class="progress-bar" role="progressbar" style="width: 33%;" aria-valuenow="33"
+             aria-valuemin="0" aria-valuemax="100">
+            Paso 1 de 3
+        </div>
+    </div>
+
+    <form asp-controller="Registro" asp-action="Crear" method="post" enctype="multipart/form-data" id="formularioProyecto" novalidate>
+        <ul class="nav nav-tabs" id="tabMenu" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="proyecto-tab" data-bs-toggle="tab" data-bs-target="#proyecto"
+                        type="button" role="tab" aria-controls="proyecto" aria-selected="true">
+                    Proyecto
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="responsable-tab" data-bs-toggle="tab" data-bs-target="#responsable" type="button"
+                        role="tab" aria-controls="responsable" aria-selected="false">
+                    Responsable
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="estatus-tab" data-bs-toggle="tab" data-bs-target="#estatus" type="button"
+                        role="tab" aria-controls="estatus" aria-selected="false">
+                    Estatus / Documentos
+                </button>
+            </li>
+        </ul>
+
+
+        <div class="tab-content border border-top-0 p-4">
+            <div class="tab-pane fade show active" id="proyecto" role="tabpanel" aria-labelledby="proyecto-tab">
+                <div class="mb-3">
+                    <label asp-for="Folio" class="form-label">Folio</label>
+                    <input asp-for="Folio" class="form-control" value="Automático" readonly />
+                </div>
+                <div class="row mb-3">
+                    <div class="col">
+                        <label asp-for="NombreProyecto" class="form-label">Nombre del Proyecto <span class="text-danger">*</span></label>
+                        <input asp-for="NombreProyecto" class="form-control" />
+                        <span asp-validation-for="NombreProyecto" class="text-danger"></span>
+                    </div>
+                    <div class="col">
+                        <label asp-for="IdCampusFk" class="form-label">Campus <span class="text-danger">*</span></label>
+                        <select asp-for="IdCampusFk" asp-items="@Model.CampusOptions" class="form-select">
+                            <option value="">Seleccione un campus</option>
+                        </select>
+                        <span asp-validation-for="IdCampusFk" class="text-danger"></span>
+                    </div>
+                    <div class="col">
+                        <label asp-for="IdDependenciaFk" class="form-label">Dependencia o Área Solicitante <span class="text-danger">*</span></label>
+                        <select asp-for="IdDependenciaFk" asp-items="@Model.DependenciaOptions" class="form-select">
+                            <option value="">Seleccione una opción</option>
+                        </select>
+                        <span asp-validation-for="IdDependenciaFk" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Descripcion" class="form-label">Descripción <span class="text-danger">*</span></label>
+                    <textarea asp-for="Descripcion" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Descripcion" class="text-danger"></span>
+                </div>
+                <div class="row mb-3">
+                    <div class="col">
+                        <label asp-for="FechaSolicitud" class="form-label">Fecha de solicitud <span class="text-danger">*</span></label>
+                        <input asp-for="FechaSolicitud" class="form-control" type="date" />
+                        <span asp-validation-for="FechaSolicitud" class="text-danger"></span>
+                    </div>
+               
+                </div>
+                <div class="row mb-3">
+                    <div class="col">
+                        <label asp-for="FechaFinalizacionAprox" class="form-label">Fecha de finalización aproximada <span class="text-danger">*</span></label>
+                        <input asp-for="FechaFinalizacionAprox" class="form-control" type="date" />
+                        <span asp-validation-for="FechaFinalizacionAprox" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="IdTipoFondoFk" class="form-label">Tipo de fondo<span class="text-danger">*</span></label>
+                    <select asp-for="IdTipoFondoFk" asp-items="@Model.TipoFondoOptions" class="form-select">
+                        <option value="">Seleccione un tipo de fondo</option>
+                    </select>
+                    <span asp-validation-for="IdTipoFondoFk" class="text-danger"></span>
+                </div>
+                <button type="button" class="btn btn-primary" id="btnSiguiente">Siguiente</button>
+            </div>
+
+            <div class="tab-pane fade" id="responsable" role="tabpanel" aria-labelledby="responsable-tab">
+                <div class="mb-3">
+                    <label asp-for="NombreResponsable" class="form-label">Nombre del responsable <span class="text-danger">*</span></label>
+                    <input asp-for="NombreResponsable" class="form-control" />
+                    <span asp-validation-for="NombreResponsable" class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Correo" class="form-label">Correo electrónico <span class="text-danger">*</span></label>
+                    <input asp-for="Correo" class="form-control" />
+                    <span asp-validation-for="Correo" class="text-danger"></span>
+                </div>
+                <div class="row mb-3">
+                   
+                    <div class="col">
+                        <label asp-for="Celular" class="form-label">Celular <span class="text-danger">*</span></label>
+                        <input asp-for="Celular" class="form-control" />
+                        <span asp-validation-for="Celular" class="text-danger"></span>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-secondary" id="btnAnterior">Anterior</button>
+                <button type="button" class="btn btn-primary" id="btnSiguienteEstatus">Siguiente</button>
+            </div>
+
+            <div class="tab-pane fade" id="estatus" role="tabpanel" aria-labelledby="estatus-tab">
+                <div class="mb-3">
+                    <label asp-for="AnteproyectoFile" class="form-label">Adjuntar anteproyecto </label>
+                    <input asp-for="AnteproyectoFile" class="form-control" accept=".pdf,.docx" />
+                
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Ubicación de la obra</label>
+                    <div id="mapa" style="height: 400px; border: 1px solid #ddd; border-radius: 4px;"></div>
+                    <input asp-for="Latitud" type="hidden" />
+                    <input asp-for="Longitud" type="hidden" />
+                </div>
+                <div class="mb-3">
+                    <label asp-for="IdTipoProyectoFk" class="form-label">Tipo de proyecto <span class="text-danger">*</span></label>
+                    <select asp-for="IdTipoProyectoFk" asp-items="@Model.TipoProyectoOptions" class="form-select">
+                        <option value="">Seleccione un tipo de proyecto</option>
+                    </select>
+                    <span asp-validation-for="IdTipoProyectoFk" class="text-danger"></span>
+                </div>
+                <button type="submit" class="btn btn-success" id="Guardar">Guardar</button>
+                <button type="button" class="btn btn-secondary" id="btnAnteriorR">Anterior</button>
+            </div>
+        </div>
+    </form>
+</div>
+</div>
+
+@section Scripts {
+    <script src="~/js/Crear.js" asp-append-version="true"></script>
+}
+   
+}
