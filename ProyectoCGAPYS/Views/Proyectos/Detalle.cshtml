@@ -3,14 +3,204 @@
 @{
     ViewData["Title"] = "Detalle del Proyecto";
 }
+        
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const alertContainer = document.getElementById('temp-data-alert');
 
+        if (alertContainer) {
+            const errorMessage = alertContainer.getAttribute('data-message');
+
+            Swal.fire({
+                icon: 'error',
+                title: '¡Error!',
+                text: errorMessage,
+                background: '#1e2837', // Fondo oscuro para la alerta
+                color: '#f0f0f0',      // Texto blanco
+                confirmButtonColor: '#2a7fff' // Azul principal
+            });
+        }
+    });
+
+
+</script>
+
+<style>
+    /* === Paleta de Colores y Variables Globales === */
+    :root {
+        --color-oro-principal: #D4AF37;
+        --color-verde-completado: #0B2D48;
+        --color-gris-pendiente: white;
+
+        /* Colores de texto para fondos claros/traslúcidos */
+        --color-texto-principal: #212529;
+        --color-texto-secundario: #6c757d;
+
+        /* Variables para el efecto Glassmorphism */
+        --color-fondo-glass: rgba(255, 255, 255, 0.65); /* Blanco traslúcido para buena legibilidad */
+        --blur-efecto: blur(10px);
+        --borde-glass: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    /* === Paneles con Efecto Glassmorphism === */
+    .project-header,
+    .tab-content .tab-pane {
+        background: var(--color-fondo-glass);
+        backdrop-filter: var(--blur-efecto);
+        -webkit-backdrop-filter: var(--blur-efecto); /* Soporte para Safari */
+        border-radius: 12px;
+        border: var(--borde-glass);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1); /* Sombra más difusa */
+    }
+
+    /* === Estilos de Texto (Sin cambios) === */
+    .project-header h2 {
+        color: var(--color-texto-principal);
+        font-weight: bold;
+        border-bottom: 2px solid var(--color-oro-principal);
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .project-header span {
+        color: var(--color-texto-secundario);
+    }
+
+    .project-header span strong {
+        color: var(--color-texto-principal);
+    }
+
+    h4, h5 {
+        color: var(--color-texto-principal);
+        border-left: 4px solid var(--color-oro-principal);
+        padding-left: 10px;
+    }
+    p {
+        color: var(--color-texto-secundario);
+    }
+    .modal-body, .modal-header .modal-title {
+        color: var(--color-texto-principal);
+    }
+
+
+    /* === Flujo de Trabajo (Sin cambios) === */
+    .workflow-steps {
+        display: flex;
+        justify-content: space-between;
+        padding: 1rem 0;
+    }
+
+    .step {
+        position: relative;
+        flex-grow: 1;
+        text-align: center;
+        z-index: 1;
+    }
+
+    .step span {
+        padding: 8px 25px;
+        border-radius: 50px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        background-color: var(--color-gris-pendiente);
+        color: var(--color-texto-secundario);
+    }
+
+    .step:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100%;
+        height: 3px;
+        transform: translateY(-50%);
+        z-index: -1;
+        transition: background-color 0.4s ease;
+        background-color: var(--color-gris-pendiente);
+    }
+
+    .step.completed span {
+        background-color: var(--color-verde-completado);
+        color: white;
+    }
+
+    .step.completed:not(:last-child)::after {
+        background-color: var(--color-verde-completado);
+    }
+
+    .step.active span {
+        background-color: var(--color-oro-principal);
+        color: white;
+        transform: scale(1.1);
+        box-shadow: 0 0 15px rgba(212, 175, 55, 0.7);
+    }
+
+    /* === Estilo de Botones (Sin cambios) === */
+    .btn {
+        border-radius: 8px;
+        border: none;
+        transition: all 0.2s ease-in-out;
+        font-weight: 500;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+
+    .btn-primary {
+        background-color: var(--color-oro-principal);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #b38f65;
+        color: white;
+    }
+    
+    .btn-secondary {
+        background-color: #6c757d;
+    }
+
+    .btn-light {
+        background-color: rgba(255, 255, 255, 0.3); /* Botón adaptado a fondo de cristal */
+        color: var(--color-texto-principal);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    /* === Estilo de la Tabla Financiera (Sin cambios) === */
+    .table {
+        color: var(--color-texto-principal);
+    }
+
+    .table > thead {
+        color: var(--color-oro-principal);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--color-oro-principal);
+    }
+    
+    .table-hover > tbody > tr:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .table > tfoot {
+        border-top: 2px solid var(--color-oro-principal);
+        color: var(--color-oro-principal);
+        font-size: 1.1rem;
+    }
+
+</style>
 <div class="container-fluid project-header">
-    <a href="@Url.Action("Index", "Proyectos")" class="btn btn-light mb-3"><i class="fas fa-arrow-left"></i> Regresar</a>
+
     <h2>@Model.Proyecto.NombreProyecto</h2>
     <div class="d-flex justify-content-between">
         <span><strong>ID:</strong> @Model.Proyecto.Id</span>
         <span><strong>Responsable:</strong> @Model.Proyecto.NombreResponsable</span>
-        <span class="badge bg-success status-badge">@Model.Proyecto.Estatus.ToUpper()</span>
+        <span class="badge bg-success status-badge" style="color:white">@Model.Proyecto.Estatus.ToUpper()</span>
     </div>
 </div>
 
@@ -21,18 +211,35 @@
     {
         <div class="tab-pane fade show active" role="tabpanel">
 
-            @* === 1. VISUALIZADOR DE FLUJO DE TRABAJO === *@
-            <h4 class="mb-3">Flujo de Trabajo</h4>
-            <div class="workflow-steps mb-5">
-                @* Aquí la lógica sería marcar como 'active' la fase actual del proyecto
-            y como 'completed' las fases anteriores. ¡Un toque premium!
-            *@
-                <div class="step @(Model.Proyecto.Fase.Nombre == "Análisis" ? "active" : "completed")"><span>Análisis</span></div>
-                <div class="step @(Model.Proyecto.Fase.Nombre == "Anteproyecto" ? "active" : "")"><span>Anteproyecto</span></div>
-                <div class="step @(Model.Proyecto.Fase.Nombre == "Licitación" ? "active" : "")"><span>Licitación</span></div>
-                <div class="step @(Model.Proyecto.Fase.Nombre == "Ejecución" ? "active" : "")"><span>Ejecución</span></div>
-                <div class="step @(Model.Proyecto.Fase.Nombre == "Finalizado" ? "active" : "")"><span>Finalizado</span></div>
-            </div>
+          <h4 class="mb-3">Flujo de Trabajo</h4>
+<div class="workflow-steps mb-5">
+    @{
+        // Obtenemos el orden de la fase actual del proyecto.
+        var ordenFaseActual = Model.Proyecto.Fase.Orden;
+
+        // Esta pequeña función nos ayuda a decidir qué clase CSS usar para cada paso.
+        string GetClassParaPaso(int ordenDelPaso)
+        {
+            if (ordenDelPaso == ordenFaseActual)
+            {
+                return "active"; // La fase actual
+            }
+            if (ordenDelPaso < ordenFaseActual)
+            {
+                return "completed"; // Una fase ya superada
+            }
+            return ""; // Una fase futura
+        }
+    }
+
+    @* Usamos la función para asignar la clase correcta a cada paso. *@
+    <div class="step @GetClassParaPaso(1)"><span>Análisis</span></div>
+    <div class="step @GetClassParaPaso(2)"><span>En elaboración de presupuesto</span></div>
+    <div class="step @GetClassParaPaso(3)"><span>Anteproyecto</span></div>
+    <div class="step @GetClassParaPaso(4)"><span>Licitación</span></div>
+    <div class="step @GetClassParaPaso(5)"><span>Ejecución</span></div>
+    <div class="step @GetClassParaPaso(6)"><span>Finalizado</span></div>
+</div>
 
             @* === 2. INFORMACIÓN GENERAL === *@
             <h4 class="mb-3">Información General</h4>
@@ -102,58 +309,10 @@
                     </button>
                 </td>
                         </tr>
-                        <div class="modal fade" id="editarCostoModal-@costo.Id" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form asp-controller="Proyectos" asp-action="EditarCosto" method="post">
-                <div class="modal-header">
-                    <h5 class="modal-title">Editar Concepto</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" name="Id" value="@costo.Id" />
-                    <input type="hidden" name="IdProyectoFk" value="@costo.IdProyectoFk" />
+          
                     
-                    <div class="mb-3">
-                        <label>Cantidad</label>
-                        <input type="number" name="Cantidad" class="form-control" value="@costo.Cantidad" required />
-                    </div>
-                    <div class="mb-3">
-                        <label>Precio Unitario</label>
-                        <input type="number" step="0.01" name="PrecioUnitario" class="form-control" value="@costo.PrecioUnitario" required />
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="eliminarCostoModal-@costo.Id" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form asp-controller="Proyectos" asp-action="EliminarCosto" method="post">
-                 <div class="modal-header">
-                    <h5 class="modal-title">Confirmar Eliminación</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" name="Id" value="@costo.Id" />
-                    <input type="hidden" name="IdProyectoFk" value="@costo.IdProyectoFk" />
-                    <p>¿Estás seguro de que deseas eliminar el concepto **"@costo.Concepto.Descripcion"** del presupuesto?</p>
-                    <p class="text-danger">Esta acción no se puede deshacer.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger">Sí, Eliminar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+                    
+                    
                     }
                 </tbody>
                 <tfoot>
@@ -166,6 +325,8 @@
                 </tfoot>
             </table>
         </div>
+
+      
     }
 </div>
 <div class="modal fade" id="agregarCostoModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -209,58 +370,64 @@
         </div>
     </div>
 </div>
+   @foreach (var costo in Model.CostosDelProyecto)
+    {
+                      <div class="modal fade" id="editarCostoModal-@costo.Id" >
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-controller="Proyectos" asp-action="EditarCosto" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Concepto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="Id" value="@costo.Id" />
+                    <input type="hidden" name="IdProyectoFk" value="@costo.IdProyectoFk" />
+                    
+                    <div class="mb-3">
+                        <label>Cantidad</label>
+                        <input type="number" name="Cantidad" class="form-control" value="@costo.Cantidad" required />
+                    </div>
+                    <div class="mb-3">
+                        <label>Precio Unitario</label>
+                        <input type="number" step="0.01" name="PrecioUnitario" class="form-control" value="@costo.PrecioUnitario" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="eliminarCostoModal-@costo.Id" >
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-controller="Proyectos" asp-action="EliminarCosto" method="post">
+                 <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="Id" value="@costo.Id" />
+                    <input type="hidden" name="IdProyectoFk" value="@costo.IdProyectoFk" />
+                    <p>¿Estás seguro de que deseas eliminar el concepto **"@costo.Concepto.Descripcion"** del presupuesto?</p>
+                    <p class="text-danger">Esta acción no se puede deshacer.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Sí, Eliminar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+         
+    }
 @if (TempData["ErrorMessage"] != null)
 {
-    <div class="alert alert-danger">
-        @TempData["ErrorMessage"]
-    </div>
+    <div id="temp-data-alert" data-message="@TempData["ErrorMessage"]" style="display: none;"></div>
 }
 
-<style>
-    .workflow-steps {
-        display: flex;
-        justify-content: space-between;
-    }
-
-    .step {
-        position: relative;
-        flex-grow: 1;
-        text-align: center;
-    }
-
-        .step span {
-            padding: 5px 10px;
-            border: 1px solid #ccc;
-            border-radius: 20px;
-            background-color: #f0f0f0;
-        }
-
-        .step.active span {
-            border-color: #0d6efd;
-            background-color: #0d6efd;
-            color: white;
-            font-weight: bold;
-        }
-
-        .step.completed span {
-            border-color: #198754;
-            background-color: #198754;
-            color: white;
-        }
-        /* Líneas de conexión */
-        .step:not(:last-child)::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 100%;
-            height: 2px;
-            background-color: #ccc;
-            transform: translateY(-50%);
-            z-index: -1;
-        }
-
-        .step.completed:not(:last-child)::after {
-            background-color: #198754;
-        }
-</style>

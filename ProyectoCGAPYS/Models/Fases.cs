@@ -10,6 +10,8 @@ namespace ProyectoCGAPYS.Models
         [Required] // Corresponde a NOT NULL.
         [StringLength(255)] // Corresponde a nvarchar(255).
         public string Nombre { get; set; }
+
+        public int Orden { get; set; }
         public virtual ICollection<Proyectos> Proyectos { get; set; }
 
     }

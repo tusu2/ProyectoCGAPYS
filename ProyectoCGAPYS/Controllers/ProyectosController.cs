@@ -145,4 +145,39 @@ public class ProyectosController : Controller
         }
         return RedirectToAction("Detalle", new { id = IdProyectoFk, tab = "financiero" });
     }
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ActualizarDetalles(string Id, string Descripcion)
+    {
+        var proyecto = await _context.Proyectos.FindAsync(Id);
+        if (proyecto != null)
+        {
+            proyecto.Descripcion = Descripcion;
+            // Aquí actualizarías los otros campos que hayas añadido al form
+            _context.Update(proyecto);
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "¡Los detalles del proyecto se han actualizado!";
+        }
+        else
+        {
+            TempData["ErrorMessage"] = "No se encontró el proyecto para actualizar.";
+        }
+        return RedirectToAction("Detalle", new { id = Id, tab = "resumen" });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CancelarProyecto(string Id)
+    {
+        var proyecto = await _context.Proyectos.FindAsync(Id);
+        if (proyecto != null)
+        {
+            proyecto.Estatus = "Cancelado"; // Cambiamos el estado
+            _context.Update(proyecto);
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "El proyecto ha sido cancelado.";
+        }
+        return RedirectToAction("Index"); // Lo redirigimos a la lista principal de proyectos
+    }
 }
+
