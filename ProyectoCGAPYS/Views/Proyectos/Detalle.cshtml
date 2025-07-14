@@ -1,0 +1,266 @@
+﻿@model ProyectoCGAPYS.ViewModels.ProyectoDetalleViewModel
+
+@{
+    ViewData["Title"] = "Detalle del Proyecto";
+}
+
+<div class="container-fluid project-header">
+    <a href="@Url.Action("Index", "Proyectos")" class="btn btn-light mb-3"><i class="fas fa-arrow-left"></i> Regresar</a>
+    <h2>@Model.Proyecto.NombreProyecto</h2>
+    <div class="d-flex justify-content-between">
+        <span><strong>ID:</strong> @Model.Proyecto.Id</span>
+        <span><strong>Responsable:</strong> @Model.Proyecto.NombreResponsable</span>
+        <span class="badge bg-success status-badge">@Model.Proyecto.Estatus.ToUpper()</span>
+    </div>
+</div>
+
+<hr />
+
+<div class="tab-content" id="projectTabsContent">
+    @if (Model.TabActiva == "resumen")
+    {
+        <div class="tab-pane fade show active" role="tabpanel">
+
+            @* === 1. VISUALIZADOR DE FLUJO DE TRABAJO === *@
+            <h4 class="mb-3">Flujo de Trabajo</h4>
+            <div class="workflow-steps mb-5">
+                @* Aquí la lógica sería marcar como 'active' la fase actual del proyecto
+            y como 'completed' las fases anteriores. ¡Un toque premium!
+            *@
+                <div class="step @(Model.Proyecto.Fase.Nombre == "Análisis" ? "active" : "completed")"><span>Análisis</span></div>
+                <div class="step @(Model.Proyecto.Fase.Nombre == "Anteproyecto" ? "active" : "")"><span>Anteproyecto</span></div>
+                <div class="step @(Model.Proyecto.Fase.Nombre == "Licitación" ? "active" : "")"><span>Licitación</span></div>
+                <div class="step @(Model.Proyecto.Fase.Nombre == "Ejecución" ? "active" : "")"><span>Ejecución</span></div>
+                <div class="step @(Model.Proyecto.Fase.Nombre == "Finalizado" ? "active" : "")"><span>Finalizado</span></div>
+            </div>
+
+            @* === 2. INFORMACIÓN GENERAL === *@
+            <h4 class="mb-3">Información General</h4>
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5>Descripción del Proyecto</h5>
+                    <p>@Model.Proyecto.Descripcion</p>
+                </div>
+             
+            </div>
+
+            @* === 3. BOTONES DE ACCIÓN === *@
+            <hr />
+            <div class="text-end">
+                @if (Model.Proyecto.Estatus == "Análisis")
+                {
+                    <button class="btn btn-primary">Aprobar y Enviar a Anteproyecto</button>
+                }
+                @if (Model.Proyecto.Estatus == "En Licitación")
+                {
+                    <button class="btn btn-primary">Asignar Contratista</button>
+                }
+                <button class="btn btn-secondary">Guardar Cambios</button>
+                <button class="btn btn-danger">Cancelar Proyecto</button>
+            </div>
+        </div>
+    }
+
+    @if (Model.TabActiva == "financiero")
+    {
+        <div class="tab-pane fade show active" role="tabpanel">
+            <h4>Desglose de Presupuesto</h4>
+            <div class="text-end mb-3">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#agregarCostoModal">
+    <i class="fas fa-plus"></i> Agregar Concepto
+</button
+            </div>
+
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Clave</th>
+                        <th>Descripción del Concepto</th>
+                        <th>Unidad</th>
+                        <th class="text-end">Cantidad</th>
+                        <th class="text-end">Precio Unitario</th>
+                        <th class="text-end">Importe</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var costo in Model.CostosDelProyecto)
+                    {
+                        <tr>
+                            <td>@costo.Concepto.Clave</td>
+                            <td>@costo.Concepto.Descripcion</td>
+                            <td>@costo.Concepto.Unidad</td>
+                            <td class="text-end">@costo.Cantidad</td>
+                            <td class="text-end">@costo.PrecioUnitario.ToString("C")</td>
+                            <td class="text-end fw-bold">@costo.ImporteTotal.ToString("C")</td>
+                            <td class="text-end">
+                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editarCostoModal-@costo.Id">
+                        <i class="fas fa-pencil-alt"></i> Editar
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#eliminarCostoModal-@costo.Id">
+                        <i class="fas fa-trash-alt"></i> Eliminar
+                    </button>
+                </td>
+                        </tr>
+                        <div class="modal fade" id="editarCostoModal-@costo.Id" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-controller="Proyectos" asp-action="EditarCosto" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar Concepto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="Id" value="@costo.Id" />
+                    <input type="hidden" name="IdProyectoFk" value="@costo.IdProyectoFk" />
+                    
+                    <div class="mb-3">
+                        <label>Cantidad</label>
+                        <input type="number" name="Cantidad" class="form-control" value="@costo.Cantidad" required />
+                    </div>
+                    <div class="mb-3">
+                        <label>Precio Unitario</label>
+                        <input type="number" step="0.01" name="PrecioUnitario" class="form-control" value="@costo.PrecioUnitario" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="eliminarCostoModal-@costo.Id" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-controller="Proyectos" asp-action="EliminarCosto" method="post">
+                 <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="Id" value="@costo.Id" />
+                    <input type="hidden" name="IdProyectoFk" value="@costo.IdProyectoFk" />
+                    <p>¿Estás seguro de que deseas eliminar el concepto **"@costo.Concepto.Descripcion"** del presupuesto?</p>
+                    <p class="text-danger">Esta acción no se puede deshacer.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Sí, Eliminar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="5" class="text-end fw-bold fs-5">Total del Presupuesto:</td>
+                        <td class="text-end fw-bold fs-5">
+                            @Model.CostosDelProyecto.Sum(c => c.ImporteTotal).ToString("C")
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    }
+</div>
+<div class="modal fade" id="agregarCostoModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-controller="Proyectos" asp-action="AgregarCosto" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Agregar Nuevo Concepto al Presupuesto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                    @* Campo oculto para mandar el ID del proyecto actual *@
+                    <input type="hidden" name="IdProyectoFk" value="@Model.Proyecto.Id" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Concepto</label>
+                        @* Usamos un ViewBag que crearemos en el controlador para llenar el dropdown *@
+                        <select name="IdConceptoFk" class="form-select" asp-items="ViewBag.Conceptos">
+                            <option value="">-- Seleccionar un concepto --</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Cantidad</label>
+                        <input type="number" name="Cantidad" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Precio Unitario</label>
+                        <input type="number" step="0.01" name="PrecioUnitario" class="form-control" required />
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Concepto</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+<style>
+    .workflow-steps {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .step {
+        position: relative;
+        flex-grow: 1;
+        text-align: center;
+    }
+
+        .step span {
+            padding: 5px 10px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            background-color: #f0f0f0;
+        }
+
+        .step.active span {
+            border-color: #0d6efd;
+            background-color: #0d6efd;
+            color: white;
+            font-weight: bold;
+        }
+
+        .step.completed span {
+            border-color: #198754;
+            background-color: #198754;
+            color: white;
+        }
+        /* Líneas de conexión */
+        .step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background-color: #ccc;
+            transform: translateY(-50%);
+            z-index: -1;
+        }
+
+        .step.completed:not(:last-child)::after {
+            background-color: #198754;
+        }
+</style>

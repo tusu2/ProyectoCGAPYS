@@ -5,6 +5,12 @@ namespace ProyectoCGAPYS.Models
 {
     public class Proyectos
     {
+
+        public Proyectos()
+        {
+            // Inicializamos la lista para que nunca sea nula
+            CostosDelProyecto = new HashSet<Proyectos_Costos>();
+        }
         [Key]
         public string Id { get; set; }
 
@@ -83,5 +89,7 @@ namespace ProyectoCGAPYS.Models
         public string IdTipoProyectoFk { get; set; }
         [ForeignKey("IdTipoProyectoFk")]
         public virtual TiposProyecto TipoProyecto { get; set; }
+
+        public virtual ICollection<Proyectos_Costos> CostosDelProyecto { get; set; }
     }
 }

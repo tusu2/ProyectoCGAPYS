@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ProyectoCGAPYS.Datos;
 
@@ -11,9 +12,11 @@ using ProyectoCGAPYS.Datos;
 namespace ProyectoCGAPYS.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250714062414_Actualizar_Estimaciones")]
+    partial class Actualizar_Estimaciones
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -454,7 +457,7 @@ namespace ProyectoCGAPYS.Migrations
                         .IsRequired();
 
                     b.HasOne("ProyectoCGAPYS.Models.Proyectos", "Proyecto")
-                        .WithMany("CostosDelProyecto")
+                        .WithMany()
                         .HasForeignKey("IdProyectoFk")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -467,11 +470,6 @@ namespace ProyectoCGAPYS.Migrations
             modelBuilder.Entity("ProyectoCGAPYS.Models.Fases", b =>
                 {
                     b.Navigation("Proyectos");
-                });
-
-            modelBuilder.Entity("ProyectoCGAPYS.Models.Proyectos", b =>
-                {
-                    b.Navigation("CostosDelProyecto");
                 });
 #pragma warning restore 612, 618
         }

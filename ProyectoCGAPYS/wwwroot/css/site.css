@@ -282,3 +282,21 @@ body {
     justify-content: center; /* Centra el botón cuando el título desaparece */
     padding: 0 0 20px 0; /* Ajustamos el padding para el estado contraído */
 }
+.sidebar-logo-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none; /* Quita el subrayado del enlace */
+    padding: 0.5rem; /* Espaciado similar al de otros elementos */
+    flex-grow: 1; /* Permite que el enlace ocupe el espacio disponible */
+}
+
+.sidebar-logo {
+    height: 120px; /* Ajusta la altura de tu logo. El ancho se ajustará automáticamente */
+    width: auto; /* Mantiene la proporción original de la imagen */
+    margin-right: 10px; /* Crea un espacio entre el logo y el botón de contraer */
+}
+
+/* Cuando la barra está colapsada, ocultamos el logo para que no se vea cortado */
+.sidebar.collapsed .sidebar-logo-link {
+    display: none;
+}

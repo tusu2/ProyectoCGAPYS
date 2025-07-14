@@ -20,6 +20,11 @@ namespace ProyectoCGAPYS.Models
         public string? Descripcion { get; set; }
 
         // --- Relación con la tabla Proyectos ---
+        // --- ¡NUEVO CAMPO! ---
+        [Required(ErrorMessage = "El estado de la estimación es obligatorio.")]
+        [StringLength(50)]
+        public string Estado { get; set; } // Posibles valores: "Pendiente", "Pagada", "Rechazada"
+
 
         [Required]
         public string IdProyectoFk { get; set; } // La columna que guarda la llave foránea.

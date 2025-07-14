@@ -23,7 +23,9 @@
     <header>
         <nav class="sidebar">
             <div class="sidebar-header">
-                <h3><span class="link-text">Gestión CGAPYS</span></h3>
+                <a asp-controller="Dashboard" asp-action="Index" class="sidebar-logo-link">
+                    <img src="~/Img/Logo_de_la_UAdeC.svg.png" alt="Logo de la Aplicación" class="sidebar-logo" />
+                </a>
                 <button id="sidebar-toggle" class="sidebar-toggle-btn" title="Contraer menú">
                     <i class="bi bi-arrow-left"></i>
                 </button>

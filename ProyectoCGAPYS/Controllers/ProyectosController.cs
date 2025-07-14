@@ -1,0 +1,148 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore; // ¡Muy importante para las consultas!; 
+using ProyectoCGAPYS.Datos;
+using ProyectoCGAPYS.Models;
+using ProyectoCGAPYS.ViewModels;
+using System.Linq;
+using System.Threading.Tasks;
+using ProyectoCGAPYS.ViewModels;
+public class ProyectosController : Controller
+{
+    private readonly ApplicationDbContext _context;
+
+    public ProyectosController(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+
+    // GET: Proyectos/Detalle/FAM-LAG-2025-01
+    public async Task<IActionResult> Detalle(string id, string tab = "resumen")
+    {
+        if (string.IsNullOrEmpty(id))
+        {
+            return NotFound();
+        }
+
+        // 1. Buscamos el proyecto y cargamos sus datos relacionados
+        var proyecto = await _context.Proyectos
+            .Include(p => p.Fase)       // Incluimos la fase para saber el nombre
+            .Include(p => p.Campus)     // Incluimos el campus
+            .Include(p => p.Dependencia) // Y la dependencia
+             .Include(p => p.CostosDelProyecto).ThenInclude(costo => costo.Concepto)
+            .FirstOrDefaultAsync(p => p.Id == id);
+
+        if (proyecto == null)
+        {
+            return NotFound();
+        }
+
+        // 2. Creamos el ViewModel
+        var viewModel = new ProyectoDetalleViewModel
+        {
+            Proyecto = proyecto,
+            CostosDelProyecto = proyecto.CostosDelProyecto.ToList(),
+            // 3. Llenamos los datos para cada pestaña
+            // (Aquí irían las consultas para Estimaciones, Documentos, Bitácora)
+            Estimaciones = await _context.Estimaciones.Where(e => e.IdProyectoFk == id).ToListAsync(),
+            // Documentos = ...
+            // EntradasBitacora = ...
+
+            TabActiva = tab // Para saber qué pestaña activar
+        };
+
+        // Calculamos los KPIs financieros
+        viewModel.TotalEjercido = viewModel.Estimaciones.Where(e => e.Estado == "Pagada").Sum(e => e.Monto);
+        viewModel.MontoContratado = proyecto.Presupuesto; // O el campo que corresponda
+        viewModel.SaldoRestante = viewModel.MontoContratado - viewModel.TotalEjercido;
+        ViewBag.Conceptos = new SelectList(await _context.Conceptos.ToListAsync(), "Id", "Descripcion");
+
+        // 4. Mandamos el ViewModel a la vista
+        return View(viewModel);
+    }
+
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AgregarCosto(AgregarCostoViewModel viewModel) // <-- Recibimos el ViewModel
+    {
+        if (ModelState.IsValid)
+        {
+            // El ViewModel es válido, ahora creamos la entidad que irá a la base de datos.
+            var nuevoCosto = new Proyectos_Costos
+            {
+                Id = Guid.NewGuid().ToString(),
+                IdProyectoFk = viewModel.IdProyectoFk,
+                IdConceptoFk = viewModel.IdConceptoFk,
+                Cantidad = viewModel.Cantidad,
+                PrecioUnitario = viewModel.PrecioUnitario,
+                ImporteTotal = viewModel.Cantidad * viewModel.PrecioUnitario // Calculamos el total
+            };
+
+            _context.Add(nuevoCosto);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "¡Concepto agregado exitosamente!";
+        }
+        else
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+            TempData["ErrorMessage"] = "Error de validación: " + string.Join(" | ", errors);
+        }
+
+        return RedirectToAction("Detalle", new { id = viewModel.IdProyectoFk, tab = "financiero" });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditarCosto(EditarCostoViewModel viewModel) // <-- Recibimos el ViewModel
+    {
+        if (ModelState.IsValid)
+        {
+            // 1. Buscamos el costo original en la base de datos
+            var costoOriginal = await _context.Proyectos_Costos.FindAsync(viewModel.Id);
+
+            if (costoOriginal != null)
+            {
+                // 2. Actualizamos solo las propiedades que cambiaron
+                costoOriginal.Cantidad = viewModel.Cantidad;
+                costoOriginal.PrecioUnitario = viewModel.PrecioUnitario;
+                costoOriginal.ImporteTotal = viewModel.Cantidad * viewModel.PrecioUnitario; // Recalculamos
+
+                // 3. Guardamos la entidad actualizada
+                _context.Update(costoOriginal);
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "¡Concepto actualizado exitosamente!";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Error: No se encontró el concepto a editar.";
+            }
+        }
+        else
+        {
+            TempData["ErrorMessage"] = "No se pudo actualizar el concepto. Verifica los datos.";
+        }
+
+        return RedirectToAction("Detalle", new { id = viewModel.IdProyectoFk, tab = "financiero" });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EliminarCosto(string Id, string IdProyectoFk)
+    {
+        var costoAEliminar = await _context.Proyectos_Costos.FindAsync(Id);
+        if (costoAEliminar != null)
+        {
+            _context.Proyectos_Costos.Remove(costoAEliminar);
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "¡Concepto eliminado exitosamente!";
+        }
+        else
+        {
+            TempData["ErrorMessage"] = "Error: No se encontró el concepto a eliminar.";
+        }
+        return RedirectToAction("Detalle", new { id = IdProyectoFk, tab = "financiero" });
+    }
+}

@@ -58,6 +58,7 @@
     </div>
 </div>
 
+
 <div class="row">
     <div class="col-lg-6 mb-4">
         <div class="glass-card alert-list">
@@ -72,7 +73,8 @@
                     @foreach (var item in Model.ProyectosPorVencer)
                     {
                         <li class="list-group-item">
-                            <a asp-controller="Proyectos" asp-action="Details" asp-route-id="@item.Id">@item.NombreProyecto</a>
+                            @* --- ENLACE ACTUALIZADO --- *@
+                            <a asp-controller="Proyectos" asp-action="Detalle" asp-route-id="@item.Id" asp-route-tab="resumen">@item.NombreProyecto</a>
                             <span class="badge">Vence: @item.FechaVencimiento?.ToString("dd/MM/yyyy")</span>
                         </li>
                     }
@@ -93,7 +95,8 @@
                     @foreach (var item in Model.EstimacionesPendientes)
                     {
                         <li class="list-group-item">
-                            <a asp-controller="Proyectos" asp-action="Details" asp-route-id="@item.Id">@item.NombreProyecto</a>
+                            @* --- ENLACE ACTUALIZADO Y CONTEXTUALIZADO --- *@
+                            <a asp-controller="Proyectos" asp-action="Detalle" asp-route-id="@item.Id" asp-route-tab="financiero">@item.NombreProyecto</a>
                             <span class="badge">Retraso: @item.DiasTranscurridos días</span>
                         </li>
                     }
