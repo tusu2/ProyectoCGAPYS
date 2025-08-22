@@ -36,23 +36,28 @@ body {
     background-color: var(--color-fondo-pagina);
     color: var(--color-texto-principal);
     line-height: 1.6;
-    padding: 0; /* Aseguramos que el body no tenga padding que empuje el contenido */
-    /* Las siguientes líneas pueden ser eliminadas o ajustadas si el contenido ya se centra con .contenido-principal .container */
-    /* flex-direction: column; */
-    /* align-items: center; */
-    /* padding: 20px; */ /* Este padding es el que probablemente causa el problema si el contenido principal ya tiene su propio margen/padding */
+    padding-top: 70px; 
     min-height: 100vh;
     box-sizing: border-box;
-    margin: 0;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     background-size: cover;
     background-position: center;
     min-height: 100vh;
     background-color: #f0f2f5; /* Un color base por si la imagen no carga */
-    background-image: url('/svg/blob-scene-haikei (2).svg'); /* Centra la imagen */
+  background-image: url('/svg/blob-scene-haikei (2).svg'); /* Centra la imagen */
     background-attachment: fixed; /* El fondo no se mueve con el scroll */
 }
+.card {
+    width: 100%;
+    max-width: 100%;
+}
 
+/* Nos aseguramos que la fila del mapa/lista también lo haga */
+.row.g-4 {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+}
 .sidebar {
     width: 260px;
     position: fixed; /* Fijo en la pantalla */
@@ -145,6 +150,16 @@ body {
         max-width: 1400px;
         margin: 0 auto; /* Esto centra el contenedor dentro del contenido-principal */
     }
+
+.background-container {
+    position: fixed; /* Lo fijamos para que no se mueva con el scroll */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    z-index: -1; /* Lo enviamos detrás de todo el contenido */
+    overflow: hidden; /* Evita barras de scroll inesperadas */
+}
 
 
 @media (max-width: 992px) {
@@ -299,4 +314,218 @@ body {
 /* Cuando la barra está colapsada, ocultamos el logo para que no se vea cortado */
 .sidebar.collapsed .sidebar-logo-link {
     display: none;
+    }
+/* ======================================= */
+/* =         ESTILOS RESPONSIVOS         = */
+/* ======================================= */
+
+/* --- Estilos para la barra de navegación móvil --- */
+.mobile-nav {
+    /* Por defecto, la barra móvil está oculta en escritorio */
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 65px;
+    background-color: var(--color-blanco);
+    box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.08);
+    justify-content: space-around;
+    align-items: center;
+    z-index: 1000;
 }
+
+.mobile-nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: var(--color-texto-secundario);
+    font-size: 0.7rem;
+    font-weight: 500;
+    transition: color 0.2s ease-in-out;
+}
+
+    .mobile-nav-link i {
+        font-size: 1.4rem;
+        margin-bottom: 4px;
+    }
+
+    .mobile-nav-link.active {
+        color: var(--oro);
+    }
+.navbar {
+    /* Sombra suave para dar profundidad y separarla del contenido */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    /* Un borde inferior muy sutil para un acabado limpio */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    /* Aumentamos ligeramente la altura para que no se sienta apretada */
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+}
+
+    .navbar .nav-link {
+        color: var(--color-acento-neutral-elegante); /* Usamos tu gris neutral */
+        font-weight: 500;
+        padding: 0.5rem 1rem; /* Hacemos el área de clic más cómoda */
+        margin: 0 0.25rem;
+        border-radius: var(--radio-borde-general); /* Esquinas redondeadas como en tus tarjetas */
+        transition: all 0.2s ease-in-out;
+    }
+
+        .navbar .nav-link:hover {
+            color: var(--color-blanco);
+            background-color: rgba(255, 255, 255, 0.05); /* Un brillo sutil */
+        }
+
+        /* Estilo para el enlace de la página ACTIVA */
+        .navbar .nav-link.active {
+            color: var(--color-primario-corporativo); /* Texto oscuro para que contraste */
+            background-color: var(--oro); /* ¡Usamos tu color heráldico para destacar! */
+            font-weight: 600;
+        }
+
+/* --- Media Query: Reglas para la vista móvil --- */
+@media (max-width: 768px) {
+    /* 1. Ocultamos la barra lateral de escritorio */
+    .sidebar {
+        display: none;
+    }
+
+    /* 2. Mostramos la barra de navegación móvil */
+    .mobile-nav {
+        display: flex;
+    }
+
+    /* 3. Ajustamos el contenido principal */
+    .contenido-principal {
+        margin-left: 0;
+        width: 100%;
+        /* Dejamos espacio abajo para que la barra no tape el contenido */
+        padding-bottom: 80px;
+    }
+
+    /* 4. Quitamos el margen del body que era para la navbar superior */
+    body {
+        padding-top: 0;
+    }
+  
+}
+@media (max-width: 991.98px) {
+    /* 1. Ocultamos la barra de navegación SUPERIOR */
+    .navbar {
+        display: none;
+    }
+
+    /* 2. Mostramos la barra de navegación INFERIOR */
+    .mobile-nav {
+        display: flex;
+    }
+
+    /* 3. Ajustamos el espaciado del body */
+    body {
+        padding-top: 0; /* Quitamos el espacio superior */
+        padding-bottom: 70px; /* Añadimos espacio inferior para la barra móvil */
+    }
+}
+/* ================================================= */
+/* =     ESTILOS PARA LISTA DE MÓDULOS MÓVIL      = */
+/* ================================================= */
+
+/* Botón "Más" en la barra de navegación */
+#more-modules-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+}
+
+/* Hoja de módulos (oculta por defecto) */
+#mobile-modules-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: var(--color-fondo-pagina);
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+    z-index: 1001;
+    transform: translateY(100%); /* La ocultamos abajo */
+    transition: transform 0.3s ease-in-out;
+}
+
+    /* Estado visible de la hoja */
+    #mobile-modules-sheet.is-open {
+        transform: translateY(0);
+    }
+
+/* Encabezado de la hoja */
+.sheet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--color-borde);
+}
+
+    .sheet-header h4 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--color-texto-principal);
+    }
+
+#close-sheet-btn {
+    background: none;
+    border: none;
+    font-size: 1.75rem;
+    color: var(--color-texto-secundario);
+    cursor: pointer;
+}
+
+/* Contenido y enlaces de la lista */
+.sheet-content {
+    padding: 1rem;
+}
+
+.sheet-link {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    text-decoration: none;
+    color: var(--color-texto-principal);
+    border-radius: var(--radio-borde-general);
+    font-weight: 500;
+}
+
+    .sheet-link:hover {
+        background-color: rgba(0,0,0,0.05);
+    }
+
+    .sheet-link i {
+        font-size: 1.25rem;
+        margin-right: 1rem;
+        color: var(--color-primario-corporativo);
+    }
+
+/* Overlay para el fondo */
+.sheet-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s;
+}
+
+    .sheet-overlay.is-open {
+        opacity: 1;
+        visibility: visible;
+    }

@@ -57,11 +57,7 @@ namespace ProyectoCGAPYS.ViewModels
         public string IdTipoProyectoFk { get; set; }
 
         public string? Folio { get; set; }
-
-        // --- CAMBIO 4: ¡LA PROPIEDAD MÁS IMPORTANTE QUE FALTABA! ---
-    
-        [Display(Name = "Anteproyecto")]
-        public IFormFile AnteproyectoFile { get; set; }
+        public IFormFile? AnteproyectoFile { get; set; }
 
         [Required(ErrorMessage = "Debe seleccionar un Campus.")]
         public int IdCampusFk { get; set; }

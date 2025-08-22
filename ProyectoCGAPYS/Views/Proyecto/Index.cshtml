@@ -1,112 +1,210 @@
-﻿<link rel="stylesheet" href="~/css/Buscar.css" asp-append-version="true" />
-<div class="container">
-    <h1>Plataforma de Proyectos</h1>
+﻿@{
+    // Esto es solo un ejemplo, asegúrate de que tus ViewData y ViewBag sigan funcionando
+    ViewData["Title"] = "Búsqueda de Proyectos";
+}
 
-    <div class="filtros-container">
-        <h2>Filtrar Proyectos</h2>
-        <form id="filtros-form">
-            <div class="filtro-item">
-                <label for="filtro-nombre">Nombre del proyecto:</label>
-                <input type="text" id="filtro-nombre" name="filtro-nombre">
-            </div>
-            <div class="filtro-item">
-                <label for="filtro-dependencia">Dependencia o Área Solicitante:</label>
-                <select id="filtro-dependencia" name="filtro-dependencia" asp-items="ViewBag.Dependencias">
-                    <option value="">-- Todas --</option>
-                </select>
-            </div>
-            <div class="filtro-item filtro-rango-fechas">
-                <label>Ejercicio (Fecha de Solicitud):</label>
-                <div class="fecha-inputs">
-                    <input type="date" id="filtro-fecha-inicio" name="filtro-fecha-inicio" placeholder="Desde">
-                    <span>-</span>
-                    <input type="date" id="filtro-fecha-fin" name="filtro-fecha-fin" placeholder="Hasta">
+<link rel="stylesheet" href="~/css/Buscar.css" asp-append-version="true" />
+
+<div class="container-fluid pt-4">
+
+    <h1 class="text-center mb-4">Plataforma de Proyectos</h1>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="card-title">Filtrar Proyectos</h2>
+            <form id="filtros-form">
+                <div class="row g-3 align-items-end">
+                    <div class="col-lg-3 col-md-6">
+                        <label for="filtro-nombre" class="form-label">Nombre del proyecto:</label>
+                        <input type="text" id="filtro-nombre" name="filtro-nombre" class="form-control">
+                    </div>
+
+                    <div class="col-lg-3 col-md-6">
+                        <label for="filtro-dependencia" class="form-label">Dependencia:</label>
+                        <select id="filtro-dependencia" name="filtro-dependencia" class="form-select" asp-items="ViewBag.Dependencias">
+                            <option value="">-- Todas --</option>
+                        </select>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6">
+                        <label class="form-label">Fecha de Solicitud:</label>
+                        <div class="input-group">
+                            <input type="date" id="filtro-fecha-inicio" name="filtro-fecha-inicio" class="form-control">
+                            <input type="date" id="filtro-fecha-fin" name="filtro-fecha-fin" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="col-lg-2 col-md-12">
+                        <div class="d-grid gap-2 d-lg-flex pt-lg-4">
+                            <button type="button" id="aplicar-filtros-btn" class="btn btn-primary w-100">Aplicar</button>
+                            <button type="button" id="limpiar-filtros-btn" class="btn btn-secondary w-100">Limpiar</button>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="filtro-botones">
-                <button type="button" id="aplicar-filtros-btn">Aplicar Filtros</button>
-                <button type="button" id="limpiar-filtros-btn">Limpiar Filtros</button>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 
-    <div class="layout-container">
-        <div id="mapa-principal-container">
-            <div id="mapa-principal"></div>
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div id="mapa-principal-container" class="shadow-sm">
+                <div id="mapa-principal"></div>
+            </div>
         </div>
-        <div id="lista-proyectos-container">
-            <h2>Proyectos Disponibles</h2>
-            <ul id="lista-proyectos">
-            </ul>
+
+        <div class="col-lg-5">
+            <div id="lista-proyectos-container" class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="card-title">Proyectos Disponibles</h2>
+                    <ul id="lista-proyectos">
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <div id="modal-proyecto" class="modal">
+
     <div class="modal-contenido">
+
         <div class="modal-header">
+
             <h2 id="modal-nombre-proyecto"></h2>
+
             <button class="cerrar-modal">&times;</button>
+
         </div>
+
         <div class="modal-body">
+
             <div id="modal-detalles">
             </div>
 
+
+
             <div class="modal-acciones">
+
                 <button id="abrir-costos-btn" class="boton-costos">Administrar Presupuesto</button>
+
             </div>
+
+
 
             <div id="seccion-costos" style="display: none;">
+
                 <h3>Desglose de Conceptos</h3>
 
+
+
                 <div class="form-costos">
+
                     <div class="form-grupo full-width">
+
                         <label for="costo-categoria">Categoría</label>
+
                         <select id="costo-categoria"></select>
+
                     </div>
+
                     <div class="form-grupo full-width">
+
                         <label for="costo-concepto">Concepto</label>
+
                         <select id="costo-concepto"></select>
+
+                    </div>
+
+
+
+                    <div class="form-grupo">
+
+                        <label for="costo-cantidad">Cantidad</label>
+
+                        <input type="number" id="costo-cantidad" placeholder="0.00">
+
                     </div>
 
                     <div class="form-grupo">
-                        <label for="costo-cantidad">Cantidad</label>
-                        <input type="number" id="costo-cantidad" placeholder="0.00">
-                    </div>
-                    <div class="form-grupo">
+
                         <label for="costo-precio">Precio Unitario</label>
+
                         <input type="number" id="costo-precio" placeholder="$ 0.00">
+
                     </div>
+
                     <div class="form-grupo">
+
                         <label>&nbsp;</label>
+
                         <button id="agregar-costo-btn">Añadir</button>
+
                     </div>
+
                 </div>
 
+
+
                 <table id="tabla-costos">
+
                     <thead>
+
                         <tr>
+
                             <th>Concepto</th>
+
                             <th>Cantidad</th>
+
                             <th>P. Unitario</th>
+
                             <th>Importe</th>
+
                             <th>Acciones</th>
+
                         </tr>
+
                     </thead>
+
                     <tbody id="cuerpo-tabla-costos">
                     </tbody>
+
                     <tfoot>
+
                         <tr>
+
                             <td colspan="3">Total del Proyecto</td>
+
                             <td id="costo-total-proyecto">$ 0.00</td>
+
                             <td></td>
+
                         </tr>
+
                     </tfoot>
+
                 </table>
+
             </div>
+
         </div>
+
     </div>
+
 </div>
 @section Scripts {
     <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        // Este código se ejecuta solo en esta página
+        document.addEventListener('DOMContentLoaded', () => {
+            // Busca el contenedor principal que viene de la plantilla (_Layout)
+            const mainContainer = document.querySelector('main .container');
+
+            // Si lo encuentra, le quita la clase 'container' y le pone 'container-fluid'
+            if (mainContainer) {
+                mainContainer.classList.remove('container');
+                mainContainer.classList.add('container-fluid');
+            }
+        });
+    </script>
 }

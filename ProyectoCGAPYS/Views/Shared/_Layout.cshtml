@@ -20,73 +20,88 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+
     <header>
-        <nav class="sidebar">
-            <div class="sidebar-header">
-                <a asp-controller="Dashboard" asp-action="Index" class="sidebar-logo-link">
-                    <img src="~/Img/Logo_de_la_UAdeC.svg.png" alt="Logo de la Aplicación" class="sidebar-logo" />
+        <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background-color: #0B2D48;">
+            <div class="container-fluid">
+                <a class="navbar-brand" asp-controller="Dashboard" asp-action="Index">
+                    <img src="~/Img/Logo_de_la_UAdeC.svg.png" alt="Logo" class="d-inline-block align-text-top" style="height: 40px; margin-right: 10px;">
+                    Control y Seguimiento
                 </a>
-                <button id="sidebar-toggle" class="sidebar-toggle-btn" title="Contraer menú">
-                    <i class="bi bi-arrow-left"></i>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
                 </button>
+
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link @(currentController == "Dashboard" ? "active" : "")" asp-controller="Dashboard" asp-action="Index">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(currentController == "Proyecto" ? "active" : "")" asp-controller="Proyecto" asp-action="Index">Proyectos</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(currentController == "Registro" ? "active" : "")" asp-controller="Registro" asp-action="Crear">Registro</a>
+                        </li>
+                    </ul>
+                </div>
             </div>
-            <ul class="lista-menu">
-                <li>
-                    <a asp-area="" asp-controller="Dashboard" asp-action="Index"
-                       class="menu-link @(currentController == "Dashboard" && currentAction == "Index" ? "active" : "")" title="Dashboard">
-                        <i class="bi bi-grid-1x2-fill"></i> <span class="link-text">Dashboard</span>
-                    </a>
-                </li>
-                <li class="menu-titulo"><span>PROYECTOS</span></li>
-                <li>
-                    <a asp-area="" asp-controller="Proyecto" asp-action="Index"
-                       class="menu-link @(currentController == "Proyecto" && currentAction == "Index" ? "active" : "")" title="Ver Proyectos">
-                        <i class="bi bi-map-fill"></i> <span class="link-text">Ver Proyectos</span>
-                    </a>
-                </li>
-                <li>
-                    <a asp-area="" asp-controller="Registro" asp-action="Crear"
-                       class="menu-link @(currentController == "Registro" && currentAction == "Crear" ? "active" : "")" title="Registro">
-                        <i class="bi bi-plus-square-fill"></i> <span class="link-text">Registro</span>
-                    </a>
-                </li>
-                <li class="menu-titulo"><span>FINANZAS</span></li>
-                <li>
-                    <a href="#" class="menu-link" data-target="catalogo-conceptos" title="Catálogo de Conceptos">
-                        <i class="bi bi-book-fill"></i> <span class="link-text">Catálogo de Conceptos</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="menu-link" data-target="reportes-financieros" title="Reportes Financieros">
-                        <i class="bi bi-file-earmark-text-fill"></i> <span class="link-text">Reportes Financieros</span>
-                    </a>
-                </li>
-                <li class="menu-titulo"><span>SUPERVISIÓN</span></li>
-                <li>
-                    <a href="#" class="menu-link" data-target="reporte-fotografico" title="Reporte Fotográfico">
-                        <i class="bi bi-camera-fill"></i> <span class="link-text">Reporte Fotográfico</span>
-                    </a>
-                </li>
-                <li class="menu-titulo"><span>ADMINISTRACIÓN</span></li>
-                <li>
-                    <a href="#" class="menu-link" data-target="gestionar-usuarios" title="Gestionar Usuarios">
-                        <i class="bi bi-people-fill"></i> <span class="link-text">Gestionar Usuarios</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="menu-link" data-target="gestionar-campus" title="Gestionar Campus">
-                        <i class="bi bi-building-fill"></i> <span class="link-text">Gestionar Campus</span>
-                    </a>
-                </li>
-            </ul>
         </nav>
     </header>
 
     <main role="main" class="pb-3">
-        <div class="contenido-principal">
+        <div class="container-fluid">
             @RenderBody()
         </div>
     </main>
+    <nav class="mobile-nav">
+        <a asp-controller="Dashboard" asp-action="Index" class="mobile-nav-link @(currentController == "Dashboard" ? "active" : "")">
+            <i class="bi bi-grid-1x2-fill"></i>
+            <span>Dashboard</span>
+        </a>
+        <a asp-controller="Proyecto" asp-action="Index" class="mobile-nav-link @(currentController == "Proyecto" ? "active" : "")">
+            <i class="bi bi-map-fill"></i>
+            <span>Proyectos</span>
+        </a>
+        <a asp-controller="Registro" asp-action="Crear" class="mobile-nav-link @(currentController == "Registro" ? "active" : "")">
+            <i class="bi bi-plus-square-fill"></i>
+            <span>Registro</span>
+        </a>
+        <button type="button" id="more-modules-btn" class="mobile-nav-link">
+            <i class="bi bi-grid-3x3-gap-fill"></i>
+            <span>Más</span>
+        </button>
+    </nav>
+    <div id="mobile-modules-sheet">
+        <div class="sheet-header">
+            <h4>Todos los Módulos</h4>
+            <button type="button" id="close-sheet-btn">&times;</button>
+        </div>
+        <div class="sheet-content">
+            <a href="#" class="sheet-link">
+                <i class="bi bi-book-fill"></i>
+                <span>Catálogo de Conceptos</span>
+            </a>
+            <a href="#" class="sheet-link">
+                <i class="bi bi-file-earmark-text-fill"></i>
+                <span>Reportes Financieros</span>
+            </a>
+            <a href="#" class="sheet-link">
+                <i class="bi bi-camera-fill"></i>
+                <span>Reporte Fotográfico</span>
+            </a>
+            <a href="#" class="sheet-link">
+                <i class="bi bi-people-fill"></i>
+                <span>Gestionar Usuarios</span>
+            </a>
+            <a href="#" class="sheet-link">
+                <i class="bi bi-building-fill"></i>
+                <span>Gestionar Campus</span>
+            </a>
+        </div>
+    </div>
+
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -100,8 +115,30 @@
             const sidebar = document.querySelector('.sidebar');
             const toggleButton = document.getElementById('sidebar-toggle');
             const mainContent = document.querySelector('.contenido-principal');
-            const toggleIcon = toggleButton.querySelector('i'); // Seleccionamos la etiqueta <i>
+           // const toggleIcon = toggleButton.querySelector('i'); // Seleccionamos la etiqueta <i>
+            const openBtn = document.getElementById('more-modules-btn');
+            const closeBtn = document.getElementById('close-sheet-btn');
+            const sheet = document.getElementById('mobile-modules-sheet');
 
+            if (openBtn && sheet) {
+                let overlay = document.createElement('div');
+                overlay.className = 'sheet-overlay';
+                document.body.appendChild(overlay);
+
+                const openSheet = () => {
+                    sheet.classList.add('is-open');
+                    overlay.classList.add('is-open');
+                };
+
+                const closeSheet = () => {
+                    sheet.classList.remove('is-open');
+                    overlay.classList.remove('is-open');
+                };
+
+                openBtn.addEventListener('click', openSheet);
+                closeBtn.addEventListener('click', closeSheet);
+                overlay.addEventListener('click', closeSheet);
+            }
             // Función para actualizar el icono
             function updateIcon() {
                 if (sidebar.classList.contains('collapsed')) {

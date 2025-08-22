@@ -45,21 +45,17 @@ namespace ProyectoCGAPYS.Controllers
         [HttpPost]
         public async Task<IActionResult> Crear(CrearProyectoViewModel viewModel)
         {
-            if (viewModel.AnteproyectoFile == null || viewModel.AnteproyectoFile.Length == 0)
-            {
-                ModelState.AddModelError("AnteproyectoFile", "Por favor, selecciona un archivo para el anteproyecto.");
-            }
-
             if (ModelState.IsValid)
             {
                 try
                 {
                     var nuevoProyecto = new Proyectos
                     {
+                        // ... (todas tus asignaciones de propiedades se quedan igual)
                         Id = Guid.NewGuid().ToString(),
                         NombreProyecto = viewModel.NombreProyecto,
                         Descripcion = viewModel.Descripcion,
-                        FechaSolicitud = viewModel.FechaSolicitud,      
+                        FechaSolicitud = viewModel.FechaSolicitud,
                         FechaFinalizacionAprox = viewModel.FechaFinalizacionAprox,
                         NombreResponsable = viewModel.NombreResponsable,
                         Correo = viewModel.Correo,
@@ -68,27 +64,30 @@ namespace ProyectoCGAPYS.Controllers
                         Longitud = viewModel.Longitud,
                         Folio = "Auto",
                         Estatus = "Registrado",
-
                         IdCampusFk = viewModel.IdCampusFk,
                         IdDependenciaFk = viewModel.IdDependenciaFk,
                         IdTipoFondoFk = viewModel.IdTipoFondoFk,
                         IdTipoProyectoFk = viewModel.IdTipoProyectoFk
                     };
 
-                    // ---- LÓGICA PARA GUARDAR EL ARCHIVO ----
-                    string wwwRootPath = _hostEnvironment.WebRootPath;
-                    string fileName = Path.GetFileNameWithoutExtension(viewModel.AnteproyectoFile.FileName);
-                    string extension = Path.GetExtension(viewModel.AnteproyectoFile.FileName);
-                    string uniqueFileName = fileName + DateTime.Now.ToString("yymmssfff") + extension;
-                    string path = Path.Combine(wwwRootPath, "documentos", uniqueFileName);
-
-                    using (var fileStream = new FileStream(path, FileMode.Create))
+                    // ---- LÓGICA CORREGIDA PARA GUARDAR EL ARCHIVO ----
+                    // Verificamos si se subió un archivo antes de procesarlo
+                    if (viewModel.AnteproyectoFile != null && viewModel.AnteproyectoFile.Length > 0)
                     {
-                        await viewModel.AnteproyectoFile.CopyToAsync(fileStream);
-                    }
+                        string wwwRootPath = _hostEnvironment.WebRootPath;
+                        string fileName = Path.GetFileNameWithoutExtension(viewModel.AnteproyectoFile.FileName);
+                        string extension = Path.GetExtension(viewModel.AnteproyectoFile.FileName);
+                        string uniqueFileName = fileName + DateTime.Now.ToString("yymmssfff") + extension;
+                        string path = Path.Combine(wwwRootPath, "documentos", uniqueFileName);
 
-                    // Asignamos el nombre del archivo guardado a la propiedad del modelo
-                    nuevoProyecto.NombreAnteproyecto = uniqueFileName;
+                        using (var fileStream = new FileStream(path, FileMode.Create))
+                        {
+                            await viewModel.AnteproyectoFile.CopyToAsync(fileStream);
+                        }
+
+                        // Solo asignamos el nombre si el archivo fue guardado
+                        nuevoProyecto.NombreAnteproyecto = uniqueFileName;
+                    }
 
                     _context.Proyectos.Add(nuevoProyecto);
                     await _context.SaveChangesAsync();
@@ -97,7 +96,9 @@ namespace ProyectoCGAPYS.Controllers
                 }
                 catch (Exception ex)
                 {
-                    return Json(new { success = false, message = "Ocurrió un error inesperado en el servidor." });
+                    // Es buena idea registrar el error para futura referencia
+                    // logger.LogError(ex, "Error al crear proyecto");
+                    return Json(new { success = false, message = "Ocurrió un error inesperado en el servidor."+ex });
                 }
             }
 

@@ -44,10 +44,9 @@ namespace ProyectoCGAPYS.Models
         [StringLength(20)]
         public string Celular { get; set; } 
 
-        [EmailAddress(ErrorMessage = "El nombre del anteproyecto es necesario")]
 
         [StringLength(255)]
-        public string NombreAnteproyecto { get; set; }
+        public string? NombreAnteproyecto { get; set; }
 
         [EmailAddress(ErrorMessage = "La latitud es necesaria")]
         [StringLength(50)]
