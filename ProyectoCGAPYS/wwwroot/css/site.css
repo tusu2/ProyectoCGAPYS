@@ -27,8 +27,60 @@
     /* ¡NUEVO COLOR DE ACENTO HERÁLDICO! */
     --accent-color: var(--oro);
     --border-color: #E2E8F0;
+    --icons--nav: #FDB913;
+}
+.navbar {
+    /* Sombra suave para dar profundidad y separarla del contenido */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    /* Un borde inferior muy sutil para un acabado limpio */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    /* Aumentamos ligeramente la altura para que no se sienta apretada */
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
 }
 
+    .navbar .nav-link {
+        display: flex; /* Activamos flexbox */
+        flex-direction: column; /* Apilamos los elementos verticalmente (ícono arriba, texto abajo) */
+        align-items: center; /* Centramos horizontalmente */
+        justify-content: center; /* Centramos verticalmente */
+        text-align: center;
+        min-width: 80px; /* Damos un ancho mínimo para que no se vean muy juntos */
+        font-size: 0.8rem; /* Ajustamos el tamaño de la fuente del texto */
+        color: var(--color-acento-neutral-elegante); /* Color base para íconos y texto no activo */
+        transition: color 0.2s ease-in-out;
+        background-color: transparent !important;
+    }
+
+        .navbar .nav-link i {
+            font-size: 1.5rem; /* Hacemos el ícono más grande */
+            margin-bottom: 5px; /* Añadimos un pequeño espacio entre el ícono y el texto */
+        }
+        .navbar .nav-link span {
+            font-weight: 500;
+        }
+        .navbar .nav-link:hover {
+
+            opacity: 1; /* Aseguramos que no haya fondo */
+        }
+            .navbar .nav-link:hover,
+            .navbar .nav-link:hover i,
+            .navbar .nav-link:hover span {
+                color: var(--icons--nav);
+            }
+
+        /* Estilo para el enlace de la página ACTIVA */
+        .navbar .nav-link.active {
+            color: var(--icons--nav) !important; /* ¡Usamos !important para asegurar que el dorado predomine! */
+            background-color: transparent !important; /* Aseguramos que no haya fondo */
+            font-weight: 600; /* Mantenemos el texto en negrita para destacar */
+        }
+
+            .navbar .nav-link.active,
+            .navbar .nav-link.active i,
+            .navbar .nav-link.active span {
+                color: var(--icons--nav) !important; /* ¡LA CLAVE! Forzamos el color en todos los elementos internos */
+            }
 
 body {
     font-family: var(--fuente-principal);
@@ -171,6 +223,10 @@ body {
 @media (max-width: 768px) {
     body {
         padding: 15px;
+        background-image: url('/svg/blob-scene-haikei (3).svg');
+    }
+    .espaciador-escritorio {
+        display: none;
     }
 
     .contenido-principal {
@@ -355,36 +411,7 @@ body {
     .mobile-nav-link.active {
         color: var(--oro);
     }
-.navbar {
-    /* Sombra suave para dar profundidad y separarla del contenido */
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    /* Un borde inferior muy sutil para un acabado limpio */
-    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-    /* Aumentamos ligeramente la altura para que no se sienta apretada */
-    padding-top: 0.75rem;
-    padding-bottom: 0.75rem;
-}
 
-    .navbar .nav-link {
-        color: var(--color-acento-neutral-elegante); /* Usamos tu gris neutral */
-        font-weight: 500;
-        padding: 0.5rem 1rem; /* Hacemos el área de clic más cómoda */
-        margin: 0 0.25rem;
-        border-radius: var(--radio-borde-general); /* Esquinas redondeadas como en tus tarjetas */
-        transition: all 0.2s ease-in-out;
-    }
-
-        .navbar .nav-link:hover {
-            color: var(--color-blanco);
-            background-color: rgba(255, 255, 255, 0.05); /* Un brillo sutil */
-        }
-
-        /* Estilo para el enlace de la página ACTIVA */
-        .navbar .nav-link.active {
-            color: var(--color-primario-corporativo); /* Texto oscuro para que contraste */
-            background-color: var(--oro); /* ¡Usamos tu color heráldico para destacar! */
-            font-weight: 600;
-        }
 
 /* --- Media Query: Reglas para la vista móvil --- */
 @media (max-width: 768px) {

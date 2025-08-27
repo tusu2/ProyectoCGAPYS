@@ -34,13 +34,22 @@ h1.text-center {
 
 /* --- 3. Efecto "Cristal Esmerilado" (Glassmorphism) para Tarjetas --- */
 .card, #mapa-principal-container, #lista-proyectos-container {
-    background: rgba(255, 255, 255, 0.65); /* Fondo blanco semitransparente */
-    backdrop-filter: blur(12px); /* El desenfoque que crea el efecto de cristal */
+    /* Usamos un gradiente sutil para dar profundidad sin usar imágenes */
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.65) 100%);
+    /* Propiedades del Glassmorphism */
+    backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: var(--radio-borde-general);
-    box-shadow: var(--sombra-suave);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
+    /* Propiedades de Flexbox y transición */
+    padding: 2rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.3s ease, background 0.3s ease;
 }
+
 
 /* --- 4. Estilos Refinados para Filtros --- */
 .card-title {
