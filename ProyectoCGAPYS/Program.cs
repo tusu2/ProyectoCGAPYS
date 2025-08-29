@@ -1,8 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using ProyectoCGAPYS.Datos;
 using System.Runtime.InteropServices;
-
+using QuestPDF.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
+QuestPDF.Settings.License = LicenseType.Community;
 //Configuracion la conexion a sql ser local dbMSSQLLLOCAL
 
 builder.Services.AddDbContext<ApplicationDbContext>(opciones =>

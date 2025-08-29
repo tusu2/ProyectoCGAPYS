@@ -90,5 +90,6 @@ namespace ProyectoCGAPYS.Models
         public virtual TiposProyecto TipoProyecto { get; set; }
 
         public virtual ICollection<Proyectos_Costos> CostosDelProyecto { get; set; }
+        public virtual ICollection<ProyectoImagen> Imagenes { get; set; }
     }
 }

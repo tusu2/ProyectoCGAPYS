@@ -22,13 +22,14 @@ namespace ProyectoCGAPYS.Datos
         public DbSet<Proyectos_Costos> Proyectos_Costos { get; set; }
         public DbSet<Fases> Fases { get; set; }
         public DbSet<Estimaciones> Estimaciones { get; set; }
-
+        public DbSet<ProyectoSimpleViewModel> ProyectosSimples { get; set; }
+        public DbSet<ProyectoImagen> ProyectoImagenes { get; set; }
         // Los ViewModels que vienen de los Stored Procedures
         public DbSet<KPIsViewModel> KPIsViewModels { get; set; }
         public DbSet<FondoViewModel> FondoViewModels { get; set; }
         public DbSet<FaseViewModel> FaseViewModels { get; set; }
         public DbSet<ProyectoAlertaViewModel> ProyectoAlertaViewModels { get; set; }
-
+      
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -40,6 +41,7 @@ namespace ProyectoCGAPYS.Datos
             modelBuilder.Entity<FondoViewModel>().HasNoKey();
             modelBuilder.Entity<FaseViewModel>().HasNoKey();
             modelBuilder.Entity<ProyectoAlertaViewModel>().HasNoKey();
+            modelBuilder.Entity<ProyectoSimpleViewModel>().HasNoKey();
         }
     }
 }
