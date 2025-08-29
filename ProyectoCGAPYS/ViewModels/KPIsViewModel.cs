@@ -10,5 +10,6 @@ namespace ProyectoCGAPYS.ViewModels
         public decimal PresupuestoTotalAutorizado { get; set; } // [cite: 7]
         public decimal MontoTotalEjercido { get; set; } // [cite: 8]
         public decimal BalanceGeneralDisponible { get; set; } // [cite: 9]
+        public decimal PresupuestoComprometido { get; set; }
     }
 }

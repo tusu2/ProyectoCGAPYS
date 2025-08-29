@@ -49,7 +49,32 @@ h1.text-center {
     flex-direction: column;
     transition: box-shadow 0.3s ease, background 0.3s ease;
 }
+/* --- Estilos para el nuevo display de Presupuesto Actual --- */
+.current-budget-container {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.4) 100%);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 4px 15px 0 rgba(0, 0, 0, 0.1);
+}
 
+.current-budget-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+}
+
+.current-budget-amount {
+    font-size: 3rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--color-blue-accent);
+}
 
 /* --- 4. Estilos Refinados para Filtros --- */
 .card-title {

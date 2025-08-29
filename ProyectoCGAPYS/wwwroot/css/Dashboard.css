@@ -5,7 +5,7 @@
     --color-text-secondary: #555555;
     --color-gold-accent: #efb810;
     --color-blue-accent: #3A7CA5;
- 
+    --color-grey-accent: #6c757d;
 }
 
 /* --- Estilos Generales del Contenido --- */
@@ -77,6 +77,16 @@
     .kpi-Ejercido.currency {
         font-size: 2.2rem;
     }
+.kpi-comprometido {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--color-grey-accent);
+}
+
+    .kpi-comprometido.currency {
+        font-size: 2.2rem;
+    }
 
 /* --- Estilos para los Contenedores de Gráficas (sin cambios) --- */
 .chart-container h5 {
@@ -125,4 +135,90 @@
     color: var(--color-gold-accent);
 }
 
+/* Estilos para la lista de proyectos en el modal */
+/* Hacemos que el fondo del modal sea consistente con el dashboard */
+/* --- Rediseño del Modal de Proyectos a Cuadrícula (Grid) --- */
 
+/* Hacemos el modal aún más ancho para la cuadrícula */
+#projectListModal .modal-dialog {
+    max-width: 900px; /* Aumentamos el espacio para 3 columnas */
+}
+
+#projectListModal .modal-content {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.8) 100%);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 16px;
+}
+
+#projectListModal .modal-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+#projectListModal .modal-title {
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+/* --- Contenedor en modo Cuadrícula (Grid) --- */
+.project-cards-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Crea 3 columnas de igual tamaño */
+    gap: 20px; /* Espacio entre las tarjetas */
+}
+
+/* --- Tarjeta de Proyecto con Diseño Vertical --- */
+.project-card {
+    display: flex;
+    flex-direction: column; /* Alinea los elementos verticalmente */
+    text-align: center;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.6);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+    .project-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    }
+
+.project-card-image {
+    width: 80px; /* Imagen más grande */
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 15px auto; /* Centrada y con espacio abajo */
+    border: 3px solid white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.project-card-info {
+    flex-grow: 1; /* Empuja las acciones hacia abajo */
+}
+
+.project-card-title {
+    font-weight: 600;
+    color: var(--color-primary);
+    font-size: 1rem;
+    margin-bottom: 10px;
+}
+
+/* --- Acciones (Botones y Correo) --- */
+.project-card-actions {
+    margin-top: 15px; /* Espacio separador arriba */
+    width: 100%;
+}
+
+    .project-card-actions .email-form {
+        display: flex;
+        gap: 5px;
+        margin-top: 10px;
+    }
+
+    .project-card-actions .form-control {
+        min-width: 0; /* Permite que el input se encoja y crezca */
+        flex-grow: 1; /* El input ocupa todo el espacio sobrante */
+    }

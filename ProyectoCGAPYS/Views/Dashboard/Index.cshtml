@@ -12,6 +12,8 @@
 
 <h3 class="dashboard-title">@ViewData["Title"]</h3>
 
+
+
 <div class="row mb-4">
     <div class="col-lg-3 col-md-6 mb-4">
         <div class="glass-card kpi-card">
@@ -19,6 +21,8 @@
             <div class="kpi-number">@Model.KPIs.ProyectosTotales</div>
         </div>
     </div>
+
+ 
     <div class="col-lg-3 col-md-6 mb-4">
         <div class="glass-card kpi-card">
             <div class="kpi-title">Proyectos Activos</div>
@@ -32,10 +36,22 @@
             <div class="kpi-number currency">@Model.KPIs.MontoTotalEjercido.ToString("C")</div>
         </div>
     </div>
+    <div class="col-lg col-md-6 mb-4">
+        <div class="glass-card kpi-card">
+            <div class="kpi-title">Presupuesto Comprometido</div>
+            <div class="kpi-comprometido currency">@Model.KPIs.PresupuestoComprometido.ToString("C")</div>
+        </div>
+    </div>
     <div class="col-lg-3 col-md-6 mb-4">
         <div class="glass-card kpi-card">
             <div class="kpi-title">Presupuesto Autorizado</div>
             <div class="kpi-Ejercido currency">@Model.KPIs.PresupuestoTotalAutorizado.ToString("C")</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="glass-card kpi-card">
+            <div class="kpi-title">Presupuesto Actual</div>
+            <div class="kpi-Ejercido currency">@Model.KPIs.BalanceGeneralDisponible.ToString("C")</div>
         </div>
     </div>
 </div>
@@ -112,75 +128,113 @@
     </div>
 </div>
 
+<div class="modal fade" id="projectListModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-card">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(0,0,0,0.1);">
+                <h5 class="modal-title" id="modalProjectListTitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalProjectListBody">
+            </div>
+        </div>
+    </div>
+</div>
+
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
 
-            // --- Configuración Global de Chart.js para un look premium ---
+            // --- Configuración Global de Chart.js ---
             Chart.defaults.color = '#0A2240';
             Chart.defaults.font.family = "'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif";
-            Chart.defaults.animation.duration = 1000; // Animación de carga más suave
+            // Reducimos la animación para que el cambio se sienta instantáneo
+            Chart.defaults.animation.duration = 500;
 
             // --- Colores y Gradientes ---
-            const colorGold = 'rgba(212, 175, 55, 1)';
-            const colorBlue = 'rgba(58, 124, 165, 1)';
-
-            // Función para crear gradientes verticales
             const createGradient = (ctx, colorStart, colorEnd) => {
-                const gradient = ctx.createLinearGradient(0, 0, 0, 400); // Gradiente vertical
+                const gradient = ctx.createLinearGradient(0, 0, 0, 400);
                 gradient.addColorStop(0, colorStart);
                 gradient.addColorStop(1, colorEnd);
                 return gradient;
             };
 
-            // --- Tooltip Personalizado ---
-            // NUEVO: Creamos un objeto de configuración para los tooltips que reutilizaremos
             const customTooltip = {
-                backgroundColor: 'rgba(10, 34, 64, 0.9)', // Fondo azul oscuro
+                backgroundColor: 'rgba(10, 34, 64, 0.9)',
                 titleColor: 'rgba(255, 255, 255, 0.9)',
                 bodyColor: 'rgba(255, 255, 255, 0.8)',
                 borderColor: 'rgba(212, 175, 55, 0.5)',
                 borderWidth: 1,
                 padding: 10,
                 cornerRadius: 8,
-                displayColors: false, // Ocultamos el cuadrito de color
+                displayColors: false,
             };
 
-
-            // --- 1. GRÁFICO DE DONA: Presupuesto General ---
+            // --- 1. GRÁFICO DE DONA: Presupuesto General (VERSIÓN FINAL) ---
             const ctxDona = document.getElementById('donaPresupuesto').getContext('2d');
 
-            // NUEVO: Creación de gradientes para la dona
+            const originalComprometido = @Json.Serialize(Model.KPIs.PresupuestoComprometido);
+            const originalDisponible = @Json.Serialize(Model.KPIs.BalanceGeneralDisponible);
+
             const gradientGold = createGradient(ctxDona, 'rgba(212, 175, 55, 1)', 'rgba(212, 175, 55, 0.7)');
             const gradientBlue = createGradient(ctxDona, 'rgba(58, 124, 165, 1)', 'rgba(58, 124, 165, 0.7)');
+            const gradientGrey = createGradient(ctxDona, 'rgba(108, 117, 125, 1)', 'rgba(108, 117, 125, 0.7)');
 
-            new Chart(ctxDona, {
+            const donaChart = new Chart(ctxDona, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Monto Ejercido', 'Balance Disponible'],
+                    labels: ['Monto Ejercido', 'Presupuesto Comprometido', 'Balance Disponible'],
                     datasets: [{
                         label: 'Presupuesto General',
                         data: [
         @Json.Serialize(Model.KPIs.MontoTotalEjercido),
-        @Json.Serialize(Model.KPIs.BalanceGeneralDisponible)
-                                ],
-                        backgroundColor: [gradientGold, gradientBlue],
+                            originalComprometido,
+                            originalDisponible
+                        ],
+                        backgroundColor: [gradientGold, gradientGrey, gradientBlue],
                         borderColor: 'rgba(248, 249, 250, 1)',
                         borderWidth: 4,
-                        borderRadius: 15, // NUEVO: Bordes redondeados
-                        spacing: 10,       // NUEVO: Espacio entre segmentos
-                        hoverOffset: 15    // NUEVO: Efecto al pasar el cursor
+                        borderRadius: 15,
+                        spacing: 10,
+                        hoverOffset: 15
                     }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    cutout: '70%', // Hacemos el hueco del centro más grande
+                    cutout: '70%',
                     plugins: {
-                        legend: { position: 'top' },
+                        // --- LÓGICA DE CLIC REESCRITA DESDE CERO ---
+                        legend: {
+                            onClick: (e, legendItem, legend) => {
+                                const chart = legend.chart;
+
+                                // 1. Ocultamos o mostramos el dato manualmente. Esto también tacha la leyenda.
+                                chart.toggleDataVisibility(legendItem.index);
+
+                                // 2. Si el clic fue en "Presupuesto Comprometido", recalculamos.
+                                if (legendItem.text === 'Presupuesto Comprometido') {
+                                    const balanceIndex = 2; // El índice del 'Balance Disponible'
+
+                                    // Verificamos el nuevo estado de visibilidad
+                                    const isVisible = chart.getDataVisibility(legendItem.index);
+
+                                    if (isVisible) {
+                                        // Si ahora es visible, restauramos el balance original
+                                        chart.data.datasets[0].data[balanceIndex] = originalDisponible;
+                                    } else {
+                                        // Si ahora está oculto, le sumamos el comprometido al balance
+                                        chart.data.datasets[0].data[balanceIndex] = originalDisponible + originalComprometido;
+                                    }
+                                }
+
+                                // 3. Actualizamos el gráfico para aplicar TODOS los cambios.
+                                chart.update();
+                            }
+                        },
                         tooltip: {
-                            ...customTooltip, // NUEVO: Aplicamos el tooltip personalizado
+                            ...customTooltip,
                             callbacks: {
                                 label: function (context) {
                                     let value = context.raw;
@@ -242,6 +296,7 @@
 
             // --- 3. GRÁFICO DE BARRAS HORIZONTALES: Proyectos por Fase ---
             const ctxBarrasFase = document.getElementById('barrasProyectosFase').getContext('2d');
+            const projectListModal = new bootstrap.Modal(document.getElementById('projectListModal'));
 
             new Chart(ctxBarrasFase, {
                 type: 'bar',
@@ -250,13 +305,65 @@
                     datasets: [{
                         label: 'Nº de Proyectos',
                         data: @Json.Serialize(Model.ProyectosPorFase.Select(f => f.TotalProyectos)),
-                        backgroundColor: createGradient(ctxBarrasFase, 'rgba(120, 120, 120, 0.8)', 'rgba(120, 120, 120, 0.5)'), // NUEVO: Gradiente de gris
-                        borderRadius: 8 // NUEVO: Bordes redondeados
+
+                        // --- ESTAS SON LAS DOS LÍNEAS QUE RESTAURAN EL ESTILO ---
+                        backgroundColor: createGradient(ctxBarrasFase, 'rgba(120, 120, 120, 0.8)', 'rgba(120, 120, 120, 0.5)'),
+                        borderRadius: 8
                     }]
                 },
                 options: {
-                    indexAxis: 'y', // <-- Se mantiene horizontal
-                    responsive: true, maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    onClick: (e, elements, chart) => {
+                        if (elements.length === 0) return;
+
+                        const index = elements[0].index;
+                        const fase = chart.data.labels[index];
+                        const totalProyectos = chart.data.datasets[0].data[index];
+
+                        if (fase === 'Finalizado' && totalProyectos > 0) {
+                            const modalTitle = document.getElementById('modalProjectListTitle');
+                            const modalBody = document.getElementById('modalProjectListBody');
+                            modalTitle.textContent = `Proyectos en Fase: ${fase}`;
+                            modalBody.innerHTML = '<p>Cargando proyectos...</p>';
+                            projectListModal.show();
+
+                            fetch(`/Dashboard/GetProyectosPorFase?fase=${fase}`)
+                                .then(response => response.json())
+                                .then(data => {
+                                    let content = '<div class="project-cards-container">';
+                                    data.forEach(proyecto => {
+                                        content += `
+                                <div class="project-card">
+                                    <img src="${proyecto.imagenUrl}" alt="Imagen" class="project-card-image">
+
+                                    <div class="project-card-info">
+                                        <h5 class="project-card-title">${proyecto.nombreProyecto}</h5>
+                                        <a href="/Dashboard/GenerarReporteHtmlAPdf?proyectoId=${proyecto.id}" target="_blank" class="btn btn-secondary btn-sm">
+                                            Ver Reporte
+                                        </a>
+                                    </div>
+
+                                    <div class="project-card-actions">
+                                        <div class="email-form">
+                                            <input type="email" class="form-control form-control-sm" placeholder="correo@@ejemplo.com" id="email-${proyecto.id}">
+                                            <button class="btn btn-primary btn-sm" onclick="enviarPorCorreo('${proyecto.id}')">Enviar</button>
+                                        </div>
+                                        <span id="status-${proyecto.id}" class="d-block w-100 mt-2" style="font-size: 0.8em;"></span>
+                                    </div>
+                                </div>
+                            `;
+                                    });
+                                    content += '</div>';
+                                    modalBody.innerHTML = content;
+                                })
+                                .catch(error => {
+                                    console.error('Error al cargar los proyectos:', error);
+                                    modalBody.innerHTML = '<p class="text-danger">No se pudieron cargar los proyectos.</p>';
+                                });
+                        }
+                    },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
@@ -276,5 +383,94 @@
                 }
             });
         });
+        function generarReporte(proyectoId, buttonElement) {
+            const statusSpan = document.getElementById(`status-${proyectoId}`);
+            statusSpan.textContent = 'Generando...';
+            buttonElement.disabled = true;
+
+            fetch(`/Dashboard/IniciarGeneracionPdf?proyectoId=${proyectoId}`)
+                .then(response => response.json())
+                .then(result => {
+                    if (result.jobId) {
+                        verificarEstado(result.jobId, statusSpan, buttonElement);
+                    } else {
+                        statusSpan.textContent = 'Error al iniciar.';
+                        buttonElement.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    statusSpan.textContent = 'Error al iniciar.';
+                    buttonElement.disabled = false;
+                });
+        }
+        function enviarPorCorreo(proyectoId) {
+    const emailInput = document.getElementById(`email-${proyectoId}`);
+    const emailDestino = emailInput.value;
+    const statusSpan = document.getElementById(`status-${proyectoId}`);
+
+    // Validación simple de email
+    if (!emailDestino || !emailDestino.includes('@@')) {
+        statusSpan.textContent = 'Por favor, introduce un email válido.';
+        statusSpan.className = 'text-danger';
+        return;
+    }
+
+    statusSpan.textContent = 'Enviando....';
+    statusSpan.className = 'text-info';
+
+    // Creamos el cuerpo de la petición para nuestra API
+    const requestBody = {
+        proyectoId: proyectoId,
+        emailDestino: emailDestino
+    };
+
+    // Hacemos la llamada a nuestra nueva API
+    fetch('/Dashboard/EnviarReportePorCorreo', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+    })
+    .then(response => response.json().then(data => ({ ok: response.ok, data })))
+    .then(({ ok, data }) => {
+        if (ok) {
+            statusSpan.textContent = data.message;
+            statusSpan.className = 'text-success';
+        } else {
+            statusSpan.textContent = `Error: ${data.message}`;
+            statusSpan.className = 'text-danger';
+        }
+    })
+    .catch(error => {
+        statusSpan.textContent = 'Error de conexión.';
+        statusSpan.className = 'text-danger';
+    });
+}
+
+        function verificarEstado(jobId, statusSpan, buttonElement) {
+            const intervalId = setInterval(() => {
+                fetch(`/Dashboard/VerificarEstadoPdf?jobId=${jobId}`)
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.status === 'Listo') {
+                            clearInterval(intervalId);
+                            statusSpan.innerHTML = `<a href="${result.url}" class="btn btn-success btn-sm" download>Descargar</a>`;
+                            buttonElement.disabled = false;
+                        } else if (result.status === 'Error') {
+                            clearInterval(intervalId);
+                            statusSpan.textContent = `Error: ${result.message}`;
+                            buttonElement.disabled = false;
+                        } else {
+                            statusSpan.textContent += '.';
+                        }
+                    })
+                    .catch(error => {
+                        clearInterval(intervalId);
+                        statusSpan.textContent = 'Error de conexión.';
+                        buttonElement.disabled = false;
+                    });
+            }, 3000);
+        }
     </script>
 }
