@@ -20,7 +20,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-   
+    @Html.Partial("_Splash")
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background-color: #0B2D48;">
             <div class="container-fluid">
@@ -116,6 +116,24 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
+        window.addEventListener('load', function () {
+            const splashScreen = document.getElementById('splash-screen');
+
+            // Tiempo de espera: debe ser un poco MÁS LARGO que tu animación
+            // Tu animación más larga termina de rellenarse en 3.7s (3.2s + 0.5s)
+            // Le daremos 4 segundos (4000 milisegundos) para estar seguros.
+            setTimeout(function () {
+                // 1. Agregamos la clase para iniciar el desvanecimiento (fade-out)
+                splashScreen.classList.add('fade-out');
+
+                // 2. Después de que termine la transición de desvanecimiento (0.5s),
+                // lo ocultamos completamente para que no bloquee los clics.
+                setTimeout(function () {
+                    splashScreen.style.display = 'none';
+                }, 500); // 500ms coincide con la transición en el CSS
+
+            }, 4000);
+        });
         document.addEventListener('DOMContentLoaded', function () {
             const sidebar = document.querySelector('.sidebar');
             const toggleButton = document.getElementById('sidebar-toggle');
@@ -165,6 +183,7 @@
             // Asegurarse de que el ícono sea el correcto al cargar la página
             updateIcon();
         });
+    
     </script>
 
     @await RenderSectionAsync("Scripts", required: false)

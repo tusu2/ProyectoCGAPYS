@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', function () {
+﻿
 
     // Seleccionamos todos los enlaces dentro del sidebar
     const menuLinks = document.querySelectorAll('.sidebar .menu-link');
@@ -73,41 +73,55 @@
     }
 
     // --- DEFINICIONES DE FUNCIONES (sin cambios) ---
-    function inicializarMapa() {
-        const latitudInicial = 25.5428;
-        const longitudInicial = -103.4068;
+function inicializarMapa() {
+    if (mapa) {
+        mapa.remove();
+    } 
+    const latitudInicial = 25.5428;
+    const longitudInicial = -103.4068;
+    mapa = L.map('mapa-principal').setView([latitudInicial, longitudInicial], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(mapa);
 
-        mapa = L.map('mapa-principal').setView([latitudInicial, longitudInicial], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(mapa);
+     
     }
 
-    async function cargarYMostrarProyectos() {
-        try {
-            const response = await fetch('/Proyecto/GetProyectos');
-            if (!response.ok) throw new Error(`Error al obtener los proyectos: ${response.statusText}`);
-            todosLosProyectos = await response.json();
-            renderizarProyectos(todosLosProyectos);
-        } catch (error) {
-            console.error("No se pudieron cargar los proyectos:", error);
+async function cargarYMostrarProyectos(listaProyectosUl) {
+    try {
+        const response = await fetch('/Proyecto/GetProyectos');
+        if (!response.ok) throw new Error(`Error al obtener los proyectos: ${response.statusText}`);
+        todosLosProyectos = await response.json();
+        // Le pasamos la referencia de la lista a la siguiente función.
+        renderizarProyectos(todosLosProyectos, listaProyectosUl);
+    } catch (error) {
+        console.error("No se pudieron cargar los proyectos:", error);
+        if (listaProyectosUl) {
             listaProyectosUl.innerHTML = '<li class="no-projects">Error al cargar los proyectos.</li>';
         }
     }
-
-    function renderizarProyectos(proyectos) {
-        marcadoresEnMapa.forEach(marker => mapa.removeLayer(marker));
-        marcadoresEnMapa = [];
-        listaProyectosUl.innerHTML = '';
-        if (proyectos.length === 0) {
-            mostrarMensajeSinProyectos();
-        } else {
-            proyectos.forEach(proyecto => {
-                crearMarcadorEnMapa(proyecto);
-                crearElementoEnLista(proyecto);
-            });
-        }
     }
+
+function renderizarProyectos(proyectos, listaProyectosUl) {
+    if (!listaProyectosUl) return; // Salimos si la lista no existe.
+
+    marcadoresEnMapa.forEach(marker => mapa.removeLayer(marker));
+    marcadoresEnMapa = [];
+    listaProyectosUl.innerHTML = '';
+
+    if (proyectos.length === 0) {
+        listaProyectosUl.innerHTML = '<li class="no-projects">No se encontraron proyectos.</li>';
+    } else {
+        proyectos.forEach(proyecto => {
+            const modal = document.getElementById('modal-proyecto'); // Buscamos modal y detalles aquí
+            const modalDetalles = document.getElementById('modal-detalles');
+            const modalNombreProyecto = document.getElementById('modal-nombre-proyecto');
+
+            crearMarcadorEnMapa(proyecto, modal, modalNombreProyecto, modalDetalles);
+            crearElementoEnLista(proyecto, listaProyectosUl, modal, modalNombreProyecto, modalDetalles);
+        });
+    }
+}
 
     function crearMarcadorEnMapa(proyecto) {
         const lat = parseFloat(proyecto.latitud);
@@ -115,12 +129,14 @@
         if (!isNaN(lat) && !isNaN(lon)) {
             const defaultIcon = new L.Icon.Default();
             const marker = L.marker([lat, lon], { icon: defaultIcon }).addTo(mapa);
-            marker.on('click', () => mostrarModalConDetalles(proyecto));
+            marker.on('click', () => mostrarModalConDetalles(proyecto, modal, modalNombreProyecto, modalDetalles));
             marcadoresEnMapa.push(marker);
         }
     }
 
-    function aplicarFiltros() {
+function aplicarFiltros(listaProyectosUl) {
+    const filtroNombre = document.getElementById('filtro-nombre').value.toLowerCase();
+    const filtroDependencia = document.getElementById('filtro-dependencia').value;
         const nombre = filtroNombre.value.toLowerCase();
         const dependencia = filtroDependencia.value;
         const fechaInicio = filtroFechaInicio.value;
@@ -136,7 +152,9 @@
         renderizarProyectos(proyectosFiltrados);
     }
 
-    function limpiarFiltros() {
+function limpiarFiltros(listaProyectosUl) {
+    document.getElementById('filtro-nombre').value = '';
+    document.getElementById('filtro-dependencia').value = '';
         filtroNombre.value = '';
         filtroDependencia.value = '';
         filtroFechaInicio.value = '';
@@ -148,7 +166,7 @@
         listaProyectosUl.innerHTML = '<li class="no-projects">No se encontraron proyectos que coincidan con los filtros.</li>';
     }
 
-    function crearElementoEnLista(proyecto) {
+function crearElementoEnLista(proyecto, listaProyectosUl, modal, modalNombreProyecto, modalDetalles) {
         const listItem = document.createElement('li');
         listItem.innerHTML = `
             <div class="project-info">
@@ -160,15 +178,17 @@
         listItem.addEventListener('click', () => {
             const lat = parseFloat(proyecto.latitud);
             const lon = parseFloat(proyecto.longitud);
+           
             if (!isNaN(lat) && !isNaN(lon)) {
                 mapa.setView([lat, lon], 17);
             }
-            mostrarModalConDetalles(proyecto);
+            mostrarModalConDetalles(proyecto, modal, modalNombreProyecto, modalDetalles);
         });
         listaProyectosUl.appendChild(listItem);
     }
 
-    function mostrarModalConDetalles(proyecto) {
+function mostrarModalConDetalles(proyecto) {
+    if (!modal) return;
         modalNombreProyecto.textContent = proyecto.nombreProyecto;
         modalDetalles.innerHTML = `
             <p><strong>Folio:</strong> ${proyecto.folio || 'No disponible'}</p>
@@ -187,4 +207,37 @@
     function cerrarModal() {
         if (modal) modal.classList.remove('show');
     }
-});
+
+function inicializarLogicaIndex() {
+
+    // 1. "Toma una foto" nueva de TODOS los elementos del HTML necesarios.
+    const listaProyectosUl = document.getElementById('lista-proyectos');
+    const modal = document.getElementById('modal-proyecto');
+    const modalNombreProyecto = document.getElementById('modal-nombre-proyecto');
+    const modalDetalles = document.getElementById('modal-detalles');
+    const cerrarModalBtn = document.querySelector('.cerrar-modal');
+    const aplicarFiltrosBtn = document.getElementById('aplicar-filtros-btn');
+    const limpiarFiltrosBtn = document.getElementById('limpiar-filtros-btn');
+
+    // 2. Llama a las funciones que necesitan estas referencias.
+    inicializarMapa();
+    cargarYMostrarProyectos(listaProyectosUl);
+
+    // 3. Asigna TODOS los eventos a los elementos que acabamos de encontrar.
+    if (cerrarModalBtn) {
+        cerrarModalBtn.addEventListener('click', () => cerrarModal(modal));
+    }
+    if (modal) {
+        modal.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                cerrarModal(modal);
+            }
+        });
+    }
+    if (aplicarFiltrosBtn) {
+        aplicarFiltrosBtn.addEventListener('click', () => aplicarFiltros(listaProyectosUl));
+    }
+    if (limpiarFiltrosBtn) {
+        limpiarFiltrosBtn.addEventListener('click', () => limpiarFiltros(listaProyectosUl));
+    }
+}

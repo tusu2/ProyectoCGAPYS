@@ -129,13 +129,14 @@ h1.text-center {
 
 /* --- 5. Mapa y Lista de Proyectos --- */
 #mapa-principal-container {
-    height: 600px;
+    border-radius: 12px;
+    overflow: hidden;
 }
 
 #mapa-principal {
-    height: 100%;
+    height: 75vh; /* Esto le da una altura del 75% de la ventana del navegador */
     width: 100%;
-    border-radius: var(--radio-borde-general);
+    border-radius: 12px; /* Para que coincida con el estilo premium */
 }
 
 #lista-proyectos-container {

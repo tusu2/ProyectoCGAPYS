@@ -179,5 +179,7 @@ public class ProyectosController : Controller
         }
         return RedirectToAction("Index"); // Lo redirigimos a la lista principal de proyectos
     }
+
+    
 }
 

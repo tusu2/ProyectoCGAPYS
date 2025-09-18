@@ -91,5 +91,8 @@ namespace ProyectoCGAPYS.Models
 
         public virtual ICollection<Proyectos_Costos> CostosDelProyecto { get; set; }
         public virtual ICollection<ProyectoImagen> Imagenes { get; set; }
+
+        [StringLength(10)]
+        public string? Prioridad { get; set; }
     }
 }

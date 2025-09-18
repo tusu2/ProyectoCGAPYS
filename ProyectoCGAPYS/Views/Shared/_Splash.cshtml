@@ -1,0 +1,130 @@
+﻿@{
+    Layout = null;
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+}
+
+
+<div id="splash-screen">
+    <svg id="logo-animado" version="1.0" xmlns="http://www.w3.org/2000/svg"
+         width="831.000000pt" height="1053.000000pt" viewBox="0 0 831.000000 1053.000000"
+         preserveAspectRatio="xMidYMid meet">
+        <g transform="translate(0.000000,1053.000000) scale(0.100000,-0.100000)" stroke="none">
+            <path d="M583 6433 l3 -2758 22 -98 c96 -419 324 -785 734 -1183 593 -574 1538 -1152 2637 -1610 l173 -72 122 50 c755 310 1581 770 2151 1198 724 543 1128 1066 1257 1627 l22 98 3 2753 3 2752 -3565 0 -3565 0 3 -2757z m6637 -130 c0 -2610 2 -2491 -54 -2684 -175 -600 -817 -1226 -1847 -1802 -290 -162 -796 -403 -1071 -512 l-96 -38 -143 57 c-553 221 -1146 530 -1591 827 -762 510 -1194 1022 -1325 1569 -16 71 -18 213 -20 2533 l-3 2457 3075 0 3075 0 0 -2407z"/>
+            <path d="M2430 7704 c-19 -2 -54 -7 -78 -10 l-43 -5 3 -667 c3 -653 4 -669 26 -747 39 -141 94 -239 186 -331 45 -44 107 -95 138 -113 223 -126 582 -147 826 -48 193 78 336 223 407 412 59 155 58 147 62 847 l4 646 -58 8 c-73 10 -272 10 -335 0 l-48 -7 0 -617 c0 -652 -1 -667 -47 -757 -68 -132 -230 -203 -404 -176 -132 21 -218 84 -273 200 l-31 66 -3 641 -3 642 -37 5 c-52 9 -250 16 -292 11z"/>
+            <path d="M4997 7700 c-38 -5 -71 -11 -74 -14 -7 -6 -713 -1875 -713 -1886 0 -27 268 -50 379 -33 l54 8 67 185 67 185 358 0 358 0 67 -185 67 -185 39 -8 c52 -12 296 -1 360 15 l51 13 -355 946 -354 947 -32 6 c-55 11 -269 15 -339 6z m269 -936 c46 -128 84 -235 84 -238 0 -3 -97 -6 -215 -6 -118 0 -215 2 -215 5 0 2 35 102 79 222 43 120 89 252 100 293 12 41 25 82 28 90 3 9 16 -17 30 -60 14 -41 63 -179 109 -306z"/>
+            <path d="M5192 5560 c-155 -22 -327 -85 -439 -161 -83 -56 -193 -170 -254 -261 -225 -341 -223 -860 6 -1203 119 -179 297 -302 531 -367 69 -19 105 -22 289 -22 229 -1 309 12 446 69 89 38 189 103 189 124 0 26 -30 121 -52 164 -24 49 -81 112 -137 152 l-44 33 -64 -44 c-92 -63 -181 -88 -318 -87 -88 0 -123 4 -174 22 -129 45 -224 128 -286 251 -54 108 -68 187 -62 352 3 85 11 162 20 189 44 136 141 261 243 312 95 48 156 60 288 55 127 -5 178 -19 268 -75 21 -13 45 -23 54 -23 25 0 148 129 176 185 14 28 33 74 42 104 15 52 15 53 -7 72 -64 53 -216 118 -342 145 -86 18 -288 26 -373 14z"/>
+            <path d="M2440 5245 c-8 -2 -45 -7 -82 -10 l-68 -7 0 -489 c0 -457 1 -490 18 -497 9 -4 116 -7 237 -7 218 0 221 0 295 29 197 75 311 227 327 435 19 254 -103 443 -335 518 -65 22 -100 26 -227 29 -82 1 -157 1 -165 -1z m291 -225 c86 -23 160 -105 179 -197 25 -120 -10 -245 -88 -313 -56 -50 -121 -70 -224 -70 l-78 0 0 294 0 295 23 4 c29 7 143 -1 188 -13z"/>
+            <path d="M3320 4735 l0 -495 334 0 333 0 7 38 c8 48 8 101 0 141 l-6 31 -219 0 -219 0 0 100 0 100 189 0 189 0 7 45 c3 25 3 70 0 100 l-7 55 -189 0 -189 0 0 90 0 90 213 2 212 3 0 95 0 95 -327 3 -328 2 0 -495z"/>
+            <path d="M2260 3950 l0 -100 870 0 870 0 0 100 0 100 -870 0 -870 0 0 -100z"/>
+            <path d="M4050 2575 l-195 -195 195 -195 195 -195 195 195 195 195 -195 195 -195 195 -195 -195z"/>
+        </g>
+    </svg>
+</div>
+
+<style>
+    /* --- Estilos para el Splash Screen --- */
+    #splash-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #f0f0f0; /* Mismo color de fondo que tenías */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999; /* Asegura que esté por encima de todo */
+        transition: opacity 0.5s ease-out; /* Para la transición de salida */
+        background-color: #ffffff; /* Color de respaldo por si la imagen no carga */
+        background-image: url('/svg/blob-scene-haikei (2).svg');
+        background-size: cover; /* Asegura que el fondo cubra toda la pantalla */
+   
+        background-position: center;
+        min-height: 100vh;
+          
+        background-attachment: fixed; /* El fondo no se mueve con el scroll */
+    }
+
+    #logo-animado {
+        width: 25%; /* Ajusta el tamaño como prefieras para el splash */
+        max-width: 300px;
+    }
+
+    /* Clase para la animación de salida */
+    #splash-screen.fade-out {
+        opacity: 0;
+    }
+    
+    /* --- Tu código de animación (versión rápida) --- */
+    #logo-animado path {
+        stroke: #274093; 
+        stroke-width: 15; 
+        fill: transparent; 
+    }
+
+    @@keyframes draw {
+        to { stroke-dashoffset: 0; }
+    }
+
+    @@keyframes fill-in {
+        to { fill: #274093; }
+    }
+
+    #logo-animado path:nth-child(1) {
+        stroke-dasharray: 51972.625; /* Reemplaza XXXX con tu valor */
+        stroke-dashoffset: 51972.625; /* Reemplaza XXXX con tu valor */
+        /* Animación: nombre, duración, función-tiempo, retraso, modo-relleno */
+        animation: draw 3s ease-in-out 0s forwards, fill-in 2s ease-in-out 1.5s forwards; /* El relleno empieza un poco antes de que termine el dibujo */
+    }
+
+    /* Path 2 */
+    #logo-animado path:nth-child(2) {
+        stroke-dasharray: 9382.6328125; /* Reemplaza XXXX con tu valor */
+        stroke-dashoffset: 9382.6328125; /* Reemplaza XXXX con tu valor */
+        animation: draw 2s ease-in-out 0s forwards, /* Empieza cuando el anterior termina */
+        fill-in 2s ease-in-out 1.5s forwards;
+    }
+
+    /* Path 3 */
+    #logo-animado path:nth-child(3) {
+        stroke-dasharray: 8601.7939453125; /* Reemplaza XXXX con tu valor */
+        stroke-dashoffset: 8601.7939453125; /* Reemplaza XXXX con tu valor */
+        animation: draw 2s ease-in-out 0s forwards, fill-in 2s ease-in-out 1.5s forwards;
+    }
+
+    /* Path 4 */
+    #logo-animado path:nth-child(4) {
+        stroke-dasharray: 7950.1962890625; /* Reemplaza XXXX con tu valor */
+        stroke-dashoffset: 7950.1962890625; /* Reemplaza XXXX con tu valor */
+        animation: draw 2s ease-in-out 0s forwards, fill-in 2s ease-in-out 1.5s forwards;
+    }
+
+    /* Path 5 */
+    #logo-animado path:nth-child(5) {
+        stroke-dasharray: 5060.37744140625; /* Reemplaza XXXX con tu valor */
+        stroke-dashoffset: 5060.37744140625; /* Reemplaza XXXX con tu valor */
+        animation: draw 2s ease-in-out 0s forwards, fill-in 2s ease-in-out 1.5s forwards;
+    }
+
+    /* Path 6 */
+    #logo-animado path:nth-child(6) {
+        stroke-dasharray: 4914.095703125; /* Reemplaza XXXX con tu valor */
+        stroke-dashoffset: 4914.095703125; /* Reemplaza XXXX con tu valor */
+        animation: draw 2s ease-in-out 0s forwards, fill-in 2s ease-in-out 1.5s forwards;
+    }
+
+    /* Path 7 */
+    #logo-animado path:nth-child(7) {
+        stroke-dasharray: 3880; /* Reemplaza XXXX con tu valor */
+        stroke-dashoffset: 3880; /* Reemplaza XXXX con tu valor */
+        animation: draw 2s ease-in-out 0s forwards, fill-in 2s ease-in-out 1.5s forwards;
+    }
+
+    /* Path 8 */
+    #logo-animado path:nth-child(8) {
+        stroke-dasharray: 2206.173095703125; /* Reemplaza XXXX con tu valor */
+        stroke-dashoffset: 2206.173095703125; /* Reemplaza XXXX con tu valor */
+        animation: draw 2s ease-in-out 0s forwards, fill-in 2s ease-in-out 1.5s forwards;
+    }
+</style>

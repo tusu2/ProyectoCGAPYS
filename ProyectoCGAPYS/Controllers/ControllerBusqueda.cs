@@ -31,28 +31,38 @@ namespace ProyectoCGAPYS.Controllers
         [HttpGet]
         public async Task<JsonResult> GetProyectos()
         {
-            // Usamos .Select() para crear un objeto anónimo y evitar problemas de referencias circulares
-            // y para enviar solo los datos necesarios.
             var proyectos = await _context.Proyectos
+                .Include(p => p.Dependencia)
+                .Include(p => p.TipoFondo)      // Asegúrate de incluir todas las relaciones
+                .Include(p => p.TipoProyecto)   // que vayas a usar.
                 .Select(p => new {
                     p.Id,
                     p.NombreProyecto,
                     p.Folio,
                     p.Latitud,
                     p.Longitud,
-                    Dependencia = p.Dependencia.Nombre, // Obtenemos el nombre de la dependencia relacionada
+
+                    // --- AQUÍ ESTÁ LA CORRECCIÓN ---
+                    // Si la dependencia no es null, usa su nombre. Si es null, usa un texto por defecto.
+                    Dependencia = p.Dependencia != null ? p.Dependencia.Nombre : "No asignada",
+
                     p.Descripcion,
                     p.FechaSolicitud,
                     p.FechaFinalizacionAprox,
                     p.Presupuesto,
-                    TipoFondo = p.TipoFondo.Nombre, // Nombre del tipo de fondo
+
+                    // Hacemos lo mismo para las otras relaciones
+                    TipoFondo = p.TipoFondo != null ? p.TipoFondo.Nombre : "No asignado",
+
                     p.NombreResponsable,
                     p.Correo,
-
                     p.Celular,
                     p.NombreAnteproyecto,
-                    TipoProyecto = p.TipoProyecto.Nombre, // Nombre del tipo de proyecto
-                    Estatus = p.Estatus
+
+                    TipoProyecto = p.TipoProyecto != null ? p.TipoProyecto.Nombre : "No asignado",
+
+                    Estatus = p.Estatus,
+                    p.Prioridad
                 })
                 .ToListAsync();
 
@@ -81,6 +91,8 @@ namespace ProyectoCGAPYS.Controllers
                                        .ToListAsync();
             return Json(costos);
         }
+     
+
 
         [HttpPost]
         public async Task<JsonResult> AnadirCosto([FromBody] Proyectos_Costos nuevoCosto)
@@ -108,6 +120,78 @@ namespace ProyectoCGAPYS.Controllers
             _context.Proyectos_Costos.Remove(costo);
             await _context.SaveChangesAsync();
             return Json(new { success = true, message = "Costo eliminado" });
+        }
+        [HttpPost]
+        public async Task<IActionResult> ActualizarPrioridad(string id, string prioridad)
+        {
+            var proyecto = await _context.Proyectos.FindAsync(id);
+            if (proyecto == null)
+            {
+                return NotFound(); // No se encontró el proyecto
+            }
+
+            // Validamos que la prioridad sea uno de los valores permitidos
+            if (prioridad == "verde" || prioridad == "amarillo" || prioridad == "rojo")
+            {
+                proyecto.Prioridad = prioridad;
+                await _context.SaveChangesAsync();
+                return Ok(); // Todo salió bien
+            }
+
+            return BadRequest("Prioridad no válida"); // Error si el valor no es correcto
+        }
+
+        // En ProyectoController.cs
+
+        public async Task<IActionResult> AsignarPrioridades()
+        {
+            var proyectosSinPrioridad = await _context.Proyectos
+                                   .Where(p => string.IsNullOrEmpty(p.Prioridad))
+                                   .Include(p => p.Dependencia)
+                                   .ToListAsync();
+
+            return PartialView("_AsignarPrioridadesPartial", proyectosSinPrioridad);
+        }
+
+        [HttpGet]
+        public async Task<JsonResult> GetProyectoDetalles(string id)
+        {
+            var proyecto = await _context.Proyectos
+                .Include(p => p.Campus) // Incluimos todas las relaciones para tener los nombres
+                .Include(p => p.Fase)
+                .FirstOrDefaultAsync(p => p.Id == id); // Buscamos el proyecto específico por su ID
+
+            if (proyecto == null)
+            {
+                return Json(new { success = false, message = "Proyecto no encontrado" });
+            }
+
+            // Creamos un objeto con los datos que queremos mostrar
+            var detalles = new
+            {
+                success = true,
+                nombreResponsable = proyecto.NombreResponsable,
+                correo = proyecto.Correo,
+                celular = proyecto.Celular,
+                fechaSolicitud = proyecto.FechaSolicitud?.ToString("dd/MM/yyyy"),
+                fechaFinalizacion = proyecto.FechaFinalizacionAprox?.ToString("dd/MM/yyyy"),
+                presupuesto = proyecto.Presupuesto.ToString("C"), // Formato de moneda
+                campus = proyecto.Campus?.Nombre,
+                fase = proyecto.Fase?.Nombre ?? "No definida",
+                descripcion = proyecto.Descripcion
+            };
+
+            return Json(detalles);
+        }
+
+        // En ProyectoController.cs
+
+        public async Task<IActionResult> GetIndexContent()
+        {
+            // Preparamos el ViewBag para el dropdown de filtros, ya que la vista parcial lo necesita
+            ViewBag.Dependencias = new SelectList(await _context.Dependencias.OrderBy(d => d.Nombre).ToListAsync(), "Id", "Nombre");
+
+            return PartialView("_IndexContentPartial");
         }
     }
 }
