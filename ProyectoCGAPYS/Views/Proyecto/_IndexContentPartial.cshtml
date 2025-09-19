@@ -17,44 +17,52 @@
 
             <h1 class="text-center mb-4">Plataforma de Proyectos</h1>
 
-            <div class="card shadow-sm mb-4">
+            <div class="card shadow-sm mb-4 filter-card">
                 <div class="card-body">
-                    <h2 class="card-title">Filtrar Proyectos</h2>
-                    <form id="filtros-form">
-                        <div class="row g-3 align-items-end">
-                            <div class="col-lg-3 col-md-6">
-                                <label for="filtro-nombre" class="form-label">Nombre del proyecto:</label>
-                                <input type="text" id="filtro-nombre" name="filtro-nombre" class="form-control">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-lg-4 col-md-12">
+                            <label for="filtro-nombre" class="form-label">Nombre del proyecto</label>
+                            <div class="form-group">
+                                <i class="bi bi-search form-icon"></i>
+                                <input type="text" id="filtro-nombre" class="form-control">
                             </div>
+                        </div>
 
-                            <div class="col-lg-3 col-md-6">
-                                <label for="filtro-dependencia" class="form-label">Dependencia:</label>
-                                <select id="filtro-dependencia" name="filtro-dependencia" class="form-select" asp-items="ViewBag.Dependencias">
-                                    <option value="">-- Todas --</option>
+                        <div class="col-lg-3 col-md-6">
+                            <label for="filtro-campus" class="form-label">Campus</label>
+                            <div class="form-group">
+                                <i class="bi bi-bank2 form-icon"></i> <select id="filtro-campus" class="form-select" asp-items="ViewBag.CampusList">
+                                    <option value="">-- Todos --</option>
                                 </select>
                             </div>
-
-                            <div class="col-lg-4 col-md-6">
-                                <label class="form-label">Fecha de Solicitud:</label>
-                                <div class="input-group">
-                                    <input type="date" id="filtro-fecha-inicio" name="filtro-fecha-inicio" class="form-control">
-                                    <input type="date" id="filtro-fecha-fin" name="filtro-fecha-fin" class="form-control">
+                        </div>
+                        <div class="col-lg-3 col-md-6">
+                            <label class="form-label">Fecha de Solicitud</label>
+                            <div class="input-group">
+                                <div class="form-group w-50">
+                                    <i class="bi bi-calendar-range form-icon"></i>
+                                    <input type="date" id="filtro-fecha-inicio" class="form-control" style="padding-left: 2.5rem !important;">
+                                </div>
+                                <div class="form-group w-50">
+                                    <i class="bi bi-calendar-range form-icon"></i>
+                                    <input type="date" id="filtro-fecha-fin" class="form-control" style="padding-left: 2.5rem !important;">
                                 </div>
                             </div>
+                        </div>
 
-                            <div class="col-lg-2 col-md-12">
-                                <div class="d-grid gap-2 d-lg-flex pt-lg-4">
-                                    <button type="button" id="aplicar-filtros-btn" class="btn btn-primary w-100">Aplicar</button>
-                                    <button type="button" id="limpiar-filtros-btn" class="btn btn-secondary w-100">Limpiar</button>
-                                </div>
-                            </div>
-                            <div class="col-lg-12 text-end mt-3">
-                                <button id="btn-asignar-prioridades" class="btn btn-outline-warning">
+                        <div class="col-lg-2 col-md-12">
+                            <div class="filter-actions">
+                                <button type="button" id="aplicar-filtros-btn" class="btn btn-primary w-50"><i class="bi bi-funnel-fill"></i></button>
+                                <button type="button" id="limpiar-filtros-btn" class="btn btn-secondary w-50"><i class="bi bi-eraser-fill"></i></button>
+                                <button id="btn-asignar-prioridades" class="btn btn-outline-warning btn-sm">
                                     <i class="bi bi-flag-fill"></i> Asignar Prioridades
                                 </button>
                             </div>
+                            </div>
                         </div>
-                    </form>
+                    </div>
+
+                  
                 </div>
             </div>
             <div class="row g-4">
@@ -96,106 +104,6 @@
 
 
 
-                    <div class="modal-acciones">
-
-                        <button id="abrir-costos-btn" class="boton-costos">Administrar Presupuesto</button>
-
-                    </div>
-
-
-
-                    <div id="seccion-costos" style="display: none;">
-
-                        <h3>Desglose de Conceptos</h3>
-
-
-
-                        <div class="form-costos">
-
-                            <div class="form-grupo full-width">
-
-                                <label for="costo-categoria">Categoría</label>
-
-                                <select id="costo-categoria"></select>
-
-                            </div>
-
-                            <div class="form-grupo full-width">
-
-                                <label for="costo-concepto">Concepto</label>
-
-                                <select id="costo-concepto"></select>
-
-                            </div>
-
-
-
-                            <div class="form-grupo">
-
-                                <label for="costo-cantidad">Cantidad</label>
-
-                                <input type="number" id="costo-cantidad" placeholder="0.00">
-
-                            </div>
-
-                            <div class="form-grupo">
-
-                                <label for="costo-precio">Precio Unitario</label>
-
-                                <input type="number" id="costo-precio" placeholder="$ 0.00">
-
-                            </div>
-
-                            <div class="form-grupo">
-
-                                <label>&nbsp;</label>
-
-                                <button id="agregar-costo-btn">Añadir</button>
-
-                            </div>
-
-                        </div>
-
-
-
-                        <table id="tabla-costos">
-
-                            <thead>
-
-                                <tr>
-
-                                    <th>Concepto</th>
-
-                                    <th>Cantidad</th>
-
-                                    <th>P. Unitario</th>
-
-                                    <th>Importe</th>
-
-                                    <th>Acciones</th>
-
-                                </tr>
-
-                            </thead>
-
-                            <tbody id="cuerpo-tabla-costos">
-                            </tbody>
-
-                            <tfoot>
-
-                                <tr>
-
-                                    <td colspan="3">Total del Proyecto</td>
-
-                                    <td id="costo-total-proyecto">$ 0.00</td>
-
-                                    <td></td>
-
-                                </tr>
-
-                            </tfoot>
-
-                        </table>
 
                     </div>
 
@@ -209,7 +117,5 @@
     <script>
         // Este pequeño script se ejecuta cada vez que este trozo de HTML es cargado.
         // Llama a la función principal de site.js para que todo se active.
-        if (typeof inicializarLogicaIndex === 'function') {
-            inicializarLogicaIndex();
-        }
+      
     </script>

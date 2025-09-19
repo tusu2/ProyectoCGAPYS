@@ -195,26 +195,50 @@ h1.text-center {
 
 /* --- 7. Estilo Refinado para el Modal --- */
 .modal {
-    backdrop-filter: blur(5px);
+    display: none; /* Oculto por defecto */
+    position: fixed; /* Se queda fijo aunque hagas scroll */
+    z-index: 1050; /* Se asegura de que esté por encima de todo */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto; /* Permite scroll si el contenido es muy largo */
+    background-color: rgba(11, 45, 72, 0.6); /* Azul oscuro semitransparente */
+    backdrop-filter: blur(5px); /* Efecto de desenfoque moderno */
 }
-
+    .modal.show {
+        display: flex; /* Usamos flexbox para centrar el contenido fácilmente */
+        align-items: center;
+        justify-content: center;
+    }
 .modal-contenido {
-    background: var(--color-fondo-pagina); /* Fondo sólido para legibilidad */
-    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
-    border-radius: var(--radio-borde-general);
-    max-width: 800px;
+    position: relative;
+    background-color: #fff;
+    margin: auto;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 700px; /* Ancho máximo para que no sea gigante en pantallas grandes */
+    animation: fadeInModal 0.4s ease-out; /* Animación de entrada */
 }
 
 .modal-header {
-    background-color: transparent;
-    color: var(--color-primario-corporativo);
-    border-bottom: 1px solid var(--color-borde);
-    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
 }
-
 .cerrar-modal {
-    color: var(--color-texto-secundario);
-    font-size: 1.5rem;
+    font-size: 2rem;
+    font-weight: bold;
+    color: #aaa;
+    background: none;
+    border: none;
+    cursor: pointer;
+    line-height: 1;
 }
 
 .modal-body {
@@ -222,6 +246,126 @@ h1.text-center {
     max-height: 70vh;
     overflow-y: auto;
 }
-/* ... (el resto de tus estilos del modal como #modal-detalles, etc., pueden permanecer o ajustarse si es necesario) ... */
 
-/* --- Scrollbar Styling (se mantiene tu buen
+#modal-nombre-proyecto {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--color-azul-oscuro); /* Usando los colores que ya definimos */
+}
+
+.cerrar-modal:hover,
+.cerrar-modal:focus {
+    color: #333;
+}
+
+/* Animación de entrada para el modal */
+@keyframes fadeInModal {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+/* Contenedor principal de filtros */
+.filter-card {
+    background-color: #FFFFFF;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+    border: 1px solid #e9ecef;
+}
+
+/* Grupo de formulario (para agrupar label, icono e input) */
+.form-group {
+    position: relative;
+}
+
+    .form-group .form-control,
+    .form-group .form-select {
+        padding-left: 2.5rem;
+        font-size: 0.9rem;
+        height: calc(1.5em + .75rem + 5px);
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+    }
+
+    /* Estilo para los iconos dentro de los inputs */
+    .form-group .form-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #adb5bd;
+        pointer-events: none;
+    }
+
+/* Efecto de foco premium en los inputs */
+.form-control:focus,
+.form-select:focus {
+    background-color: #FFFFFF;
+    border-color: #0B2D48;
+    box-shadow: 0 0 0 3px rgba(11, 45, 72, 0.1);
+}
+
+/* Grupo de botones al final */
+.filter-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center; /* Centramos verticalmente los botones */
+    height: 100%;
+}
+
+    .filter-actions .btn {
+        height: calc(1.5em + .75rem + 5px);
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+     
+    }
+
+.priority-display {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Espacio entre el círculo y el texto */
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+}
+.priority-indicator {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%; /* Esto lo hace un círculo perfecto */
+    border: 2px solid; /* Borde opcional para todos */
+}
+
+.priority-verde {
+    background-color: #198754;
+    border-color: #105c38;
+}
+
+.priority-amarillo {
+    background-color: #ffc107;
+    border-color: #d9a406;
+}
+
+.priority-rojo {
+    background-color: #dc3545;
+    border-color: #b02a37;
+}
+
+.priority-ninguna {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+.priority-display p {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.1rem;
+}

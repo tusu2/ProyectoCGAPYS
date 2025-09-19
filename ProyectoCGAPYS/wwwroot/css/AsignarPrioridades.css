@@ -28,6 +28,7 @@
     align-items: center;
     border-left: 5px solid transparent; /* Borde inicial invisible para la transición */
     transition: all 0.3s ease-in-out;
+  
 }
 
     .project-card:hover {
@@ -198,3 +199,88 @@
 .priority-selected-rojo .btn-rojo {
     background-color: #dc3545;
 }
+
+
+
+/* Definimos la animación: empieza invisible y abajo, termina visible y en su posición */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Por defecto, las tarjetas están invisibles para poder animarlas */
+
+    /* Cuando una tarjeta tenga esta clase, se ejecutará la animación */
+    .project-card.is-visible {
+        animation: fadeInUp 0.5s ease-out forwards;
+    }
+
+.filter-card {
+    background-color: var(--color-blanco);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem; /* Más espacio antes de la lista de proyectos */
+    box-shadow: var(--sombra-tarjeta);
+    border: 1px solid #e9ecef;
+}
+.form-group {
+    position: relative;
+}
+
+    .form-group .form-control,
+    .form-group .form-select {
+        padding-left: 2.5rem; /* Hacemos espacio para el icono */
+        font-size: 0.9rem;
+        height: calc(1.5em + .75rem + 5px); /* Un poco más altos */
+        background-color: #f8f9fa; /* Fondo sutil */
+        border: 1px solid #dee2e6;
+    }
+
+    .form-group .form-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--color-plata);
+        pointer-events: none; /* Para que se pueda hacer clic en el input */
+    }
+
+.form-control:focus,
+.form-select:focus {
+    background-color: var(--color-blanco);
+    border-color: var(--color-azul-oscuro);
+    box-shadow: 0 0 0 3px rgba(11, 45, 72, 0.1);
+}
+
+/* Grupo de botones al final */
+.filter-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-end; /* Alinea los botones con los inputs */
+    height: 100%;
+}
+
+    .filter-actions .btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+/* Botón de Volver con estilo más sutil */
+.btn-volver {
+    background-color: #e9ecef;
+    color: #495057;
+    border: none;
+}
+
+    .btn-volver:hover {
+        background-color: #dee2e6;
+    }

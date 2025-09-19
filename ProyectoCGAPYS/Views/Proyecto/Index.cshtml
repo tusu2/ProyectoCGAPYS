@@ -9,13 +9,60 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     <script>
-      
+        function debounce(func, delay) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), delay);
+            };
+        }
    
         // Este código se ejecuta solo en esta página
         document.addEventListener('DOMContentLoaded', () => {
 
         
             const contenedor = document.getElementById('contenido-principal');
+            function aplicarFiltrosPrioridad() {
+                console.log("Aplicando filtros...");
+                const nombre = document.getElementById('filtro-nombre-p')?.value || '';
+                const campusId = document.getElementById('filtro-campus-p')?.value || '';
+                const fechaInicio = document.getElementById('filtro-fecha-inicio-p')?.value || '';
+                const fechaFin = document.getElementById('filtro-fecha-fin-p')?.value || '';
+                const presupuestoMin = document.getElementById('filtro-presupuesto-min-p')?.value || '';
+
+                const url = new URL('@Url.Action("AsignarPrioridades", "Proyecto")', window.location.origin);
+                if (nombre) url.searchParams.append('nombre', nombre);
+                if (campusId) url.searchParams.append('campusId', campusId);
+                if (fechaInicio) url.searchParams.append('fechaInicio', fechaInicio);
+                if (fechaFin) url.searchParams.append('fechaFin', fechaFin);
+                if (presupuestoMin) url.searchParams.append('presupuestoMin', presupuestoMin);
+
+                document.querySelector('.projects-container').innerHTML = '<p>Filtrando...</p>';
+                fetch(url)
+                    .then(response => response.text())
+                    .then(html => {
+                        // Reemplazamos SOLO el contenedor de las tarjetas, no toda la página.
+                        // Esto mantiene los filtros visibles.
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = html;
+                        const nuevoContenedorProyectos = tempDiv.querySelector('.projects-container');
+                        const contenedorActual = document.querySelector('.projects-container');
+
+                        if (nuevoContenedorProyectos && contenedorActual) {
+                            contenedorActual.innerHTML = nuevoContenedorProyectos.innerHTML;
+
+                            // --- LÓGICA DE ANIMACIÓN ---
+                            // Buscamos todas las nuevas tarjetas que acabamos de agregar
+                            const cards = contenedorActual.querySelectorAll('.project-card');
+                            // Las recorremos y les agregamos la clase 'is-visible' con un pequeño retraso
+                            cards.forEach((card, index) => {
+                                setTimeout(() => {
+                                    card.classList.add('is-visible');
+                                }, index * 80);
+                            });
+                        }
+                    });
+            }
 
 
             const mainContainer = document.querySelector('main .container');
@@ -29,11 +76,55 @@
             inicializarLogicaIndex();
 
 
-            // --- Parte 1: Cargar la vista parcial al hacer clic en el botón ---
-           
+            const filtrarEnTiempoReal = debounce(aplicarFiltrosPrioridad, 400);
 
+            contenedor.addEventListener('input', function (event) {
+                if (event.target.id === 'filtro-nombre-p') {
+                    const textoBusqueda = event.target.value;
+                    // Solo filtramos con 3+ letras o si está vacío
+                    if (textoBusqueda.length >= 3 || textoBusqueda.length === 0) {
+                        filtrarEnTiempoReal();
+                    }
+                }
+            });
+            const aplicarFiltrosDebounced = debounce(() => {
+                const listaUl = document.getElementById('lista-proyectos');
+                if (listaUl) {
+                    aplicarFiltros(listaUl);
+                }
+            }, 400);
             // --- Parte 2: El "Súper Listener" Delegado (VERSIÓN FINAL Y CORREGIDA) ---
             contenedor.addEventListener('click', function (event) {
+                if (event.target.closest('#aplicar-filtros-prioridad')) {
+                    aplicarFiltrosPrioridad();
+                }
+                if (event.target.closest('#aplicar-filtros-btn')) {
+                    const listaUl = document.getElementById('lista-proyectos');
+                    aplicarFiltros(listaUl);
+                }
+                if (event.target.closest('#limpiar-filtros-btn')) {
+                    const listaUl = document.getElementById('lista-proyectos');
+                    limpiarFiltros(listaUl);
+                }
+
+
+                const btnLimpiarFiltros = event.target.closest('#limpiar-filtros-prioridad');
+                if (btnLimpiarFiltros) {
+                    // Limpiamos los campos
+                    document.getElementById('filtro-nombre-p').value = '';
+                    document.getElementById('filtro-campus-p').value = '';
+                    document.getElementById('filtro-fecha-inicio-p').value = '';
+                    document.getElementById('filtro-fecha-fin-p').value = '';
+                    document.getElementById('filtro-presupuesto-min-p').value = '';
+
+                    // Simulamos un clic en "Aplicar" para recargar la lista sin filtros
+                    document.getElementById('aplicar-filtros-prioridad').click();
+                }
+
+
+
+
+
                 const btnAsignar = event.target.closest('#btn-asignar-prioridades');
                 if (btnAsignar) {
                     contenedor.innerHTML = '<h3 class="text-center">Cargando...</h3>';
@@ -81,6 +172,14 @@
                     return; // Detenemos la ejecución para no interferir con el despliegue
                 }
 
+                // --- NUEVO LISTENER PARA EL FILTRADO EN TIEMPO REAL ---
+                contenedor.addEventListener('input', function (event) {
+                    // Si el evento ocurrió en nuestro campo de texto de nombre...
+                    if (event.target.id === 'filtro-nombre-p') {
+                        // ...llamamos a la versión con "debounce".
+                        filtrarEnTiempoReal();
+                    }
+                });
 
                 // ---- Lógica para DESPLEGAR DETALLES (NUEVA Y ROBUSTA) ----
                 const clickableArea = event.target.closest('.clickable-area');
@@ -135,7 +234,7 @@
             });
             
 
-                // ---- Lógica para el NUEVO BOTÓN DE REGRESAR ----
+              
              
 
         });

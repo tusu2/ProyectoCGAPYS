@@ -10,16 +10,59 @@
 </div>
 
 <div class="container mt-4">
-        <div class="text-end mb-3">
-            <a href="#" id="btn-regresar-index" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left"></i> Volver a Proyectos
-            </a>
-        </div>
+       
     <h1 class="text-center mb-2">Asignar Prioridad a Proyectos</h1>
     <p class="text-center text-muted mb-5">
         Seleccione un nivel de prioridad para los siguientes proyectos.
     </p>
 
+        <div class="card shadow-sm mb-4 filter-card">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-lg-3 col-md-6">
+                        <label for="filtro-nombre-p" class="form-label">Nombre del proyecto</label>
+                        <div class="form-group">
+                            <i class="bi bi-search form-icon"></i>
+                            <input type="text" id="filtro-nombre-p" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="col-lg-2 col-md-6">
+                        <label for="filtro-campus-p" class="form-label">Campus</label>
+                        <div class="form-group">
+                            <i class="bi bi-building form-icon"></i>
+                            <select id="filtro-campus-p" class="form-select" asp-items="ViewBag.CampusList">
+                                <option value="">-- Todos --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label">Fecha de Solicitud</label>
+                        <div class="form-group">
+                            <i class="bi bi-calendar-range form-icon"></i>
+                            <input type="date" id="filtro-fecha-inicio-p" class="form-control" style="padding-left: 2.5rem !important;">
+                        </div>
+                    </div>
+
+                    <div class="col-lg-2 col-md-6">
+                        <label for="filtro-presupuesto-min-p" class="form-label">Presupuesto Mínimo</label>
+                        <div class="form-group">
+                            <i class="bi bi-currency-dollar form-icon"></i>
+                            <input type="number" id="filtro-presupuesto-min-p" class="form-control" placeholder="50000">
+                        </div>
+                    </div>
+
+                    <div class="col-lg-2 col-md-12">
+                        <div class="filter-actions">
+                            <button type="button" id="aplicar-filtros-prioridad" class="btn btn-primary w-100"><i class="bi bi-funnel-fill"></i> Filtrar</button>
+                            <button type="button" id="limpiar-filtros-prioridad" class="btn btn-secondary w-100"><i class="bi bi-eraser-fill"></i></button>
+                            <a href="#" id="btn-regresar-index" class="btn btn-volver w-100" title="Volver a Proyectos"><i class="bi bi-arrow-left"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     <div class="projects-container">
             @foreach (var proyecto in Model)
             {

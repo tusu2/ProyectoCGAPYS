@@ -21,7 +21,7 @@ namespace ProyectoCGAPYS.Controllers
         public async Task<IActionResult> Index()
         {
             // Pasamos las dependencias a la vista para llenar el dropdown de filtros
-            ViewBag.Dependencias = new SelectList(await _context.Dependencias.OrderBy(d => d.Nombre).ToListAsync(), "Id", "Nombre");
+            ViewBag.CampusList = new SelectList(await _context.Campus.OrderBy(c => c.Nombre).ToListAsync(), "Id", "Nombre");
             return View();
         }
 
@@ -32,9 +32,10 @@ namespace ProyectoCGAPYS.Controllers
         public async Task<JsonResult> GetProyectos()
         {
             var proyectos = await _context.Proyectos
-                .Include(p => p.Dependencia)
-                .Include(p => p.TipoFondo)      // Asegúrate de incluir todas las relaciones
-                .Include(p => p.TipoProyecto)   // que vayas a usar.
+                .Include(p => p.Dependencia) // Puedes dejar estas o quitarlas si ya no las usas
+                .Include(p => p.TipoFondo)
+                .Include(p => p.TipoProyecto)
+                .Include(p => p.Campus) // <-- AÑADE ESTA LÍNEA
                 .Select(p => new {
                     p.Id,
                     p.NombreProyecto,
@@ -42,25 +43,21 @@ namespace ProyectoCGAPYS.Controllers
                     p.Latitud,
                     p.Longitud,
 
-                    // --- AQUÍ ESTÁ LA CORRECCIÓN ---
-                    // Si la dependencia no es null, usa su nombre. Si es null, usa un texto por defecto.
+                    // --- CÓDIGO ACTUALIZADO ---
+                    IdCampusFk = p.IdCampusFk, // <-- AÑADE ESTA LÍNEA
+                    Campus = p.Campus != null ? p.Campus.Nombre : "No asignado", // <-- AÑADE ESTA LÍNEA
+
+                    // Puedes borrar las siguientes dos líneas si ya no usas Dependencia
+                    IdDependenciaFk = p.IdDependenciaFk,
                     Dependencia = p.Dependencia != null ? p.Dependencia.Nombre : "No asignada",
 
                     p.Descripcion,
                     p.FechaSolicitud,
-                    p.FechaFinalizacionAprox,
+                    // ... el resto de tus campos ...
                     p.Presupuesto,
-
-                    // Hacemos lo mismo para las otras relaciones
                     TipoFondo = p.TipoFondo != null ? p.TipoFondo.Nombre : "No asignado",
-
                     p.NombreResponsable,
-                    p.Correo,
-                    p.Celular,
-                    p.NombreAnteproyecto,
-
                     TipoProyecto = p.TipoProyecto != null ? p.TipoProyecto.Nombre : "No asignado",
-
                     Estatus = p.Estatus,
                     p.Prioridad
                 })
@@ -143,14 +140,52 @@ namespace ProyectoCGAPYS.Controllers
 
         // En ProyectoController.cs
 
-        public async Task<IActionResult> AsignarPrioridades()
+        public async Task<IActionResult> AsignarPrioridades(
+       string? nombre,
+       int? campusId,
+       DateTime? fechaInicio,
+       DateTime? fechaFin,
+       decimal? presupuestoMin,
+       decimal? presupuestoMax)
         {
-            var proyectosSinPrioridad = await _context.Proyectos
-                                   .Where(p => string.IsNullOrEmpty(p.Prioridad))
-                                   .Include(p => p.Dependencia)
-                                   .ToListAsync();
+            // Empezamos con todos los proyectos que no tienen prioridad
+            IQueryable<Proyectos> query = _context.Proyectos
+                                                .Where(p => string.IsNullOrEmpty(p.Prioridad))
+                                                .Include(p => p.Dependencia);
 
-            return PartialView("_AsignarPrioridadesPartial", proyectosSinPrioridad);
+            // Aplicamos los filtros dinámicamente solo si tienen un valor
+            if (!string.IsNullOrEmpty(nombre))
+            {
+                query = query.Where(p => EF.Functions.Collate(p.NombreProyecto, "SQL_Latin1_General_CP1_CI_AI").Contains(nombre));
+            }
+            if (campusId.HasValue)
+            {
+                query = query.Where(p => p.IdCampusFk == campusId.Value);
+            }
+            if (fechaInicio.HasValue)
+            {
+                query = query.Where(p => p.FechaSolicitud >= fechaInicio.Value);
+            }
+            if (fechaFin.HasValue)
+            {
+                // Añadimos un día para incluir todo el día de la fecha fin
+                query = query.Where(p => p.FechaSolicitud < fechaFin.Value.AddDays(1));
+            }
+            if (presupuestoMin.HasValue)
+            {
+                query = query.Where(p => p.Presupuesto >= presupuestoMin.Value);
+            }
+            if (presupuestoMax.HasValue)
+            {
+                query = query.Where(p => p.Presupuesto <= presupuestoMax.Value);
+            }
+
+            // Pasamos la lista de campus al ViewBag para poder llenar el dropdown
+            ViewBag.CampusList = new SelectList(await _context.Campus.OrderBy(c => c.Nombre).ToListAsync(), "Id", "Nombre", campusId);
+
+            var proyectosFiltrados = await query.ToListAsync();
+
+            return PartialView("_AsignarPrioridadesPartial", proyectosFiltrados);
         }
 
         [HttpGet]
@@ -189,7 +224,7 @@ namespace ProyectoCGAPYS.Controllers
         public async Task<IActionResult> GetIndexContent()
         {
             // Preparamos el ViewBag para el dropdown de filtros, ya que la vista parcial lo necesita
-            ViewBag.Dependencias = new SelectList(await _context.Dependencias.OrderBy(d => d.Nombre).ToListAsync(), "Id", "Nombre");
+            ViewBag.CampusList = new SelectList(await _context.Campus.OrderBy(c => c.Nombre).ToListAsync(), "Id", "Nombre");
 
             return PartialView("_IndexContentPartial");
         }
