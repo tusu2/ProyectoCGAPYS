@@ -148,12 +148,12 @@ namespace ProyectoCGAPYS.Controllers
        decimal? presupuestoMin,
        decimal? presupuestoMax)
         {
-            // Empezamos con todos los proyectos que no tienen prioridad
+   
             IQueryable<Proyectos> query = _context.Proyectos
                                                 .Where(p => string.IsNullOrEmpty(p.Prioridad))
                                                 .Include(p => p.Dependencia);
 
-            // Aplicamos los filtros dinámicamente solo si tienen un valor
+          
             if (!string.IsNullOrEmpty(nombre))
             {
                 query = query.Where(p => EF.Functions.Collate(p.NombreProyecto, "SQL_Latin1_General_CP1_CI_AI").Contains(nombre));
@@ -168,7 +168,7 @@ namespace ProyectoCGAPYS.Controllers
             }
             if (fechaFin.HasValue)
             {
-                // Añadimos un día para incluir todo el día de la fecha fin
+              
                 query = query.Where(p => p.FechaSolicitud < fechaFin.Value.AddDays(1));
             }
             if (presupuestoMin.HasValue)
@@ -180,7 +180,7 @@ namespace ProyectoCGAPYS.Controllers
                 query = query.Where(p => p.Presupuesto <= presupuestoMax.Value);
             }
 
-            // Pasamos la lista de campus al ViewBag para poder llenar el dropdown
+          
             ViewBag.CampusList = new SelectList(await _context.Campus.OrderBy(c => c.Nombre).ToListAsync(), "Id", "Nombre", campusId);
 
             var proyectosFiltrados = await query.ToListAsync();
@@ -228,5 +228,7 @@ namespace ProyectoCGAPYS.Controllers
 
             return PartialView("_IndexContentPartial");
         }
+
+      
     }
 }

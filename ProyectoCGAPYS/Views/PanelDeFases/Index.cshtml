@@ -1,0 +1,86 @@
+﻿@model IEnumerable<ProyectoCGAPYS.Models.Proyectos>
+@{
+    ViewData["Title"] = "Panel de Fases de Proyectos";
+    // Obtenemos la lista completa de fases que enviamos desde el controlador
+    var fases = ViewBag.Fases as List<Fases>;
+}
+
+<link rel="stylesheet" href="~/css/PanelDeFases.css" asp-append-version="true" />
+
+<div class="container-fluid mt-4">
+    <h1 class="text-center mb-4">@ViewData["Title"]</h1>
+
+    <div id="confirm-bar" class="confirm-bar">
+        <span>Tienes cambios sin guardar.</span>
+        <button id="btn-confirmar-cambios" class="btn btn-sm btn-success">
+            <i class="bi bi-check-lg"></i> Confirmar Cambios
+        </button>
+    </div>
+    <div class="kanban-board">
+        @if (fases != null)
+        {
+            // --- BUCLE EXTERIOR: Construye las COLUMNAS (las "repisas") ---
+            // Recorremos cada una de las fases posibles ("Recepción", "Anteproyecto", etc.)
+            @foreach (var fase in fases)
+            {
+                <div class="kanban-column" id="fase-col-@fase.Id">
+
+                    <h5 class="kanban-column-title drag-handle">
+                        @fase.Nombre
+                        <span class="card-count">@Model.Count(p => p.IdFaseFk == fase.Id)</span>
+                    </h5>
+                    <div class="resize-handle"></div>
+                    <div class="kanban-cards-container">
+
+                        @foreach (var proyecto in Model.Where(p => p.IdFaseFk == fase.Id))
+                        {
+                            <div class="kanban-card" id="proyecto-@proyecto.Id" data-proyecto-id="@proyecto.Id">
+                                <a asp-action="Detalles" asp-controller="PanelDeFases" asp-route-id="@proyecto.Id" class="card-link">
+                                    <h6>@proyecto.NombreProyecto</h6>
+                                    <p>Folio: @proyecto.Folio</p>
+                                </a>
+
+                                @{
+                                    bool puedeActuar = false;
+                                    // La Jefa siempre puede actuar
+                                    if (User.IsInRole("Jefa")) { puedeActuar = true; }
+                                    // Empleado1 solo puede actuar en la Fase 1
+                                    else if (User.IsInRole("Empleado1") && fase.Id == 1) { puedeActuar = true; }
+                                    // Empleado2 solo puede actuar en la Fase 2
+                                    else if (User.IsInRole("Empleado2") && fase.Id == 2) { puedeActuar = true; }
+                                    // Empleado3 solo puede actuar en la Fase 3
+                                    else if (User.IsInRole("Empleado3") && fase.Id == 3) { puedeActuar = true; }
+                                }
+
+                                @if (puedeActuar && fase.Nombre != "Finalizado" && fase.Nombre != "Cancelado")
+                                {
+                                    <div class="card-actions mt-2">
+                                        <button class="btn btn-sm btn-success btn-avanzar-fase" title="Aprobar y Avanzar">
+                                            <i class="bi bi-check-circle-fill"></i> Avanzar
+                                        </button>
+
+                                        @if (fase.Id > 1) // El botón de rechazar solo aparece después de la primera fase
+                                        {
+                                            <button class="btn btn-sm btn-danger btn-rechazar-fase" title="Rechazar / Devolver">
+                                                <i class="bi bi-x-circle-fill"></i> Rechazar
+                                            </button>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+              
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+    <script src="~/js/panelDeFases.js" asp-append-version="true"></script>
+}

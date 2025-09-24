@@ -1,0 +1,227 @@
+﻿@model ProyectoCGAPYS.Models.Proyectos
+@{
+    ViewData["Title"] = "Detalles del Proyecto";
+}
+
+<link rel="stylesheet" href="~/css/Detalles.css" asp-append-version="true" />
+
+<div class="container mt-4">
+    <div class="project-header">
+        <div>
+            <h1 class="project-title">@Model.NombreProyecto</h1>
+            <p class="project-folio">Folio: @Model.Folio</p>
+        </div>
+        <a asp-action="Index" class="btn btn-light"><i class="bi bi-arrow-left"></i> Volver a la Lista</a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm info-card">
+                <div class="card-body">
+                    <h5 class="card-title-section">Información General</h5>
+                    <dl class="details-list">
+                        <dt>Descripción</dt>
+                        <dd>@Model.Descripcion</dd>
+
+                        <dt>Responsable</dt>
+                        <dd>@Model.NombreResponsable</dd>
+
+                        <dt>Campus</dt>
+                        <dd>@Model.Campus.Nombre</dd>
+
+                        <dt>Dependencia</dt>
+                        <dd>@Model.Dependencia.Nombre</dd>
+                    </dl>
+
+                    <h5 class="card-title-section mt-4">Datos Financieros y Fechas</h5>
+                    <dl class="details-list">
+                        <dt>Tipo de Fondo</dt>
+                        <dd>@Model.TipoFondo.Nombre</dd>
+
+                        <dt>Presupuesto</dt>
+                        <dd>@Model.Presupuesto.ToString("C")</dd>
+
+                        <dt>Fecha de Solicitud</dt>
+                        <dd>@Model.FechaSolicitud?.ToString("dd 'de' MMMM 'de' yyyy")</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm status-card">
+                <div class="card-body">
+                    <h5 class="card-title-section">Control de Fases</h5>
+
+                    <div class="phase-control">
+                        <div class="current-phase">
+                            <span>Fase Actual</span>
+                            <h5>@Model.Fase.Nombre</h5>
+                        </div>
+
+                        <div class="next-phase-actions">
+                            @{
+                                bool puedeActuarEnDetalle = false;
+                                if (User.IsInRole("Jefa")) { puedeActuarEnDetalle = true; }
+                                else if (User.IsInRole("Empleado1") && Model.IdFaseFk == 1) { puedeActuarEnDetalle = true; }
+                                else if (User.IsInRole("Empleado2") && Model.IdFaseFk == 2) { puedeActuarEnDetalle = true; }
+                                else if (User.IsInRole("Empleado3") && Model.IdFaseFk == 3) { puedeActuarEnDetalle = true; }
+                            }
+
+                            @if (puedeActuarEnDetalle)
+                            {
+                                <h6>Siguiente Fase:</h6>
+                                <button id="btn-avanzar-fase" class="btn btn-success w-100" data-proyecto-id="@Model.Id">
+                                    Aprobar y Avanzar
+                                </button>
+                                <button id="btn-rechazar-fase" class="btn btn-danger w-100 mt-2" data-proyecto-id="@Model.Id">
+                                    Rechazar / Devolver
+                                </button>
+                            }
+                            else
+                            {
+                                <p class="text-muted small">No tienes permisos para realizar acciones en esta fase.</p>
+                            }
+                        </div>
+
+                        <div class="phase-history mt-4">
+                            <h6>Historial de Fases</h6>
+                            <ul class="history-list">
+                                @if (ViewBag.Historial != null && ViewBag.Historial.Count > 0)
+                                {
+                                    @foreach (var registro in ViewBag.Historial)
+                                    {
+                                        <li class="history-item">
+                                            <div class="history-icon">
+                                                @if (registro.TipoCambio == "Rechazado")
+                                                {
+                                                    <i class="bi bi-x-circle-fill text-danger"></i>
+                                                }
+                                                else
+                                                {
+                                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                                }
+                                            </div>
+                                            <div class="history-content">
+                                                <span class="history-date">@registro.FechaCambio.ToString("dd/MM/yyyy 'a las' HH:mm")</span>
+                                                <strong>@registro.TipoCambio</strong>
+                                                @if (!string.IsNullOrEmpty(registro.Comentario))
+                                                {
+                                                    <p class="history-comment">"@registro.Comentario"</p>
+                                                }
+                                            </div>
+                                        </li>
+                                    }
+                                }
+                                else
+                                {
+                                    <li class="history-item-empty">
+                                        <p class="text-muted small">No hay registros en el historial para este proyecto.</p>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnAvanzar = document.getElementById('btn-avanzar-fase');
+
+            if (btnAvanzar) {
+                btnAvanzar.addEventListener('click', function() {
+                    const proyectoId = this.dataset.proyectoId;
+                    const nuevaFaseId = this.dataset.faseSiguienteId;
+
+                    // 1. Pedimos confirmación
+                    Swal.fire({
+                        title: '¿Estás seguro?',
+                        text: "El proyecto avanzará a la siguiente fase y se notificará a los responsables.",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#28a745',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Sí, ¡avanzar!',
+                        cancelButtonText: 'Cancelar'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // 2. Si confirma, llamamos a la API
+                            // DESPUÉS
+                            fetch(`/Proyecto/AvanzarFaseProyecto?proyectoId=${proyectoId}`, {
+                                method: 'POST'
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    Swal.fire(
+                                        '¡Actualizado!',
+                                        'El proyecto ha avanzado de fase.',
+                                        'success'
+                                    ).then(() => {
+                                        // 3. Recargamos la página para ver el cambio
+                                        location.reload();
+                                    });
+                                } else {
+                                    Swal.fire('Error', data.message, 'error');
+                                }
+                            });
+                        }
+                    });
+                });
+            }
+
+const btnRechazar = document.getElementById('btn-rechazar-fase');
+
+if (btnRechazar) {
+    btnRechazar.addEventListener('click', function() {
+        const proyectoId = this.dataset.proyectoId; // Necesitarás añadir data-proyecto-id="@Model.Id" al botón de rechazar en el HTML
+
+        // 1. Pedimos el motivo del rechazo con un pop-up
+        Swal.fire({
+            title: 'Rechazar Avance de Fase',
+            input: 'textarea',
+            inputLabel: 'Motivo del rechazo',
+            inputPlaceholder: 'Escribe aquí por qué se rechaza el avance...',
+            inputAttributes: {
+                'aria-label': 'Escribe aquí por qué se rechaza el avance'
+            },
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            confirmButtonText: 'Registrar Rechazo',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            // 2. Si el usuario escribió algo y confirmó
+            if (result.isConfirmed && result.value) {
+                const comentario = result.value;
+
+                // 3. Llamamos a nuestra nueva API en el controlador
+                fetch(`/Proyecto/RechazarFase?proyectoId=${proyectoId}&comentario=${encodeURIComponent(comentario)}`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('Registrado', data.message, 'success')
+                        .then(() => {
+                            location.reload(); // Recargamos para ver el historial (en el futuro)
+                        });
+                    } else {
+                        Swal.fire('Error', data.message, 'error');
+                    }
+                });
+            } else if (result.isConfirmed && !result.value) {
+                Swal.fire('Error', 'El comentario no puede estar vacío.', 'warning');
+            }
+        });
+    });
+}
+        });
+    </script>
+}

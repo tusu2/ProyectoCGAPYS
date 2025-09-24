@@ -38,6 +38,14 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link @(currentController == "PanelDeFases" ? "active" : "")" asp-controller="PanelDeFases" asp-action="Index">
+                                <i class="bi bi-kanban-fill"></i>
+                                <span>Panel de fases</span>
+                            </a>
+                                
+                   
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link @(currentController == "Proyecto" ? "active" : "")" asp-controller="Proyecto" asp-action="Index">
                                 <i class="bi bi-map-fill"></i>
                                 <span>Proyectos</span>
@@ -50,6 +58,9 @@
                             </a>
                         </li>
                     </ul>
+                    <div class="ms-auto">
+                        <partial name="_LoginPartial" />
+                    </div>
                 </div>
             </div>
         </nav>
@@ -138,7 +149,7 @@
             const sidebar = document.querySelector('.sidebar');
             const toggleButton = document.getElementById('sidebar-toggle');
             const mainContent = document.querySelector('.contenido-principal');
-           // const toggleIcon = toggleButton.querySelector('i'); // Seleccionamos la etiqueta <i>
+           //const toggleIcon = toggleButton.querySelector('i'); // Seleccionamos la etiqueta <i>
             const openBtn = document.getElementById('more-modules-btn');
             const closeBtn = document.getElementById('close-sheet-btn');
             const sheet = document.getElementById('mobile-modules-sheet');
@@ -172,16 +183,22 @@
                     toggleButton.title = 'Contraer menú';
                 }
             }
+           
 
-            // Evento de clic
-            toggleButton.addEventListener('click', function () {
-                sidebar.classList.toggle('collapsed');
-                mainContent.classList.toggle('collapsed');
-                updateIcon(); // Llamamos a la función para que cambie el ícono
-            });
+            // 2. Comprobamos SI EXISTE ese botón en la página actual.
+            if (toggleButton) {
 
-            // Asegurarse de que el ícono sea el correcto al cargar la página
-            updateIcon();
+                // 3. SOLO SI EXISTE, le agregamos el 'escuchador' de eventos de clic.
+                toggleButton.addEventListener('click', function () {
+                    // El código de adentro, que ya funciona, se queda igual.
+                    sidebar.classList.toggle('collapsed');
+                    mainContent.classList.toggle('collapsed');
+                    updateIcon();
+                });
+
+       
+                updateIcon();
+            }
         });
     
     </script>

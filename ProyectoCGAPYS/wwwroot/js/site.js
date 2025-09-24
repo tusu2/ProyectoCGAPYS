@@ -69,6 +69,8 @@ function renderizarProyectos(proyectos, listaProyectosUl) {
     }
 }
 
+
+
 function crearMarcadorEnMapa(proyecto, modal, modalNombreProyecto, modalDetalles) {
     const lat = parseFloat(proyecto.latitud);
     const lon = parseFloat(proyecto.longitud);

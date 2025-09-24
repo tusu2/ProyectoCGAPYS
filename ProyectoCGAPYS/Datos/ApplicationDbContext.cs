@@ -1,10 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ProyectoCGAPYS.Models;
 using ProyectoCGAPYS.ViewModels; // <-- ¡ESTA ES LA LÍNEA QUE SOLUCIONA EL ERROR!
 
 namespace ProyectoCGAPYS.Datos
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
@@ -29,7 +30,9 @@ namespace ProyectoCGAPYS.Datos
         public DbSet<FondoViewModel> FondoViewModels { get; set; }
         public DbSet<FaseViewModel> FaseViewModels { get; set; }
         public DbSet<ProyectoAlertaViewModel> ProyectoAlertaViewModels { get; set; }
-      
+        public DbSet<HistorialFase> HistorialFases { get; set; }
+
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

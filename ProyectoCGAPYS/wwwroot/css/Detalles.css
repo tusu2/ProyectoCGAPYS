@@ -1,0 +1,47 @@
+﻿/* --- Estilos para la Bitácora de Historial --- */
+.history-list {
+    list-style: none;
+    padding: 0;
+    margin-top: 1rem;
+}
+
+.history-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 1rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+    .history-item:last-child {
+        border-bottom: none;
+    }
+
+.history-icon {
+    font-size: 1.5rem;
+    margin-right: 1rem;
+    margin-top: 2px;
+}
+
+.history-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.history-date {
+    font-size: 0.8rem;
+    color: #999;
+}
+
+.history-content strong {
+    font-weight: 600;
+}
+
+.history-comment {
+    margin-top: 0.5rem;
+    font-style: italic;
+    color: #555;
+    background-color: #f8f9fa;
+    border-left: 3px solid #dee2e6;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+}
