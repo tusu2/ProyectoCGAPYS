@@ -16,7 +16,9 @@
             <i class="bi bi-check-lg"></i> Confirmar Cambios
         </button>
     </div>
-    <div class="kanban-board">
+    <div class="kanban-board"
+         data-puede-arrastrar="@User.IsInRole("Jefa").ToString().ToLower()"
+         data-user-roles="@Html.Raw(Json.Serialize(User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.Role).Select(c => c.Value).ToList()))">
         @if (fases != null)
         {
             // --- BUCLE EXTERIOR: Construye las COLUMNAS (las "repisas") ---
@@ -34,12 +36,32 @@
 
                         @foreach (var proyecto in Model.Where(p => p.IdFaseFk == fase.Id))
                         {
-                            <div class="kanban-card" id="proyecto-@proyecto.Id" data-proyecto-id="@proyecto.Id">
-                                <a asp-action="Detalles" asp-controller="PanelDeFases" asp-route-id="@proyecto.Id" class="card-link">
-                                    <h6>@proyecto.NombreProyecto</h6>
-                                    <p>Folio: @proyecto.Folio</p>
-                                </a>
+                            <div class="kanban-card" id="proyecto-@proyecto.Id" data-proyecto-id="@proyecto.Id" data-fase-origen-id="@fase.Id">
 
+                                @{
+                                    bool puedeVerDetalles =
+                                    User.IsInRole("Jefa") ||
+                                    (User.IsInRole("Empleado1") && fase.Id == 1) ||
+                                    (User.IsInRole("Empleado2") && fase.Id == 2) ||
+                                    (User.IsInRole("Empleado3") && fase.Id == 3);
+                                }
+
+                                @if (puedeVerDetalles)
+                                {
+                                    // Si tiene permiso, la información es un enlace a los detalles
+                                    <a asp-action="Detalles" asp-controller="PanelDeFases" asp-route-id="@proyecto.Id" class="card-link">
+                                        <h6>@proyecto.NombreProyecto</h6>
+                                        <p>Folio: @proyecto.Folio</p>
+                                    </a>
+                                }
+                                else
+                                {
+                                    // Si no tiene permiso, es solo texto (no clicable)
+                                    <div class="card-link">
+                                        <h6>@proyecto.NombreProyecto</h6>
+                                        <p>Folio: @proyecto.Folio</p>
+                                    </div>
+                                }
                                 @{
                                     bool puedeActuar = false;
                                     // La Jefa siempre puede actuar
@@ -59,7 +81,7 @@
                                             <i class="bi bi-check-circle-fill"></i> Avanzar
                                         </button>
 
-                                        @if (fase.Id > 1) // El botón de rechazar solo aparece después de la primera fase
+                                        @if (fase.Id > 1)
                                         {
                                             <button class="btn btn-sm btn-danger btn-rechazar-fase" title="Rechazar / Devolver">
                                                 <i class="bi bi-x-circle-fill"></i> Rechazar
@@ -76,6 +98,27 @@
         }
     </div>
 </div>
+<script>
+    let permisoFaseUsuario = 0; // Valor por defecto para un rol sin fase específica
+    @if (User.IsInRole("Jefa"))
+    {
+        @:permisoFaseUsuario = -1; // Un código especial para "acceso total"
+    }
+    else if (User.IsInRole("Empleado1"))
+    {
+        @:permisoFaseUsuario = 1;
+    }
+    else if (User.IsInRole("Empleado2"))
+    {
+        @:permisoFaseUsuario = 2;
+    }
+    else if (User.IsInRole("Empleado3"))
+    {
+        @:permisoFaseUsuario = 3;
+    }
+
+         const userRoles = @Html.Raw(Json.Serialize(User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.Role).Select(c => c.Value).ToList()));
+</script>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

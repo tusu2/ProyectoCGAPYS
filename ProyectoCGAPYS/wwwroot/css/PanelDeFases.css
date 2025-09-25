@@ -137,3 +137,13 @@
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     font-weight: 500;
 }
+.card-link.link-disabled {
+    cursor: default; /* El cursor se queda como una flecha normal */
+    pointer-events: none; /* ¡LA CLAVE! El enlace ignora completamente los clics. */
+}
+
+    /* Opcional: Hacemos que el texto del enlace desactivado no cambie de color al pasar el mouse */
+    .card-link.link-disabled:hover h6 {
+        color: inherit;
+        text-decoration: none;
+    }

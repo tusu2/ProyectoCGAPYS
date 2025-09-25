@@ -58,5 +58,13 @@ public static class DbSeeder
             // ...se lo asignamos.
             await userManager.AddToRoleAsync(empleado2, "Empleado2");
         }
+        var empleado3= await userManager.FindByEmailAsync("empleado3@uadec.mx");
+
+        // Si el usuario existe y AÚN NO tiene el rol de "Empleado2"...
+        if (empleado3 != null && !(await userManager.IsInRoleAsync(empleado3, "Empleado3")))
+        {
+            // ...se lo asignamos.
+            await userManager.AddToRoleAsync(empleado3, "Empleado3");
+        }
     }
 }

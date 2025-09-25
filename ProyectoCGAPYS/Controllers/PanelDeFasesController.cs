@@ -20,43 +20,15 @@ namespace ProyectoCGAPYS.Controllers
         public async Task<IActionResult> Index()
         {
             var user = await _userManager.GetUserAsync(User); // Obtenemos el usuario actual
-            var roles = await _userManager.GetRolesAsync(user); // Obtenemos sus roles
+            var proyectosActivos = await _context.Proyectos
+            .Include(p => p.Fase)
+            .Where(p => p.Fase != null && p.Fase.Nombre != "Finalizado" && p.Fase.Nombre != "Cancelado")
+            .ToListAsync();
 
-            IQueryable<Proyectos> proyectosQuery = _context.Proyectos
-                .Include(p => p.Fase)
-               .Where(p => p.Fase != null && p.Fase.Nombre != "Finalizado" && p.Fase.Nombre != "Cancelado");
-
-            // --- ¡AQUÍ ESTÁ LA MAGIA DEL FILTRADO POR ROL! ---
-            if (roles.Contains("Jefa"))
-            {
-                // La jefa ve todos los proyectos activos, no se aplica filtro extra.
-            }
-            else if (roles.Contains("Empleado1"))
-            {
-                // Empleado1 solo ve los proyectos en Fase 1 (Recepción / Análisis)
-                proyectosQuery = proyectosQuery.Where(p => p.IdFaseFk == 1);
-            }
-            else if (roles.Contains("Empleado2"))
-            {
-                // Empleado2 solo ve los proyectos en Fase 2 (Elaboración de Anteproyecto)
-                proyectosQuery = proyectosQuery.Where(p => p.IdFaseFk == 2);
-            }
-            else if (roles.Contains("Empleado3"))
-            {
-                // Empleado3 solo ve los proyectos en Fase 3 (Elaboración de Presupuesto)
-                proyectosQuery = proyectosQuery.Where(p => p.IdFaseFk == 3);
-            }
-            else
-            {
-                // Si el usuario no tiene un rol relevante, no ve ningún proyecto.
-                proyectosQuery = proyectosQuery.Where(p => false);
-            }
-
-            var proyectosActivos = await proyectosQuery.ToListAsync();
             var todasLasFases = await _context.Fases.OrderBy(f => f.Orden).ToListAsync();
 
             ViewBag.Fases = todasLasFases;
-            return View( proyectosActivos);
+            return View("Index", proyectosActivos);
         }
 
         // GET: PanelDeFasesController/Details/5
@@ -216,6 +188,8 @@ namespace ProyectoCGAPYS.Controllers
         {
             public string ProyectoId { get; set; }
             public int NuevaFaseId { get; set; }
+            public string Tipo { get; set; }
+            public string Comentario { get; set; }
         }
         [HttpPost]
         public async Task<JsonResult> GuardarCambiosDeFase([FromBody] List<CambioFaseRequest> cambios)
@@ -224,7 +198,6 @@ namespace ProyectoCGAPYS.Controllers
             {
                 return Json(new { success = false, message = "No se recibieron cambios." });
             }
-
             foreach (var cambio in cambios)
             {
                 var proyecto = await _context.Proyectos.FindAsync(cambio.ProyectoId);
@@ -233,18 +206,19 @@ namespace ProyectoCGAPYS.Controllers
                     var faseActualId = proyecto.IdFaseFk;
                     proyecto.IdFaseFk = cambio.NuevaFaseId;
 
-                    // Creamos el registro en el historial
                     var registroHistorial = new HistorialFase
                     {
                         ProyectoId = cambio.ProyectoId,
                         FaseAnteriorId = faseActualId,
                         FaseNuevaId = cambio.NuevaFaseId,
-                        TipoCambio = "Aprobado (Arrastre)",
-                        Comentario = "Movimiento de fase en el panel Kanban."
+                        TipoCambio = cambio.Tipo == "Avance" ? "Aprobado (Arrastre)" : "Devuelto (Arrastre)",
+                        // ¡USAREMOS EL COMENTARIO QUE NOS LLEGA!
+                        Comentario = cambio.Comentario
                     };
                     _context.HistorialFases.Add(registroHistorial);
                 }
             }
+
 
             await _context.SaveChangesAsync();
             return Json(new { success = true, message = "¡Todos los cambios han sido guardados!" });
