@@ -14,8 +14,12 @@ using Azure.Core;
 using System;
 using SendGrid.Helpers.Mail;
 using SendGrid;
-namespace TuProyecto.Controllers
+using Microsoft.AspNetCore.Authorization;
+
+namespace ProyectoCGAPYS.Controllers
 {
+    [Authorize(Roles = "Jefa")]
+
     public class DashboardController : Controller
     {
         private readonly ApplicationDbContext _context;

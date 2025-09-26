@@ -31,7 +31,7 @@ namespace ProyectoCGAPYS.Datos
         public DbSet<FaseViewModel> FaseViewModels { get; set; }
         public DbSet<ProyectoAlertaViewModel> ProyectoAlertaViewModels { get; set; }
         public DbSet<HistorialFase> HistorialFases { get; set; }
-
+        public DbSet<DocumentosProyecto> DocumentosProyectos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

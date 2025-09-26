@@ -1,12 +1,16 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProyectoCGAPYS.Datos;
 using ProyectoCGAPYS.Models;
+using System.Security.Claims;
+using System.Security.Claims;
 
 namespace ProyectoCGAPYS.Controllers
 {
+    [Authorize]
     public class PanelDeFasesController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -51,8 +55,6 @@ namespace ProyectoCGAPYS.Controllers
 
 
 
-
-
         public async Task<IActionResult> Detalles(string id)
         {
             if (id == null)
@@ -60,12 +62,14 @@ namespace ProyectoCGAPYS.Controllers
                 return NotFound();
             }
 
+            // Esta parte para obtener el proyecto principal está correcta.
             var proyecto = await _context.Proyectos
                 .Include(p => p.Fase)
                 .Include(p => p.Campus)
                 .Include(p => p.Dependencia)
                 .Include(p => p.TipoFondo)
                 .Include(p => p.TipoProyecto)
+                .Include(p => p.Documentos)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (proyecto == null)
@@ -73,11 +77,23 @@ namespace ProyectoCGAPYS.Controllers
                 return NotFound();
             }
 
+            // --- SECCIÓN ACTUALIZADA ---
+            // Aquí transformamos los datos del historial al ViewModel que la vista necesita.
+            var historialParaLaVista = await _context.HistorialFases
+                .Include(h => h.Usuario) // Importante: Carga los datos del usuario relacionado
+                .Where(h => h.ProyectoId == id)
+                .OrderByDescending(h => h.FechaCambio)
+                .Select(h => new HistorialViewModel // "Traducimos" cada registro
+                {
+                    FechaCambio = h.FechaCambio,
+                    TipoCambio = h.TipoCambio,
+                    Comentario = h.Comentario,
+                    // Acceso seguro al nombre de usuario. Si no hay usuario, muestra "Sistema".
+                    NombreUsuario = h.Usuario.UserName ?? "Sistema"
+                })
+                .ToListAsync();
 
-            ViewBag.Historial = await _context.HistorialFases
-                                        .Where(h => h.ProyectoId == id)
-                                        .OrderByDescending(h => h.FechaCambio)
-                                        .ToListAsync();
+            ViewBag.Historial = historialParaLaVista;
 
             return View(proyecto);
         }
@@ -168,6 +184,7 @@ namespace ProyectoCGAPYS.Controllers
 
             // Actualizamos el proyecto y guardamos el historial
             proyecto.IdFaseFk = nuevaFaseId;
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             var registroHistorial = new HistorialFase
             {
@@ -175,7 +192,8 @@ namespace ProyectoCGAPYS.Controllers
                 FaseAnteriorId = faseActualId,
                 FaseNuevaId = nuevaFaseId,
                 TipoCambio = "Aprobado",
-                Comentario = "Avance de fase automático."
+                Comentario = "Avance de fase automático.",
+                UsuarioId = userId
             };
             _context.HistorialFases.Add(registroHistorial);
 
@@ -213,7 +231,9 @@ namespace ProyectoCGAPYS.Controllers
                         FaseNuevaId = cambio.NuevaFaseId,
                         TipoCambio = cambio.Tipo == "Avance" ? "Aprobado (Arrastre)" : "Devuelto (Arrastre)",
                         // ¡USAREMOS EL COMENTARIO QUE NOS LLEGA!
-                        Comentario = cambio.Comentario
+                        Comentario = cambio.Comentario,
+
+
                     };
                     _context.HistorialFases.Add(registroHistorial);
                 }
@@ -222,6 +242,59 @@ namespace ProyectoCGAPYS.Controllers
 
             await _context.SaveChangesAsync();
             return Json(new { success = true, message = "¡Todos los cambios han sido guardados!" });
+        }
+        [HttpPost]
+        public async Task<IActionResult> SubirDocumento(string proyectoId, IFormFile archivo, string descripcion)
+        {
+            if (archivo == null || archivo.Length == 0)
+            {
+                return BadRequest("No se ha seleccionado ningún archivo.");
+            }
+
+            var proyecto = await _context.Proyectos.FindAsync(proyectoId);
+            if (proyecto == null) return NotFound();
+
+            // Creamos una ruta segura para guardar el archivo
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "proyectos");
+            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+            var uniqueFileName = Guid.NewGuid().ToString() + "_" + archivo.FileName;
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await archivo.CopyToAsync(stream);
+            }
+
+            var documento = new DocumentosProyecto
+            {
+                ProyectoId = proyectoId,
+                NombreArchivo = archivo.FileName,
+                RutaArchivo = "/uploads/proyectos/" + uniqueFileName, // Ruta web
+                Descripcion = descripcion
+            };
+
+            _context.DocumentosProyectos.Add(documento);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("Detalles", new { id = proyectoId });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DescargarDocumento(int documentoId)
+        {
+            var documento = await _context.DocumentosProyectos.FindAsync(documentoId);
+            if (documento == null) return NotFound();
+
+            var memory = new MemoryStream();
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", documento.RutaArchivo.TrimStart('/'));
+            using (var stream = new FileStream(path, FileMode.Open))
+            {
+                await stream.CopyToAsync(memory);
+            }
+            memory.Position = 0;
+
+            return File(memory, "application/octet-stream", documento.NombreArchivo);
         }
     }
 }

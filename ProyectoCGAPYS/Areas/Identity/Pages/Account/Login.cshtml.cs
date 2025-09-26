@@ -17,15 +17,18 @@ using Microsoft.Extensions.Logging;
 
 namespace ProyectoCGAPYS.Areas.Identity.Pages.Account
 {
+    [AllowAnonymous]
     public class LoginModel : PageModel
     {
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly ILogger<LoginModel> _logger;
+        private readonly UserManager<IdentityUser> _userManager;
 
-        public LoginModel(SignInManager<IdentityUser> signInManager, ILogger<LoginModel> logger)
+        public LoginModel(SignInManager<IdentityUser> signInManager, ILogger<LoginModel> logger, UserManager<IdentityUser> userManager)
         {
             _signInManager = signInManager;
             _logger = logger;
+            _userManager = userManager;
         }
 
         /// <summary>
@@ -105,35 +108,48 @@ namespace ProyectoCGAPYS.Areas.Identity.Pages.Account
         {
             returnUrl ??= Url.Content("~/");
 
-            ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-
             if (ModelState.IsValid)
             {
-                // This doesn't count login failures towards account lockout
-                // To enable password failures to trigger account lockout, set lockoutOnFailure: true
                 var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
                 if (result.Succeeded)
                 {
-                    _logger.LogInformation("User logged in.");
-                    return LocalRedirect(returnUrl);
+                    _logger.LogInformation("Usuario '{Email}' logueado exitosamente.", Input.Email);
+
+                    // Lógica de redirección inteligente
+                    var user = await _userManager.FindByEmailAsync(Input.Email);
+                    var isJefa = await _userManager.IsInRoleAsync(user, "Jefa");
+
+                    if (isJefa)
+                    {
+                        // Si es Jefa, la mandamos al Dashboard (o a donde quería ir).
+                        _logger.LogInformation("Usuario es Jefa. Redirigiendo a {ReturnUrl}.", returnUrl);
+                        return LocalRedirect(returnUrl);
+                    }
+                    else
+                    {
+                        // Si es cualquier otro rol, lo mandamos SIEMPRE al PanelDeFases.
+                        _logger.LogInformation("Usuario no es Jefa. Forzando redirección a /PanelDeFases.");
+                        return Redirect("/PanelDeFases");
+                    }
                 }
+
+                // ... (El resto del código para TwoFactor, Lockout, etc., se queda igual) ...
                 if (result.RequiresTwoFactor)
                 {
                     return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
                 }
                 if (result.IsLockedOut)
                 {
-                    _logger.LogWarning("User account locked out.");
+                    _logger.LogWarning("La cuenta del usuario '{Email}' está bloqueada.", Input.Email);
                     return RedirectToPage("./Lockout");
                 }
                 else
                 {
-                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                    ModelState.AddModelError(string.Empty, "Intento de inicio de sesión no válido.");
                     return Page();
                 }
             }
 
-            // If we got this far, something failed, redisplay form
             return Page();
         }
     }

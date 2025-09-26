@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ProyectoCGAPYS.Datos; // Tu DbContext
@@ -6,6 +7,7 @@ using ProyectoCGAPYS.Models; // Tus modelos de EF Core
 
 namespace ProyectoCGAPYS.Controllers
 {
+    [Authorize(Roles = "Jefa")]
     public class ProyectoController : Controller
     {
         private readonly ApplicationDbContext _context;

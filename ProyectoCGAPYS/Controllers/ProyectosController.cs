@@ -7,8 +7,11 @@ using ProyectoCGAPYS.ViewModels;
 using System.Linq;
 using System.Threading.Tasks;
 using ProyectoCGAPYS.ViewModels;
+using Microsoft.AspNetCore.Authorization;
+[Authorize(Roles = "Jefa")]
 public class ProyectosController : Controller
 {
+    
     private readonly ApplicationDbContext _context;
 
     public ProyectosController(ApplicationDbContext context)

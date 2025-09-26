@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using QuestPDF.Infrastructure;
 using Microsoft.AspNetCore.Identity;
 using ProyectoCGAPYS.Data;
+using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 QuestPDF.Settings.License = LicenseType.Community;
@@ -18,7 +19,13 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
     .AddEntityFrameworkStores<ApplicationDbContext>();
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+           .RequireAuthenticatedUser()
+           .RequireRole("Jefa")
+           .Build();
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -37,9 +44,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 
+
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Dashboard}/{action=Index}/{id?}");
+    pattern: "{controller=PanelDeFases}/{action=Index}/{id?}");
 app.MapRazorPages();
 // En Program.cs, justo antes de app.Run()
 
@@ -61,4 +69,4 @@ using (var scope = app.Services.CreateScope())
 //==============================================================
 
 app.Run();
-app.Run();
+

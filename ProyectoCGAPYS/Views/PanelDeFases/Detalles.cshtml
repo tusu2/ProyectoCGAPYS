@@ -4,125 +4,213 @@
 }
 
 <link rel="stylesheet" href="~/css/Detalles.css" asp-append-version="true" />
-
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+</br>
+</br>
+</br>
 <div class="container mt-4">
     <div class="project-header">
         <div>
             <h1 class="project-title">@Model.NombreProyecto</h1>
             <p class="project-folio">Folio: @Model.Folio</p>
         </div>
-        <a asp-action="Index" class="btn btn-light"><i class="bi bi-arrow-left"></i> Volver a la Lista</a>
+        <a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Volver a la Lista</a>
     </div>
 
     <div class="row g-4">
         <div class="col-lg-8">
             <div class="card shadow-sm info-card">
-                <div class="card-body">
-                    <h5 class="card-title-section">Información General</h5>
-                    <dl class="details-list">
+                <div class="card-body p-4">
+                    <h5 class="card-title-section"><i class="bi bi-info-circle-fill"></i>Información General</h5>
+                    <dl class="details-grid">
                         <dt>Descripción</dt>
                         <dd>@Model.Descripcion</dd>
-
                         <dt>Responsable</dt>
                         <dd>@Model.NombreResponsable</dd>
-
                         <dt>Campus</dt>
                         <dd>@Model.Campus.Nombre</dd>
-
                         <dt>Dependencia</dt>
                         <dd>@Model.Dependencia.Nombre</dd>
                     </dl>
 
-                    <h5 class="card-title-section mt-4">Datos Financieros y Fechas</h5>
-                    <dl class="details-list">
+                    <h5 class="card-title-section mt-4"><i class="bi bi-calendar-check-fill"></i>Datos Financieros y Fechas</h5>
+                    <dl class="details-grid">
                         <dt>Tipo de Fondo</dt>
                         <dd>@Model.TipoFondo.Nombre</dd>
-
                         <dt>Presupuesto</dt>
                         <dd>@Model.Presupuesto.ToString("C")</dd>
-
                         <dt>Fecha de Solicitud</dt>
                         <dd>@Model.FechaSolicitud?.ToString("dd 'de' MMMM 'de' yyyy")</dd>
                     </dl>
+
+                    @if (!string.IsNullOrEmpty(Model.Latitud) && !string.IsNullOrEmpty(Model.Longitud))
+                    {
+                        <h5 class="card-title-section mt-4"><i class="bi bi-geo-alt-fill"></i>Ubicación del Proyecto</h5>
+                        <div id="mapa-proyecto"></div>
+                    }
                 </div>
+            </div>
+
+            <div class="card shadow-sm info-card mt-4">
+
+                <div class="card-body p-4">
+
+                    <h5 class="card-title-section"><i class="bi bi-file-earmark-arrow-up-fill"></i> Documentos del Proyecto</h5>
+
+
+
+                    @if (Model.Documentos != null && Model.Documentos.Any())
+
+                    {
+
+                        <ul class="list-group list-group-flush mb-4">
+
+                            @foreach (var doc in Model.Documentos)
+
+                            {
+
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+
+                                    <div>
+
+                                        <strong>@doc.NombreArchivo</strong>
+
+                                        <small class="d-block text-muted">@doc.Descripcion</small>
+
+                                    </div>
+
+                                    <a asp-action="DescargarDocumento" asp-route-documentoId="@doc.Id" class="btn btn-sm btn-outline-primary">
+
+                                        <i class="bi bi-download"></i> Descargar
+
+                                    </a>
+
+                                </li>
+
+                            }
+
+                        </ul>
+
+                    }
+
+                    else
+
+                    {
+
+                        <p class="text-muted text-center">No hay documentos adjuntos.</p>
+
+                    }
+
+
+
+                    <hr />
+
+                    <h6>Subir Nuevo Documento</h6>
+
+                    <form asp-action="SubirDocumento" method="post" enctype="multipart/form-data">
+
+                        <input type="hidden" name="proyectoId" value="@Model.Id" />
+
+                        <div class="mb-3">
+
+                            <label for="descripcion" class="form-label">Descripción (opcional)</label>
+
+                            <input type="text" name="descripcion" class="form-control" />
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label for="archivo" class="form-label">Seleccionar Archivo</label>
+
+                            <input type="file" name="archivo" class="form-control" required />
+
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+
+                            <i class="bi bi-upload"></i> Subir Archivo
+
+                        </button>
+
+                    </form>
+
+                </div>
+
             </div>
         </div>
 
+   
         <div class="col-lg-4">
             <div class="card shadow-sm status-card">
-                <div class="card-body">
-                    <h5 class="card-title-section">Control de Fases</h5>
-
-                    <div class="phase-control">
-                        <div class="current-phase">
-                            <span>Fase Actual</span>
-                            <h5>@Model.Fase.Nombre</h5>
-                        </div>
-
-                        <div class="next-phase-actions">
-                            @{
-                                bool puedeActuarEnDetalle = false;
-                                if (User.IsInRole("Jefa")) { puedeActuarEnDetalle = true; }
-                                else if (User.IsInRole("Empleado1") && Model.IdFaseFk == 1) { puedeActuarEnDetalle = true; }
-                                else if (User.IsInRole("Empleado2") && Model.IdFaseFk == 2) { puedeActuarEnDetalle = true; }
-                                else if (User.IsInRole("Empleado3") && Model.IdFaseFk == 3) { puedeActuarEnDetalle = true; }
-                            }
-
-                            @if (puedeActuarEnDetalle)
-                            {
-                                <h6>Siguiente Fase:</h6>
-                                <button id="btn-avanzar-fase" class="btn btn-success w-100" data-proyecto-id="@Model.Id">
-                                    Aprobar y Avanzar
-                                </button>
-                                <button id="btn-rechazar-fase" class="btn btn-danger w-100 mt-2" data-proyecto-id="@Model.Id">
-                                    Rechazar / Devolver
-                                </button>
-                            }
-                            else
-                            {
-                                <p class="text-muted small">No tienes permisos para realizar acciones en esta fase.</p>
-                            }
-                        </div>
-
-                        <div class="phase-history mt-4">
-                            <h6>Historial de Fases</h6>
-                            <ul class="history-list">
-                                @if (ViewBag.Historial != null && ViewBag.Historial.Count > 0)
-                                {
-                                    @foreach (var registro in ViewBag.Historial)
-                                    {
-                                        <li class="history-item">
-                                            <div class="history-icon">
-                                                @if (registro.TipoCambio == "Rechazado")
-                                                {
-                                                    <i class="bi bi-x-circle-fill text-danger"></i>
-                                                }
-                                                else
-                                                {
-                                                    <i class="bi bi-check-circle-fill text-success"></i>
-                                                }
-                                            </div>
-                                            <div class="history-content">
-                                                <span class="history-date">@registro.FechaCambio.ToString("dd/MM/yyyy 'a las' HH:mm")</span>
-                                                <strong>@registro.TipoCambio</strong>
-                                                @if (!string.IsNullOrEmpty(registro.Comentario))
-                                                {
-                                                    <p class="history-comment">"@registro.Comentario"</p>
-                                                }
-                                            </div>
-                                        </li>
-                                    }
-                                }
-                                else
-                                {
-                                    <li class="history-item-empty">
-                                        <p class="text-muted small">No hay registros en el historial para este proyecto.</p>
-                                    </li>
-                                }
-                            </ul>
-                        </div>
+                <div class="card-body p-4">
+                    <h5 class="card-title-section"><i class="bi bi-diagram-3-fill"></i>Control de Fases</h5>
+                    <div class="current-phase">
+                        <span>Fase Actual</span>
+                        <h5>@Model.Fase.Nombre</h5>
                     </div>
+                    <div class="next-phase-actions">
+                        @{
+                            bool puedeActuarEnDetalle = false;
+                            if (User.IsInRole("Jefa")) { puedeActuarEnDetalle = true; }
+                            else if (User.IsInRole("Empleado1") && Model.IdFaseFk == 1) { puedeActuarEnDetalle = true; }
+                            else if (User.IsInRole("Empleado2") && Model.IdFaseFk == 2) { puedeActuarEnDetalle = true; }
+                            else if (User.IsInRole("Empleado3") && Model.IdFaseFk == 3) { puedeActuarEnDetalle = true; }
+                        }
+                        @if (puedeActuarEnDetalle)
+                        {
+                            <h6>Acciones Disponibles:</h6>
+                            <button id="btn-avanzar-fase" class="btn btn-success w-100 mb-2" data-proyecto-id="@Model.Id"><i class="bi bi-check-circle-fill"></i> Aprobar y Avanzar</button>
+                            <button id="btn-rechazar-fase" class="btn btn-danger w-100" data-proyecto-id="@Model.Id"><i class="bi bi-x-octagon-fill"></i> Rechazar / Devolver</button>
+                        }
+                        else
+                        {
+                            <p class="text-muted small text-center">No tienes permisos para realizar acciones en esta fase.</p>
+                        }
+                    </div>
+                    <div class="phase-history mt-4">
+                           <h6>Historial de Fases</h6> 
+                 <ul class="timeline">
+    @if (ViewBag.Historial != null && ViewBag.Historial.Count > 0)
+    {
+        foreach (var registro in ViewBag.Historial)
+        {
+          <li class="timeline-item @if (registro.TipoCambio.Contains("Rechazado")) { <text>timeline-item--danger</text> } else if (registro.TipoCambio.Contains("Devuelto")) { <text>timeline-item--warning</text> } else { <text>timeline-item--success</text> }">
+    
+                
+                <div class="timeline-icon">
+                       @if (registro.TipoCambio.Contains("Rechazado"))
+        {
+            <i class="bi bi-x-circle-fill"></i>
+        }
+        else if (registro.TipoCambio.Contains("Devuelto")) // <-- LÓGICA AÑADIDA
+        {
+           <i class="bi bi-x-circle-fill"></i>// <-- NUEVO ÍCONO
+        }
+        else
+        {
+            <i class="bi bi-check-circle-fill"></i>
+        }
+                </div>
 
+                <div class="timeline-content">
+                    <div class="timeline-header">
+                        <span class="timeline-date">@registro.FechaCambio.ToString("dd/MM/yyyy 'a las' HH:mm")</span>
+                        <span class="timeline-user"><i class="bi bi-person-fill"></i> @registro.NombreUsuario</span>
+                    </div>
+                    <strong>@registro.TipoCambio</strong>
+                    @if (!string.IsNullOrEmpty(registro.Comentario))
+                    {
+                        <p class="timeline-comment">"@registro.Comentario"</p>
+                    }
+                </div>
+
+            </li>
+        }
+    }
+</ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -131,16 +219,39 @@
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // --- Lógica del mapa ---
+            // Verificamos si existe el div del mapa en la página
+            const mapContainer = document.getElementById('mapa-proyecto');
+            if (mapContainer) {
+                // Pasamos las coordenadas del modelo de C# a JavaScript
+                // Usamos parseFloat para convertir el string a número
+                const latitud = parseFloat('@Model.Latitud'.replace(',', '.'));
+                const longitud = parseFloat('@Model.Longitud'.replace(',', '.'));
+
+                // Creamos el mapa y lo centramos en las coordenadas del proyecto
+                const mapa = L.map('mapa-proyecto').setView([latitud, longitud], 16); // Zoom 16 para más detalle
+
+                // Añadimos la capa de OpenStreetMap
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(mapa);
+
+                // Añadimos un marcador en la ubicación del proyecto
+                L.marker([latitud, longitud]).addTo(mapa)
+                    .bindPopup('<b>@Model.NombreProyecto</b><br>Ubicación del proyecto.')
+                    .openPopup();
+            }
+
+            // --- Lógica de los botones (sin cambios) ---
             const btnAvanzar = document.getElementById('btn-avanzar-fase');
-
             if (btnAvanzar) {
-                btnAvanzar.addEventListener('click', function() {
+                btnAvanzar.addEventListener('click', function () {
+                    // ... (tu código original de avanzar fase aquí, no necesita cambios)
                     const proyectoId = this.dataset.proyectoId;
-                    const nuevaFaseId = this.dataset.faseSiguienteId;
-
-                    // 1. Pedimos confirmación
                     Swal.fire({
                         title: '¿Estás seguro?',
                         text: "El proyecto avanzará a la siguiente fase y se notificará a los responsables.",
@@ -152,76 +263,56 @@
                         cancelButtonText: 'Cancelar'
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            // 2. Si confirma, llamamos a la API
-                            // DESPUÉS
-                            fetch(`/Proyecto/AvanzarFaseProyecto?proyectoId=${proyectoId}`, {
+                            fetch(`/PanelDeFases/AvanzarFaseProyecto?proyectoId=${proyectoId}`, {
                                 method: 'POST'
                             })
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.success) {
-                                    Swal.fire(
-                                        '¡Actualizado!',
-                                        'El proyecto ha avanzado de fase.',
-                                        'success'
-                                    ).then(() => {
-                                        // 3. Recargamos la página para ver el cambio
-                                        location.reload();
-                                    });
-                                } else {
-                                    Swal.fire('Error', data.message, 'error');
-                                }
-                            });
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        Swal.fire('¡Actualizado!', 'El proyecto ha avanzado de fase.', 'success').then(() => location.reload());
+                                    } else {
+                                        Swal.fire('Error', data.message, 'error');
+                                    }
+                                });
                         }
                     });
                 });
             }
 
-const btnRechazar = document.getElementById('btn-rechazar-fase');
-
-if (btnRechazar) {
-    btnRechazar.addEventListener('click', function() {
-        const proyectoId = this.dataset.proyectoId; // Necesitarás añadir data-proyecto-id="@Model.Id" al botón de rechazar en el HTML
-
-        // 1. Pedimos el motivo del rechazo con un pop-up
-        Swal.fire({
-            title: 'Rechazar Avance de Fase',
-            input: 'textarea',
-            inputLabel: 'Motivo del rechazo',
-            inputPlaceholder: 'Escribe aquí por qué se rechaza el avance...',
-            inputAttributes: {
-                'aria-label': 'Escribe aquí por qué se rechaza el avance'
-            },
-            showCancelButton: true,
-            confirmButtonColor: '#dc3545',
-            confirmButtonText: 'Registrar Rechazo',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            // 2. Si el usuario escribió algo y confirmó
-            if (result.isConfirmed && result.value) {
-                const comentario = result.value;
-
-                // 3. Llamamos a nuestra nueva API en el controlador
-                fetch(`/Proyecto/RechazarFase?proyectoId=${proyectoId}&comentario=${encodeURIComponent(comentario)}`, {
-                    method: 'POST'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        Swal.fire('Registrado', data.message, 'success')
-                        .then(() => {
-                            location.reload(); // Recargamos para ver el historial (en el futuro)
-                        });
-                    } else {
-                        Swal.fire('Error', data.message, 'error');
-                    }
+            const btnRechazar = document.getElementById('btn-rechazar-fase');
+            if (btnRechazar) {
+                btnRechazar.addEventListener('click', function () {
+                    // ... (tu código original de rechazar fase aquí, no necesita cambios)
+                    const proyectoId = this.dataset.proyectoId;
+                    Swal.fire({
+                        title: 'Rechazar Avance de Fase',
+                        input: 'textarea',
+                        inputLabel: 'Motivo del rechazo',
+                        inputPlaceholder: 'Escribe aquí por qué se rechaza el avance...',
+                        showCancelButton: true,
+                        confirmButtonColor: '#dc3545',
+                        confirmButtonText: 'Registrar Rechazo',
+                        cancelButtonText: 'Cancelar'
+                    }).then((result) => {
+                        if (result.isConfirmed && result.value) {
+                            const comentario = result.value;
+                            fetch(`/PanelDeFases/RechazarFase?proyectoId=${proyectoId}&comentario=${encodeURIComponent(comentario)}`, {
+                                method: 'POST'
+                            })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        Swal.fire('Registrado', data.message, 'success').then(() => location.reload());
+                                    } else {
+                                        Swal.fire('Error', data.message, 'error');
+                                    }
+                                });
+                        } else if (result.isConfirmed && !result.value) {
+                            Swal.fire('Error', 'El comentario no puede estar vacío.', 'warning');
+                        }
+                    });
                 });
-            } else if (result.isConfirmed && !result.value) {
-                Swal.fire('Error', 'El comentario no puede estar vacío.', 'warning');
             }
-        });
-    });
-}
         });
     </script>
 }

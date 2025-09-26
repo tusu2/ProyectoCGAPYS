@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Identity; // <-- AÑADE ESTA LÍNEA
 
 namespace ProyectoCGAPYS.Models
 {
@@ -13,6 +14,12 @@ namespace ProyectoCGAPYS.Models
         public string ProyectoId { get; set; }
         [ForeignKey("ProyectoId")]
         public virtual Proyectos Proyecto { get; set; }
+
+        // --- Clave foránea para el Usuario que realizó el cambio ---
+        // 🔑 Guardamos el ID del usuario de Identity.
+        public string? UsuarioId { get; set; }
+        [ForeignKey("UsuarioId")]
+        public virtual IdentityUser Usuario { get; set; } // Propiedad de navegación
 
 
         // --- Claves foráneas para las Fases (pueden ser nulas) ---

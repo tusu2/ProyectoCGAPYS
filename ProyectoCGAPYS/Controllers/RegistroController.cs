@@ -1,5 +1,6 @@
 ﻿// En: Controllers/RegistroController.cs
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,7 @@ using ProyectoCGAPYS.ViewModels; // <-- ¡Muy importante!
 
 namespace ProyectoCGAPYS.Controllers
 {
+    [Authorize(Roles = "Jefa")]
     public class RegistroController : Controller
     {
         private readonly ApplicationDbContext _context;

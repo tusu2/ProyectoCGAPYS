@@ -48,12 +48,12 @@ namespace ProyectoCGAPYS.Models
         [StringLength(255)]
         public string? NombreAnteproyecto { get; set; }
 
-        [EmailAddress(ErrorMessage = "La latitud es necesaria")]
+
+        [Required(ErrorMessage = "La latitud es necesaria")]
         [StringLength(50)]
         public string Latitud { get; set; }
 
-        [EmailAddress(ErrorMessage = "La longitud es necesaria")]
-
+        [Required(ErrorMessage = "La longitud es necesaria")]
         [StringLength(50)]
         public string Longitud { get; set; }
 
@@ -94,5 +94,7 @@ namespace ProyectoCGAPYS.Models
 
         [StringLength(10)]
         public string? Prioridad { get; set; }
+
+        public virtual ICollection<DocumentosProyecto> Documentos { get; set; }
     }
 }

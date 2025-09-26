@@ -304,6 +304,39 @@ namespace ProyectoCGAPYS.Migrations
                     b.ToTable("Dependencias");
                 });
 
+            modelBuilder.Entity("ProyectoCGAPYS.Models.DocumentosProyecto", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Descripcion")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("FechaSubida")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("NombreArchivo")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ProyectoId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("RutaArchivo")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProyectoId");
+
+                    b.ToTable("DocumentosProyectos");
+                });
+
             modelBuilder.Entity("ProyectoCGAPYS.Models.Estimaciones", b =>
                 {
                     b.Property<int>("Id")
@@ -737,6 +770,17 @@ namespace ProyectoCGAPYS.Migrations
                     b.Navigation("Categoria");
                 });
 
+            modelBuilder.Entity("ProyectoCGAPYS.Models.DocumentosProyecto", b =>
+                {
+                    b.HasOne("ProyectoCGAPYS.Models.Proyectos", "Proyecto")
+                        .WithMany("Documentos")
+                        .HasForeignKey("ProyectoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Proyecto");
+                });
+
             modelBuilder.Entity("ProyectoCGAPYS.Models.Estimaciones", b =>
                 {
                     b.HasOne("ProyectoCGAPYS.Models.Proyectos", "Proyecto")
@@ -850,6 +894,8 @@ namespace ProyectoCGAPYS.Migrations
             modelBuilder.Entity("ProyectoCGAPYS.Models.Proyectos", b =>
                 {
                     b.Navigation("CostosDelProyecto");
+
+                    b.Navigation("Documentos");
 
                     b.Navigation("Imagenes");
                 });
