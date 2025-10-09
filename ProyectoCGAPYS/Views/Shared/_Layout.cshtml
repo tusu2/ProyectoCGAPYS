@@ -5,6 +5,7 @@
     // Obtenemos el nombre del controlador y la acción de la página actual
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -58,6 +59,13 @@
                             <a class="nav-link @(currentController == "Registro" ? "active" : "")" asp-controller="Registro" asp-action="Crear">
                                 <i class="bi bi-plus-square-fill"></i>
                                 <span>Registro</span>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link @(currentController == "Licitaciones" ? "active" : "")" asp-controller="Licitaciones" asp-action="Index">
+                                <i class="bi bi-briefcase-fill"></i>
+                                <span>Licitaciones</span>
                             </a>
                         </li>
                         @if (SignInManager.IsSignedIn(User))

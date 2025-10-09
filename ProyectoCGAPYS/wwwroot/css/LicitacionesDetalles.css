@@ -1,0 +1,156 @@
+﻿/* ---- ESTILOS MODERNOS UNIFICADOS PARA PÁGINAS DE DETALLES Y FORMULARIOS ---- */
+
+/* 1. Fondo suave para toda la página */
+body {
+    background-color: #f8f9fc;
+}
+
+/* 2. Tarjetas de contenido con bordes más suaves y efecto hover */
+.detail-card {
+    background-color: #ffffff;
+    border: 1px solid #eef2f7; /* Borde muy sutil */
+    border-radius: 16px; /* Bordes más redondeados */
+    padding: 2rem;
+    box-shadow: 0 8px 24px rgba(21, 48, 112, 0.05); /* Sombra más suave */
+    margin-bottom: 25px;
+    transition: all 0.3s ease;
+}
+
+    .detail-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 32px rgba(21, 48, 112, 0.08);
+    }
+
+/* 3. Encabezados de tarjeta más refinados */
+.detail-card-header h4 {
+    color: #374151;
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: -0.5px; /* Espaciado de letra más compacto */
+    margin: 0;
+}
+
+/* 4. Lista de detalles con mejor jerarquía visual */
+.details-list dt {
+    font-weight: 500;
+    color: #6b7280;
+    font-size: 0.85rem;
+    text-transform: uppercase; /* Todo en mayúsculas */
+    margin-bottom: 0.25rem;
+}
+
+.details-list dd {
+    color: #111827; /* Texto principal más oscuro */
+    font-weight: 500;
+    font-size: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+/* 5. Estilos para formularios (inputs) */
+.form-label {
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    background-color: #f9fafb; /* Fondo ligeramente gris para inputs */
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px 14px;
+    transition: all 0.2s ease;
+}
+
+    .form-control:focus {
+        background-color: #ffffff;
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        outline: none;
+    }
+
+/* 6. Paleta de botones moderna y unificada */
+.btn-primary-custom {
+    background-color: #4f46e5;
+    color: white;
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 12px 24px;
+    border: none;
+    transition: all 0.2s;
+}
+
+    .btn-primary-custom:hover {
+        background-color: #4338ca;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+    }
+
+/* Botón de éxito (Activar) */
+.btn-success-custom {
+    background-color: #16a34a; /* Verde intenso */
+    color: #ffffff; /* Texto blanco */
+    font-weight: 500; /* Ajustamos el grosor para texto blanco */
+    border-radius: 8px;
+    padding: 12px 24px;
+    border: none;
+    transition: all 0.2s;
+}
+    .btn-success-custom:hover {
+        background-color: #15803d;
+        color: #ffffff; /* Un verde un poco más oscuro */
+        transform: translateY(-2px);
+    }
+
+/* Botón de peligro (Devolver) - Estilo "outline" más sutil */
+.btn-danger-custom {
+    background-color: #dc2626; /* Rojo intenso */
+    color: #ffffff; /* Texto blanco */
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 12px 24px;
+    border: none;
+    transition: all 0.2s;
+}
+
+    .btn-danger-custom:hover {
+        background-color: #b91c1c;
+        color: #ffffff; /* Un rojo un poco más oscuro */
+        transform: translateY(-2px);
+    }
+.map-container {
+    height: 300px; /* Altura fija para el mapa */
+    border-radius: 12px; /* Bordes redondeados consistentes con el diseño */
+    z-index: 0; /* Asegura que el mapa se muestre correctamente sobre otros elementos */
+    margin-top: 1rem;
+}
+/* ---- 7. Estilos para la tabla personalizada de contratistas ---- */
+.table-custom {
+    width: 100%;
+    border-collapse: collapse; /* Quita espacios entre celdas */
+    margin-top: 1.5rem; /* Espacio después del encabezado */
+}
+
+    .table-custom th {
+        font-weight: 500;
+        color: #6b7280; /* Mismo color que los 'dt' para consistencia */
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        text-align: left;
+        padding: 12px 16px;
+        border-bottom: 2px solid #eef2f7; /* Línea separadora sutil */
+    }
+
+    .table-custom td {
+        color: #374151;
+        padding: 16px;
+        border-bottom: 1px solid #eef2f7;
+        font-size: 0.95rem;
+    }
+
+    .table-custom tbody tr:last-child td {
+        border-bottom: none; /* Quita la última línea para un look más limpio */
+    }
+
+    .table-custom tbody tr:hover {
+        background-color: #f9fafb; /* Efecto hover sutil */
+    }

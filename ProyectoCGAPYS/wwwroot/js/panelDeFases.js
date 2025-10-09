@@ -7,9 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnConfirmarCambios = document.getElementById('btn-confirmar-cambios');
     const cardContainers = board.querySelectorAll('.kanban-cards-container');
     let cambiosPendientes = []; // Aquí guardaremos los movimientos
-   
+
     // --- 1. CONFIGURAMOS LAS COLUMNAS PARA SER "ARRASTRABLES" ---
-  
+
     const columnas = board.querySelectorAll('.kanban-cards-container');
     columnas.forEach(columna => {
         const faseColumnaId = parseInt(columna.parentElement.id.split('-').pop());
@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     // --- 2. LÓGICA QUE SE EJECUTA CUANDO SE ARRASTRA Y SUELTA UNA TARJETA ---
+    // --- 2. LÓGICA QUE SE EJECUTA CUANDO SE ARRASTRA Y SUELTA UNA TARJETA ---
     async function handleDragEnd(event) {
         const tarjeta = event.item;
         const columnaDestino = event.to;
@@ -37,53 +38,49 @@ document.addEventListener('DOMContentLoaded', () => {
         const proyectoId = tarjeta.dataset.proyectoId;
         const faseOrigenId = parseInt(columnaOrigen.parentElement.id.split('-').pop());
         const faseDestinoId = parseInt(columnaDestino.parentElement.id.split('-').pop());
-        // Validamos el movimiento (solo a fases contiguas)
+
         if (Math.abs(faseDestinoId - faseOrigenId) !== 1) {
             event.from.appendChild(tarjeta);
             Swal.fire('Movimiento Inválido', 'Un proyecto solo puede moverse a la fase contigua.', 'error');
             return;
         }
 
-        // Si el movimiento es válido, actualizamos la visibilidad de los botones INMEDIATAMENTE
-    
-        // CASO 1: Es un AVANCE (movimiento hacia adelante)
         if (faseDestinoId === faseOrigenId + 1) {
             registrarCambioPendiente(proyectoId, faseDestinoId, "Avance", "Movimiento de fase en el panel Kanban.");
             actualizarVisibilidadBotones(tarjeta, faseDestinoId);
             actualizarEnlaceDetalles(tarjeta, faseDestinoId);
+            // ----> LÍNEA NUEVA: Activamos la animación
+            tarjeta.classList.add('card-pending-changes');
         }
-        // CASO 2: Es un RETROCESO (movimiento hacia atrás)
         else if (faseDestinoId === faseOrigenId - 1) {
-            // Primero, devolvemos la tarjeta a su sitio original mientras pedimos el comentario.
-            columnaOrigen.appendChild(tarjeta);
-
-            // Pedimos el motivo del rechazo con SweetAlert
-            const { value: comentario } = await Swal.fire({
+            const { value: comentario, isConfirmed } = await Swal.fire({
                 title: 'Devolver a Fase Anterior',
                 input: 'textarea',
                 inputLabel: 'Motivo de la devolución',
                 inputPlaceholder: 'Escribe aquí por qué se devuelve el proyecto...',
                 showCancelButton: true,
                 confirmButtonText: 'Registrar y Devolver',
-                cancelButtonText: 'Cancelar'
+                cancelButtonText: 'Cancelar',
+                allowOutsideClick: false,
+                inputValidator: (value) => {
+                    if (!value || value.trim() === '') {
+                        return '¡Necesitas escribir un motivo para la devolución!'
+                    }
+                }
             });
 
-            // Si el usuario escribió un comentario y confirmó...
-            if (comentario) {
-                // ...movemos la tarjeta programáticamente a la columna anterior...
-                columnaDestino.appendChild(tarjeta);
-                // ...y registramos el cambio con el comentario.
+            if (isConfirmed && comentario) {
                 registrarCambioPendiente(proyectoId, faseDestinoId, "Retroceso", comentario);
+                actualizarVisibilidadBotones(tarjeta, faseDestinoId);
+                actualizarEnlaceDetalles(tarjeta, faseDestinoId);
+                // ----> LÍNEA NUEVA: Activamos la animación
+                tarjeta.classList.add('card-pending-changes');
+            } else {
+                columnaOrigen.appendChild(tarjeta);
             }
-        }
-        // CASO 3: Es un MOVIMIENTO INVÁLIDO
-        else {
-            columnaOrigen.appendChild(tarjeta);
-            Swal.fire('Movimiento Inválido', 'Un proyecto solo puede moverse a la fase contigua.', 'error');
         }
     }
 
-   
     function registrarCambioPendiente(proyectoId, nuevaFaseId, tipo, comentario) {
         const confirmBar = document.getElementById('confirm-bar');
 
@@ -123,10 +120,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (data.success) {
                             Swal.fire('¡Guardado!', data.message, 'success');
 
-                            // Actualizamos la "memoria" de cada tarjeta que se movió.
                             cambiosPendientes.forEach(cambio => {
                                 const tarjetaMovida = document.getElementById(`proyecto-${cambio.proyectoId}`);
                                 if (tarjetaMovida) {
+                                    // ----> AÑADE ESTA LÍNEA <----
+                                    tarjetaMovida.classList.remove('card-pending-changes');
                                     tarjetaMovida.dataset.faseOrigenId = cambio.nuevaFaseId;
                                 }
                             });
@@ -141,41 +139,61 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    board.addEventListener('click', function (event) {
+    board.addEventListener('click', async function (event) {
         const targetButton = event.target.closest('button');
-        // Si no se hizo clic en un botón, o si el clic fue en la manija de resize, no hacemos nada.
         if (!targetButton || event.target.classList.contains('resize-handle')) return;
 
         const card = targetButton.closest('.kanban-card');
         if (!card) return;
 
         const proyectoId = card.dataset.proyectoId;
+        const columnaOrigenEl = card.parentElement;
+        const faseColumnaOrigenEl = columnaOrigenEl.parentElement;
+        const faseOrigenId = parseInt(faseColumnaOrigenEl.id.split('-').pop());
 
         // Lógica para avanzar fase
         if (targetButton.classList.contains('btn-avanzar-fase')) {
-            Swal.fire({ title: '¿Avanzar proyecto?', text: "El proyecto se moverá a la siguiente fase.", icon: 'question', showCancelButton: true, confirmButtonText: 'Sí, ¡avanzar!' })
-                .then(result => {
-                    if (result.isConfirmed) {
-                        fetch(`/PanelDeFases/AvanzarFaseProyecto?proyectoId=${proyectoId}`, { method: 'POST' })
-                            .then(response => response.json())
-                            .then(data => handleServerResponse(data, card));
-                    }
-                });
+            const faseDestinoId = faseOrigenId + 1;
+            const columnaDestinoEl = document.querySelector(`#fase-col-${faseDestinoId} .kanban-cards-container`);
+
+            if (columnaDestinoEl) {
+                // Mover visualmente la tarjeta
+                columnaDestinoEl.appendChild(card);
+                // Registrar el cambio pendiente
+                registrarCambioPendiente(proyectoId, faseDestinoId, "Avance", "Avance de fase mediante botón.");
+                // Actualizar UI de la tarjeta en su nueva posición
+                actualizarVisibilidadBotones(card, faseDestinoId);
+                actualizarEnlaceDetalles(card, faseDestinoId);
+                // Añadir el resaltado persistente
+                card.classList.add('card-pending-changes');
+            }
         }
 
         // Lógica para rechazar fase
         if (targetButton.classList.contains('btn-rechazar-fase')) {
-            Swal.fire({ title: 'Rechazar Avance', input: 'textarea', inputLabel: 'Motivo del rechazo', showCancelButton: true, confirmButtonText: 'Registrar Rechazo' })
-                .then(result => {
-                    if (result.isConfirmed && result.value) {
-                        const comentario = encodeURIComponent(result.value);
-                        fetch(`/PanelDeFases/RechazarFase?proyectoId=${proyectoId}&comentario=${comentario}`, { method: 'POST' })
-                            .then(response => response.json())
-                            .then(data => handleServerResponse(data, card));
-                    } else if (result.isConfirmed) {
-                        Swal.fire('Error', 'El comentario no puede estar vacío.', 'warning');
-                    }
+            const faseDestinoId = faseOrigenId - 1;
+            const columnaDestinoEl = document.querySelector(`#fase-col-${faseDestinoId} .kanban-cards-container`);
+
+            if (columnaDestinoEl) {
+                // Pedir el motivo del rechazo ANTES de moverla
+                const { value: comentario, isConfirmed } = await Swal.fire({
+                    title: 'Rechazar Avance',
+                    input: 'textarea',
+                    inputLabel: 'Motivo del rechazo',
+                    showCancelButton: true,
+                    confirmButtonText: 'Registrar Rechazo',
+                    inputValidator: (value) => !value && 'El comentario no puede estar vacío.'
                 });
+
+                if (isConfirmed && comentario) {
+                    // Si el usuario confirma, ahora sí la movemos
+                    columnaDestinoEl.appendChild(card);
+                    registrarCambioPendiente(proyectoId, faseDestinoId, "Retroceso", comentario);
+                    actualizarVisibilidadBotones(card, faseDestinoId);
+                    actualizarEnlaceDetalles(card, faseDestinoId);
+                    card.classList.add('card-pending-changes');
+                }
+            }
         }
     });
 
@@ -275,16 +293,3 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- FUNCIÓN UTILITARIA PARA MANEJAR RESPUESTA DEL SERVIDOR ---
 // También la llamamos después de guardar los cambios
-function handleServerResponse(data, cardElement) {
-    if (data.success) {
-        Swal.fire('¡Éxito!', data.message, 'success');
-        const nuevaColumna = document.querySelector(`#fase-col-${data.nuevaFaseId} .kanban-cards-container`);
-        if (nuevaColumna) {
-            nuevaColumna.appendChild(cardElement);
-            actualizarVisibilidadBotones(cardElement, data.nuevaFaseId);
-            actualizarEnlaceDetalles(cardElement, data.nuevaFaseId); // <-- ¡NUEVA LLAMADA!
-        }
-    } else {
-        Swal.fire('Error', data.message, 'error');
-    }
-}

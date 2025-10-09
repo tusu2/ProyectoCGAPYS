@@ -5,6 +5,8 @@
     var fases = ViewBag.Fases as List<Fases>;
 }
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css " asp-append-version="true" />
+
 <link rel="stylesheet" href="~/css/PanelDeFases.css" asp-append-version="true" />
 
 <div class="container-fluid mt-4">
@@ -27,8 +29,37 @@
             {
                 <div class="kanban-column" id="fase-col-@fase.Id">
 
-                    <h5 class="kanban-column-title drag-handle">
-                        @fase.Nombre
+                    <h5 class="kanban-column-title drag-handle fase-header-@fase.Id">
+                        <span>
+                            @switch (fase.Nombre)
+                            {
+                                case "Recepción / Análisis":
+                                    <i class="bi bi-inbox-fill"></i>
+                                    ; break;
+                                case "En Elaboración de Anteproyecto":
+                                    <i class="bi bi-pencil-square"></i>
+                                    ; break;
+                                case "En Elaboración de Presupuesto":
+                                    <i class="bi bi-calculator-fill"></i>
+                                    ; break;
+                                case "En Licitación":
+                                    <i class="bi bi-briefcase-fill"></i>
+                                    ; break; // <-- ¡Ahora funcionará sin importar el ID!
+                                case "En Ejecución":
+                                    <i class="bi bi-tools"></i>
+                                    ; break;
+                                case "Finalizado":
+                                    <i class="bi bi-check2-circle"></i>
+                                    ; break;
+                                case "Cancelado":
+                                    <i class="bi bi-x-circle-fill"></i>
+                                    ; break;
+                                default:
+                                    <i class="bi bi-card-text"></i>
+                                    ; break;
+                            }
+                            @fase.Nombre
+                        </span>
                         <span class="card-count">@Model.Count(p => p.IdFaseFk == fase.Id)</span>
                     </h5>
                     <div class="resize-handle"></div>
@@ -51,7 +82,21 @@
                                     // Si tiene permiso, la información es un enlace a los detalles
                                     <a asp-action="Detalles" asp-controller="PanelDeFases" asp-route-id="@proyecto.Id" class="card-link">
                                         <h6>@proyecto.NombreProyecto</h6>
-                                        <p>Folio: @proyecto.Folio</p>
+                                        <div class="card-details">
+                                            <span>Folio: @proyecto.Folio</span>
+
+                                            @if (!string.IsNullOrEmpty(proyecto.Prioridad))
+                                            {
+                                                var prioridadClass = "";
+                                                switch (proyecto.Prioridad)
+                                                {
+                                                    case "rojo": prioridadClass = "prioridad-alta"; break;
+                                                    case "amarillo": prioridadClass = "prioridad-media"; break;
+                                                    case "verde": prioridadClass = "prioridad-baja"; break;
+                                                }
+                                                <span class="prioridad-badge @prioridadClass" title="Prioridad: @proyecto.Prioridad"></span>
+                                            }
+                                        </div>
                                     </a>
                                 }
                                 else

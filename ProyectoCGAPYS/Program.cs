@@ -7,6 +7,9 @@ using ProyectoCGAPYS.Data;
 using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 QuestPDF.Settings.License = LicenseType.Community;
 //Configuracion la conexion a sql ser local dbMSSQLLLOCAL
 
@@ -69,4 +72,3 @@ using (var scope = app.Services.CreateScope())
 //==============================================================
 
 app.Run();
-

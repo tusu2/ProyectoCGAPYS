@@ -1,0 +1,29 @@
+﻿@model IEnumerable<ProyectoCGAPYS.Models.Proyectos>
+
+@* Este es el menú desplegable que se mostrará en la barra de navegación *@
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownLicitaciones" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        Licitaciones
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="navbarDropdownLicitaciones">
+        @if (Model.Any())
+        {
+            @foreach (var proyecto in Model)
+            {
+                <li>
+                    @* Cada proyecto será un enlace al detalle de su licitación *@
+                    <a class="dropdown-item"
+                       asp-controller="Licitaciones"
+                       asp-action="DetallesPorProyecto"
+                       asp-route-proyectoId="@proyecto.Id">
+                        @proyecto.NombreProyecto
+                    </a>
+                </li>
+            }
+        }
+        else
+        {
+            <li><span class="dropdown-item-text">No hay proyectos en licitación</span></li>
+        }
+    </ul>
+</li>

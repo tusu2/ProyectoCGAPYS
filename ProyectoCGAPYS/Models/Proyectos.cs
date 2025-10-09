@@ -96,5 +96,7 @@ namespace ProyectoCGAPYS.Models
         public string? Prioridad { get; set; }
 
         public virtual ICollection<DocumentosProyecto> Documentos { get; set; }
+       
+
     }
 }

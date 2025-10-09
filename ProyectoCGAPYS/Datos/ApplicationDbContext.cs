@@ -33,6 +33,10 @@ namespace ProyectoCGAPYS.Datos
         public DbSet<HistorialFase> HistorialFases { get; set; }
         public DbSet<DocumentosProyecto> DocumentosProyectos { get; set; }
 
+        public DbSet<Contratista> Contratistas { get; set; }
+        public DbSet<Licitacion> Licitaciones { get; set; }
+        public DbSet<LicitacionContratista> LicitacionContratistas { get; set; }
+        public DbSet<PropuestaContratista> PropuestasContratistas { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -45,6 +49,7 @@ namespace ProyectoCGAPYS.Datos
             modelBuilder.Entity<FaseViewModel>().HasNoKey();
             modelBuilder.Entity<ProyectoAlertaViewModel>().HasNoKey();
             modelBuilder.Entity<ProyectoSimpleViewModel>().HasNoKey();
+
         }
     }
 }

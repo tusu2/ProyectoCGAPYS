@@ -1,0 +1,296 @@
+﻿@model ProyectoCGAPYS.ViewModels.LicitacionDetalleViewModel
+
+@{
+    ViewData["Title"] = "Detalles de la Licitación";
+    // Usamos la misma función auxiliar de la vista anterior para los badges
+    string GetStatusClass(string estado)
+    {
+        switch (estado?.ToLower())
+        {
+            case "abierta": return "status-abierta";
+            case "adjudicada": return "status-adjudicada";
+            case "cancelada": return "status-cancelada";
+            case "cerrada": return "status-cerrada";
+            default: return "status-cerrada";
+        }
+    }
+}
+<link rel="stylesheet" href="~/css/LicitacionesDetalles.css" asp-append-version="true" />
+<h2 class="mb-4">@ViewData["Title"]: <strong>@Model.NumeroLicitacion</strong></h2>
+
+<div class="row">
+    <div class="col-lg-8">
+
+        <div class="detail-card">
+            <div class="detail-card-header">
+                <h4>Información General</h4>
+            </div>
+            <dl class="row details-list">
+
+                <dt class="col-sm-4">Proyecto Asociado</dt>
+                <dd class="col-sm-8">@Model.ProyectoNombre</dd>
+
+                <dt class="col-sm-4">Folio del Proyecto</dt>
+                <dd class="col-sm-8">@Model.FolioProyecto</dd>
+
+                <dt class="col-sm-4">Estado Licitación</dt>
+                <dd class="col-sm-8">
+                    <span class="status-badge @GetStatusClass(Model.Estado)">@Model.Estado</span>
+                </dd>
+
+                <dt class="col-sm-4">Descripción</dt>
+                <dd class="col-sm-8">@Model.DescripcionLicitacion</dd>
+
+                <dt class="col-sm-4">Dependencia</dt>
+                <dd class="col-sm-8">@Model.DependenciaNombre</dd>
+
+                <dt class="col-sm-4">Campus</dt>
+                <dd class="col-sm-8">@Model.CampusNombre</dd>
+
+                <dt class="col-sm-4">Presupuesto Aprobado</dt>
+                <dd class="col-sm-8"><strong>@Model.PresupuestoProyecto.ToString("C", new System.Globalization.CultureInfo("es-MX"))</strong></dd>
+
+                <dt class="col-sm-4">Fuente de Financiamiento</dt>
+                <dd class="col-sm-8">@Model.TipoFondoNombre</dd>
+
+            </dl>
+        </div>
+        <div class="detail-card">
+            <div class="detail-card-header d-flex justify-content-between align-items-center">
+                <h4>Contratistas Participantes</h4>
+                <button type="button" class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#modalInvitar">
+                    <i class="fas fa-plus me-2"></i>Invitar
+                </button>
+            </div>
+
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>Razón Social</th>
+                        <th>RFC</th>
+                        <th>Invitación</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Participantes.Any())
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">Aún no se han invitado contratistas.</td>
+                        </tr>
+                    }
+                    @foreach (var contratista in Model.Participantes)
+                    {
+                        <tr>
+                            <td><strong>@contratista.RazonSocial</strong></td>
+                            <td>@contratista.RFC</td>
+                            <td>@(contratista.FechaInvitacion.HasValue ? contratista.FechaInvitacion.Value.ToShortDateString() : "--")</td>
+                            <td>@contratista.EstadoParticipacion</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="detail-card">
+            <div class="detail-card-header">
+                <h4>Acciones y Fechas</h4>
+            </div>
+
+            <form asp-action="ActualizarFechas" method="post" class="mb-4">
+                <input type="hidden" name="LicitacionId" value="@Model.LicitacionId" />
+                <div class="mb-3">
+                    <label class="form-label">Fecha de Inicio</label>
+                    <input type="date" name="FechaInicio" class="form-control" value="@Model.FechaInicio.ToString("yyyy-MM-dd")" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Fecha Límite para Propuestas</label>
+                    <input type="date" name="FechaFinPropuestas" class="form-control" value="@(Model.FechaFinPropuestas?.ToString("yyyy-MM-dd"))" />
+                </div>
+                <button type="submit" class="btn btn-secondary w-100">Guardar Fechas</button>
+            </form>
+
+            <div class="d-grid gap-2">
+                <button type="button" class="btn btn-success-custom" disabled>
+                    <i class="fas fa-check-circle me-2"></i>Activar Licitación
+                </button>
+                <button type="button" class="btn btn-danger-custom" id="btnDevolverFase">
+                    <i class="fas fa-undo me-2"></i>Devolver a Fase Anterior
+                </button>
+            </div>
+        </div>
+
+        <div class="detail-card">
+            <div class="detail-card-header">
+                <h4>Ubicación del Proyecto</h4>
+            </div>
+            <div id="mapa-proyecto" class="map-container"></div>
+        </div>
+
+        <div class="detail-card">
+            <div class="detail-card-header">
+                <h4>Archivos del Proyecto</h4>
+            </div>
+            @if (Model.Documentos.Any())
+            {
+                <ul class="list-unstyled">
+                    @foreach (var doc in Model.Documentos)
+                    {
+                        <li class="file-list-item">
+                            <a href="@doc.RutaArchivo" target="_blank">
+                                <i class="fas fa-file-alt me-2"></i>@doc.NombreArchivo
+                            </a>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p class="text-muted">No hay archivos adjuntos.</p>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a asp-action="Index"><i class="fas fa-arrow-left me-2"></i>Volver al listado</a>
+</div>
+@section Scripts {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+    <script>
+        $(document).ready(function () {
+
+            const licitacionId = @Model.LicitacionId;
+
+            // ==========================================================
+            // --- MANEJO DE DEVOLUCIÓN DE FASE CON SWEETALERT2 ---
+            // ==========================================================
+            $('#btnDevolverFase').on('click', function () {
+                Swal.fire({
+                    title: 'Devolver Proyecto',
+                    text: 'Estás a punto de regresar el proyecto a su fase anterior. Por favor, especifica el motivo.',
+                    icon: 'warning',
+                    html: '<textarea id="swal-motivo" class="swal2-textarea" placeholder="Escribe aquí el motivo de la devolución..." required></textarea>',
+                    showCancelButton: true,
+                    confirmButtonText: 'Confirmar Devolución',
+                    confirmButtonColor: '#d33',
+                    cancelButtonText: 'Cancelar',
+                    preConfirm: () => {
+                        const motivo = document.getElementById('swal-motivo').value;
+                        if (!motivo) {
+                            Swal.showValidationMessage('Por favor, ingresa un motivo.');
+                            return false;
+                        }
+                        return motivo;
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const motivo = result.value;
+                        // Aquí va la llamada AJAX para devolver la fase
+                        $.post('@Url.Action("DevolverFase")', { licitacionId: licitacionId, comentario: motivo })
+                            .done(function () {
+                                Swal.fire('¡Devuelto!', 'El proyecto ha sido regresado a la fase anterior.', 'success')
+                                    .then(() => window.location.href = '@Url.Action("Index", "PanelDeFases")');
+                            })
+                            .fail(function () {
+                                Swal.fire('Error', 'No se pudo devolver el proyecto.', 'error');
+                            });
+                    }
+                });
+            });
+
+            // ==========================================================
+            // --- MANEJO DE INVITACIÓN DE CONTRATISTAS CON SWEETALERT2 ---
+            // ==========================================================
+            $('#btnInvitarContratista').on('click', function () {
+                cargarContenidoModalInvitar();
+            });
+
+            function cargarContenidoModalInvitar(terminoBusqueda = '') {
+                const url = '@Url.Action("_InvitarContratistasPartial", "Licitaciones", new { id = Model.LicitacionId })' + `?busqueda=${encodeURIComponent(terminoBusqueda)}`;
+
+                $.get(url).done(function (data) {
+                    Swal.fire({
+                        title: 'Invitar Contratistas',
+                        html: data, // El contenido del Partial View se carga aquí
+                        width: '800px',
+                        showConfirmButton: false, // Ocultamos el botón por defecto, el formulario tendrá el suyo
+                        showCancelButton: true,
+                        cancelButtonText: 'Cerrar'
+                    });
+                }).fail(function () {
+                    Swal.fire('Error', 'No se pudo cargar la lista de contratistas.', 'error');
+                });
+            }
+
+            // Usamos delegación de eventos en 'document' porque el contenido del modal es dinámico
+            $(document).on('submit', '#formInvitarContratistas', function (e) {
+                e.preventDefault();
+                var form = $(this);
+                $.ajax({
+                    url: form.attr('action'),
+                    type: form.attr('method'),
+                    data: form.serialize(),
+                    success: function (response) {
+                        Swal.close();
+                        location.reload(); // Recarga la página para mostrar los nuevos invitados
+                    },
+                    error: function () {
+                        // Podríamos mostrar un error dentro del modal, pero por ahora cerramos.
+                        Swal.fire('Error', 'Ocurrió un error al invitar.', 'error');
+                    }
+                });
+            });
+
+            $(document).on('click', '#btnBuscarContratista', function () {
+                var busqueda = $('#busquedaContratista').val();
+                cargarContenidoModalInvitar(busqueda);
+            });
+
+            $(document).on('keypress', '#busquedaContratista', function (e) {
+                if (e.which == 13) {
+                    e.preventDefault();
+                    $('#btnBuscarContratista').click();
+                }
+            });
+            if ($('#mapa-proyecto').length > 0) {
+                try {
+                    // Obtenemos las coordenadas y el nombre del proyecto desde el modelo.
+                    const latitud = parseFloat('@Model.Latitud'.replace(',', '.'));
+                    const longitud = parseFloat('@Model.Longitud'.replace(',', '.'));
+                    const nombreProyecto = "@Html.Raw(Model.ProyectoNombre.Replace("'", "\\'"))";
+
+                    if (!isNaN(latitud) && !isNaN(longitud)) {
+                        // 2. Inicializamos el mapa en el div 'mapa-proyecto'.
+                        var map = L.map('mapa-proyecto').setView([latitud, longitud], 15);
+
+                        // 3. Añadimos una capa de mapa base.
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        }).addTo(map);
+
+                        // 4. Creamos y añadimos un marcador (pin).
+                        L.marker([latitud, longitud]).addTo(map)
+                            .bindPopup(`<strong>${nombreProyecto}</strong>`)
+                            .openPopup();
+                    } else {
+                        $('#mapa-proyecto').html('<p class="text-center text-muted m-4">Ubicación no disponible.</p>');
+                    }
+                } catch (e) {
+                    console.error("Error al inicializar el mapa: ", e);
+                    $('#mapa-proyecto').html('<p class="text-center text-danger m-4">No se pudo cargar el mapa.</p>');
+                }
+            } else {
+                // Si el contenedor no existe, lo notificamos en la consola del navegador.
+                console.error("Error de inicialización: No se encontró el elemento con ID 'mapa-proyecto'.");
+            }
+
+        });
+    </script>
+}
