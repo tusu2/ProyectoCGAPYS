@@ -1,0 +1,96 @@
+﻿@model ProyectoCGAPYS.ViewModels.DetallesLicitacionViewModel
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Detalles de Licitación - Portal Contratistas</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark border-bottom box-shadow mb-3" style="background-color: #003366;">
+            <div class="container-fluid">
+                <a class="navbar-brand" asp-action="Index" asp-controller="Contratista">Portal Contratistas</a>
+                <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout">
+                    <button type="submit" class="nav-link btn btn-link text-light">Cerrar Sesión</button>
+                </form>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container mt-4">
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4 class="mb-0">Proyecto: @Model.NombreProyecto</h4>
+            </div>
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">Licitación No. @Model.NumeroLicitacion</h6>
+                <p class="card-text">@Model.DescripcionProyecto</p>
+                <p class="card-text text-danger"><strong>Fecha límite para propuestas: @Model.FechaFinPropuestas.ToString("dd MMMM, yyyy")</strong></p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-5">
+                <h3>Subir Nueva Propuesta</h3>
+                <div class="card">
+                    <div class="card-body">
+                        <form method="post" enctype="multipart/form-data" asp-action="DetallesLicitacion">
+                            <input type="hidden" asp-for="LicitacionId" />
+
+                            <div class="mb-3">
+                                <label asp-for="DescripcionPropuesta" class="form-label">Descripción o Anotaciones</label>
+                                <textarea asp-for="DescripcionPropuesta" class="form-control" rows="3"></textarea>
+                                <span asp-validation-for="DescripcionPropuesta" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="ArchivoPropuesta" class="form-label">Seleccionar Archivo (PDF, Word, Excel, etc.)</label>
+                                <input asp-for="ArchivoPropuesta" class="form-control" type="file">
+                                <span asp-validation-for="ArchivoPropuesta" class="text-danger"></span>
+                            </div>
+
+                            <button type="submit" class="btn btn-success w-100">Subir Archivo</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <h3>Propuestas Enviadas</h3>
+                @if (Model.PropuestasSubidas.Any())
+                {
+                    <ul class="list-group">
+                        @foreach (var propuesta in Model.PropuestasSubidas)
+                        {
+                            <li class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1"><a href="@propuesta.RutaArchivo" target="_blank">@propuesta.NombreArchivo</a></h5>
+                                    <small>@propuesta.FechaSubida.ToString("g")</small>
+                                </div>
+                                <p class="mb-1">@propuesta.Descripcion</p>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p class="text-muted">Aún no has subido ninguna propuesta para esta licitación.</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+</body>
+</html>

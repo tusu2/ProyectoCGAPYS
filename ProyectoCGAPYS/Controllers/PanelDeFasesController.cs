@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using ProyectoCGAPYS.Datos;
 using ProyectoCGAPYS.Models;
 using System.Security.Claims;
-using System.Security.Claims;
 
 namespace ProyectoCGAPYS.Controllers
 {
@@ -15,6 +14,7 @@ namespace ProyectoCGAPYS.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<IdentityUser> _userManager;
+
         public PanelDeFasesController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
         {
             _context = context;
@@ -23,20 +23,17 @@ namespace ProyectoCGAPYS.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var user = await _userManager.GetUserAsync(User); // Obtenemos el usuario actual
+            var user = await _userManager.GetUserAsync(User);
             var proyectosActivos = await _context.Proyectos
-            .Include(p => p.Fase)
-            .Where(p => p.Fase != null && p.Fase.Nombre != "Finalizado" && p.Fase.Nombre != "Cancelado")
-            .ToListAsync();
+                .Include(p => p.Fase)
+                .Where(p => p.Fase != null && p.Fase.Nombre != "Finalizado" && p.Fase.Nombre != "Cancelado")
+                .ToListAsync();
 
             var todasLasFases = await _context.Fases.OrderBy(f => f.Orden).ToListAsync();
 
             ViewBag.Fases = todasLasFases;
             return View("Index", proyectosActivos);
         }
-
-        // GET: PanelDeFasesController/Details/5
-
 
         [HttpPost]
         public async Task<JsonResult> CambiarFase(string proyectoId, int nuevaFaseId)
@@ -47,13 +44,11 @@ namespace ProyectoCGAPYS.Controllers
                 return Json(new { success = false, message = "Proyecto no encontrado." });
             }
 
-            proyecto.IdFaseFk = nuevaFaseId; // ¡Aquí ocurre el cambio de fase!
+            proyecto.IdFaseFk = nuevaFaseId;
             await _context.SaveChangesAsync();
 
             return Json(new { success = true, message = "Fase actualizada correctamente." });
         }
-
-
 
         public async Task<IActionResult> Detalles(string id)
         {
@@ -62,7 +57,6 @@ namespace ProyectoCGAPYS.Controllers
                 return NotFound();
             }
 
-            // Esta parte para obtener el proyecto principal está correcta.
             var proyecto = await _context.Proyectos
                 .Include(p => p.Fase)
                 .Include(p => p.Campus)
@@ -77,18 +71,15 @@ namespace ProyectoCGAPYS.Controllers
                 return NotFound();
             }
 
-            // --- SECCIÓN ACTUALIZADA ---
-            // Aquí transformamos los datos del historial al ViewModel que la vista necesita.
             var historialParaLaVista = await _context.HistorialFases
-                .Include(h => h.Usuario) // Importante: Carga los datos del usuario relacionado
+                .Include(h => h.Usuario)
                 .Where(h => h.ProyectoId == id)
                 .OrderByDescending(h => h.FechaCambio)
-                .Select(h => new HistorialViewModel // "Traducimos" cada registro
+                .Select(h => new HistorialViewModel
                 {
                     FechaCambio = h.FechaCambio,
                     TipoCambio = h.TipoCambio,
                     Comentario = h.Comentario,
-                    // Acceso seguro al nombre de usuario. Si no hay usuario, muestra "Sistema".
                     NombreUsuario = h.Usuario.UserName ?? "Sistema"
                 })
                 .ToListAsync();
@@ -97,8 +88,6 @@ namespace ProyectoCGAPYS.Controllers
 
             return View(proyecto);
         }
-
-        // En ProyectoController.cs
 
         [HttpPost]
         public async Task<JsonResult> RechazarFase(string proyectoId, string comentario)
@@ -120,11 +109,10 @@ namespace ProyectoCGAPYS.Controllers
             var registroHistorial = new HistorialFase
             {
                 ProyectoId = proyectoId,
-                FaseAnteriorId = proyecto.IdFaseFk, // Guardamos la fase en la que estaba
-                FaseNuevaId = proyecto.IdFaseFk,   // No cambia de fase, solo se anota el rechazo
+                FaseAnteriorId = proyecto.IdFaseFk,
+                FaseNuevaId = proyecto.IdFaseFk,
                 Comentario = comentario,
                 TipoCambio = "Rechazado"
-                // La fecha se genera automáticamente por la base de datos
             };
 
             _context.HistorialFases.Add(registroHistorial);
@@ -133,13 +121,11 @@ namespace ProyectoCGAPYS.Controllers
             return Json(new { success = true, message = "El rechazo ha sido registrado en el historial." });
         }
 
-        // En ProyectoController.cs
-
         [HttpPost]
         public async Task<JsonResult> AvanzarFaseProyecto(string proyectoId)
         {
             var proyecto = await _context.Proyectos
-                                    .Include(p => p.TipoProyecto) // Incluimos el Tipo de Proyecto para la decisión
+                                    .Include(p => p.TipoProyecto)
                                     .FirstOrDefaultAsync(p => p.Id == proyectoId);
 
             if (proyecto == null)
@@ -150,39 +136,49 @@ namespace ProyectoCGAPYS.Controllers
             int faseActualId = proyecto.IdFaseFk ?? 0;
             int nuevaFaseId = faseActualId;
 
-            // --- AQUÍ VIVEN LAS REGLAS DE NEGOCIO DEL DIAGRAMA DE FLUJO ---
             switch (faseActualId)
             {
-                case 1: // Si está en "Recepción / Análisis"
-                        // Esta es la bifurcación clave
+                case 1:
                     if (proyecto.TipoProyecto.Nombre.Contains("Mantenimiento"))
                     {
-                        nuevaFaseId = 3; // Va directo a "En Elaboración de Presupuesto"
+                        nuevaFaseId = 3;
                     }
-                    else // Si es Obra Nueva o cualquier otro tipo
+                    else
                     {
-                        nuevaFaseId = 2; // Va a "En Elaboración de Anteproyecto"
+                        nuevaFaseId = 2;
                     }
                     break;
-
-                case 2: // Si está en "En Elaboración de Anteproyecto"
-                    nuevaFaseId = 3; // El siguiente paso es "En Elaboración de Presupuesto"
+                case 2:
+                    nuevaFaseId = 3;
                     break;
-
-                case 3: // Si está en "En Elaboración de Presupuesto"
+                case 3:
                     nuevaFaseId = 4; // El siguiente paso es "En Licitación"
                     break;
-
-                    // Aquí podrías añadir más reglas para las fases futuras (de Licitación a Ejecución, etc.)
             }
 
-            // Si no hubo un cambio de fase válido, devolvemos un error.
             if (nuevaFaseId == faseActualId)
             {
                 return Json(new { success = false, message = "El proyecto ya se encuentra en la última fase del flujo definido." });
             }
 
-            // Actualizamos el proyecto y guardamos el historial
+            // ******************** INICIO DE LA MODIFICACIÓN ********************
+            // Si la nueva fase es "En Licitación" (ID 4), creamos el registro.
+            if (nuevaFaseId == 4)
+            {
+                var nuevaLicitacion = new Licitacion
+                {
+                    ProyectoId = proyecto.Id,
+                    // Generamos un número de licitación único basado en la fecha y hora.
+                    NumeroLicitacion = $"LIC-{proyecto.Folio}-{DateTime.Now:yyyyMMdd}",
+                    Descripcion = proyecto.Descripcion, // Usamos la descripción del proyecto.
+                    FechaInicio = DateTime.Now, // La fecha y hora actual.
+                    FechaFinPropuestas = null, // Como se solicitó, se deja en null.
+                    Estado = "Abierta" // Estado por defecto.
+                };
+                _context.Licitaciones.Add(nuevaLicitacion);
+            }
+            // ********************* FIN DE LA MODIFICACIÓN **********************
+
             proyecto.IdFaseFk = nuevaFaseId;
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -209,6 +205,7 @@ namespace ProyectoCGAPYS.Controllers
             public string Tipo { get; set; }
             public string Comentario { get; set; }
         }
+
         [HttpPost]
         public async Task<JsonResult> GuardarCambiosDeFase([FromBody] List<CambioFaseRequest> cambios)
         {
@@ -216,12 +213,31 @@ namespace ProyectoCGAPYS.Controllers
             {
                 return Json(new { success = false, message = "No se recibieron cambios." });
             }
+
             foreach (var cambio in cambios)
             {
                 var proyecto = await _context.Proyectos.FindAsync(cambio.ProyectoId);
                 if (proyecto != null)
                 {
                     var faseActualId = proyecto.IdFaseFk;
+
+                    // ******************** INICIO DE LA MODIFICACIÓN ********************
+                    // Verificamos si el proyecto se está moviendo A la fase 4 y no estaba antes en ella.
+                    if (cambio.NuevaFaseId == 4 && faseActualId != 4)
+                    {
+                        var nuevaLicitacion = new Licitacion
+                        {
+                            ProyectoId = proyecto.Id,
+                            NumeroLicitacion = $"LIC-{proyecto.Folio}-{DateTime.Now:yyyyMMdd}",
+                            Descripcion = proyecto.Descripcion,
+                            FechaInicio = DateTime.Now,
+                            FechaFinPropuestas = null,
+                            Estado = "Abierta"
+                        };
+                        _context.Licitaciones.Add(nuevaLicitacion);
+                    }
+                    // ********************* FIN DE LA MODIFICACIÓN **********************
+
                     proyecto.IdFaseFk = cambio.NuevaFaseId;
 
                     var registroHistorial = new HistorialFase
@@ -230,19 +246,18 @@ namespace ProyectoCGAPYS.Controllers
                         FaseAnteriorId = faseActualId,
                         FaseNuevaId = cambio.NuevaFaseId,
                         TipoCambio = cambio.Tipo == "Avance" ? "Aprobado (Arrastre)" : "Devuelto (Arrastre)",
-                        // ¡USAREMOS EL COMENTARIO QUE NOS LLEGA!
                         Comentario = cambio.Comentario,
-
-
                     };
                     _context.HistorialFases.Add(registroHistorial);
                 }
             }
 
-
             await _context.SaveChangesAsync();
             return Json(new { success = true, message = "¡Todos los cambios han sido guardados!" });
         }
+
+        // ... (resto de los métodos sin cambios)
+
         [HttpPost]
         public async Task<IActionResult> SubirDocumento(string proyectoId, IFormFile archivo, string descripcion)
         {

@@ -1,0 +1,129 @@
+﻿@model ContratistaLobbyViewModel
+@{
+    // Con esta línea le decimos a .NET que NO use ningún archivo de layout.
+    // La página será completamente independiente.
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Portal de Contratistas - @Model.NombreContratista</title>
+    
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    
+    <style>
+        body {
+            background-color: #f4f7f6; /* Un fondo ligeramente diferente */
+        }
+        .navbar-custom {
+            background-color: #003366; /* Color institucional de ejemplo */
+        }
+        .invitacion-card {
+            border-left: 5px solid #ffc107; /* Un borde para destacar */
+            margin-bottom: 1.5rem;
+        }
+        .placeholder-text {
+            color: #6c757d;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark navbar-custom border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">
+                    <img src="/path/to/your/logo.png" alt="Logo" style="height: 30px;"/>
+                    Portal Contratistas
+                </a>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-end">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <span class="nav-link text-light">Bienvenido, @Model.NombreContratista</span>
+                        </li>
+                        <li class="nav-item">
+                            <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                                <button type="submit" class="nav-link btn btn-link text-light">Cerrar Sesión</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container mt-4">
+        
+        <div class="row">
+            <div class="col-12">
+                <h2 class="display-4">Invitaciones de Licitación</h2>
+                <hr />
+
+                @if (Model.Invitaciones.Any())
+                {
+                    foreach (var invitacion in Model.Invitaciones)
+                    {
+                        <div class="card shadow-sm invitacion-card">
+                            <div class="card-body">
+                                <h5 class="card-title">@invitacion.NombreProyecto</h5>
+                                <h6 class="card-subtitle mb-2 text-muted">Licitación: @invitacion.NumeroLicitacion</h6>
+                                <p class="card-text">@invitacion.DescripcionProyecto</p>
+                                <p class="card-text">
+                                    <small class="text-danger">Fecha límite para enviar propuestas: @invitacion.FechaFinPropuestas.ToString("dd/MM/yyyy")</small>
+                                </p>
+                                <a asp-action="DetallesLicitacion" asp-controller="Contratista" asp-route-id="@invitacion.LicitacionId" class="btn btn-primary">
+                                    Ver Detalles y Subir Propuesta
+                                </a>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="text-center p-5">
+                        <h4 class="placeholder-text">A la espera de una nueva invitación</h4>
+                        <p class="text-muted">No tienes licitaciones pendientes en este momento.</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="row mt-5">
+            <div class="col-12">
+                <h3>Historial de Proyectos</h3>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nombre del Proyecto</th>
+                                <th>Folio</th>
+                                <th>Fecha de Finalización</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var proyecto in Model.HistorialProyectos)
+                            {
+                                <tr>
+                                    <td>@proyecto.NombreProyecto</td>
+                                    <td>@proyecto.Folio</td>
+                                    <td>@(proyecto.FechaFinalizacion?.ToString("dd/MM/yyyy") ?? "N/A")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+</body>
+</html>
