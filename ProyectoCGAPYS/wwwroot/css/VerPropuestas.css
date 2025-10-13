@@ -1,0 +1,162 @@
+﻿/* Importar una fuente profesional desde Google Fonts (si es necesario, parece que ya usas una similar) */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+/* Estilos generales para integrarse con el sistema */
+body {
+    background-color: #F7F8FC; /* Fondo gris claro del sistema */
+    color: #343a40; /* Color de texto principal oscuro */
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Cabecera de la página (Licitación y Proyecto) */
+.page-header {
+    background-color: #0b2d48; /* Fondo amarillo suave para resaltar */
+    border: 1px solid #0b2d48; /* Borde sutil a juego */
+    padding: 15px 20px;
+    margin-bottom: 25px;
+    border-radius: 8px;
+}
+
+    .page-header h4, .page-header h5 {
+        margin: 0;
+        color: #ffffff;
+    }
+
+/* Estilo para las tarjetas de contratista, ahora como acordeones */
+.contractor-card {
+    background-color: #ffffff; /* Fondo blanco para las tarjetas */
+    border-radius: 8px;
+    border: 1px solid #ffffff;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* Sombra suave y profesional */
+    overflow: hidden;
+    transition: all 0.3s ease-in-out;
+}
+
+    .contractor-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Sombra más pronunciada al pasar el mouse */
+        transform: translateY(-3px);
+    }
+
+/* Encabezado de la tarjeta (clickeable) */
+.contractor-header {
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    background-color: #eaeaea; /* Gris oscuro, como en tu captura */
+    color: #000000;
+}
+
+    .contractor-header h4 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .contractor-header .rfc-tag {
+        font-size: 0.9em;
+        font-weight: 300;
+        opacity: 0.8;
+        margin-left: 10px;
+    }
+
+/* Icono de flecha para el acordeón */
+.toggle-icon {
+    font-size: 1.2em;
+    color: #ffffff;
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.contractor-header.active .toggle-icon {
+    transform: rotate(180deg);
+}
+
+/* Contenedor de las propuestas (el contenido del acordeón) */
+.proposals-list {
+    padding: 0;
+    margin: 0;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease-out, padding 0.5s ease-out, opacity 0.3s ease-out;
+}
+
+    .proposals-list.open {
+        padding: 10px 20px 20px 20px;
+        max-height: 1000px;
+        opacity: 1;
+    }
+
+/* Estilo para cada item de propuesta */
+.proposal-item {
+    list-style: none;
+    padding: 15px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+    .proposal-item:last-child {
+        border-bottom: none;
+    }
+
+/* Enlace del archivo de la propuesta */
+.proposal-link {
+    color: #1E3A5F; /* Azul corporativo para enlaces */
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+    .proposal-link:hover {
+        color: #0056b3;
+        text-decoration: underline;
+    }
+
+    .proposal-link i {
+        margin-right: 10px;
+    }
+
+/* Metadatos y descripción */
+.proposal-meta {
+    color: #6c757d;
+    font-size: 0.85em;
+}
+
+.proposal-description {
+    margin-top: 8px;
+    color: #495057;
+}
+
+/* Mensajes de alerta */
+.info-panel, .empty-state {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    color: #6c757d;
+    border: 1px dashed #ced4da;
+}
+
+/* Botón de "Volver" */
+.btn-back {
+    display: inline-flex;
+    align-items: center;
+    background-color: #e9ecef; /* Fondo gris claro */
+    border: 1px solid #ced4da;
+    color: #343a40; /* Texto oscuro */
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+    .btn-back:hover {
+        background-color: #dee2e6;
+        border-color: #b8b8b8;
+    }
+
+    .btn-back i {
+        margin-right: 8px;
+    }

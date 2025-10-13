@@ -8,24 +8,50 @@ using System.Linq;
 using System.Threading.Tasks;
 using ProyectoCGAPYS.Datos;
 using static ProyectoCGAPYS.ViewModels.LicitacionDetalleViewModel;
+using Microsoft.AspNetCore.Identity;
 
 // Solo los usuarios autorizados (administradores/empleados) podrán acceder a este controlador.
 [Authorize(Roles = "Jefa,Empleado1,Empleado2,Empleado3")]
 public class LicitacionesController : Controller
 {
     private readonly ApplicationDbContext _context;
+    private readonly UserManager<IdentityUser> _userManager;
 
     // Inyectamos el DbContext para poder interactuar con la base de datos.
-    public LicitacionesController(ApplicationDbContext context)
+    public LicitacionesController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
     {
         _context = context;
+        _userManager = userManager;
     }
+    // En LicitacionesController.cs
 
-    // GET: /Licitaciones
-    // Muestra una lista de todas las licitaciones creadas.
+
     public async Task<IActionResult> Index()
     {
-        // Obtenemos las licitaciones y también cargamos la información del proyecto asociado.
+        var userId = _userManager.GetUserId(User);
+        if (userId != null)
+        {
+            var notificacionesSinLeer = await _context.Notificaciones
+                .Where(n => n.UsuarioId == userId && !n.Leida && n.Url.Contains("/Licitaciones"))
+                .OrderByDescending(n => n.FechaCreacion)
+                .ToListAsync();
+
+            if (notificacionesSinLeer.Any())
+            {
+                // --- LÍNEA AÑADIDA ---
+                // Le "avisamos" al Layout cuál era el conteo ANTES de limpiar.
+                ViewBag.ConteoNotificacionesBadge = notificacionesSinLeer.Count;
+
+                ViewBag.NuevasNotificaciones = notificacionesSinLeer;
+
+                foreach (var notificacion in notificacionesSinLeer)
+                {
+                    notificacion.Leida = true;
+                }
+                await _context.SaveChangesAsync();
+            }
+        }
+
         var licitaciones = await _context.Licitaciones
                                          .Include(l => l.Proyecto)
                                          .OrderByDescending(l => l.FechaInicio)
@@ -76,7 +102,7 @@ public class LicitacionesController : Controller
                 Descripcion = viewModel.Descripcion,
                 FechaInicio = viewModel.FechaInicio,
                 FechaFinPropuestas = viewModel.FechaFinPropuestas,
-                Estado = "Abierta" // Estado inicial por defecto.
+                Estado = "Preparacion" // Estado inicial por defecto.
             };
 
             _context.Licitaciones.Add(nuevaLicitacion);
@@ -123,7 +149,12 @@ public class LicitacionesController : Controller
         {
             return NotFound();
         }
-
+        var licitacionParaValidar = await _context.Licitaciones.FindAsync(id);
+        if (licitacionParaValidar != null && licitacionParaValidar.Estado == "Adjudicada")
+        {
+            TempData["Info"] = "No se puede acceder a los detalles de una licitación que ya ha sido adjudicada.";
+            return RedirectToAction("Index"); // Redirige al listado principal.
+        }
         var licitacion = await _context.Licitaciones
              .Include(l => l.Proyecto)
                  .ThenInclude(p => p.Campus) // Incluimos Campus
@@ -206,14 +237,16 @@ public class LicitacionesController : Controller
             ProyectoNombre = licitacion.Proyecto.NombreProyecto,
             // Obtenemos todos los contratistas y marcamos los que ya fueron invitados.
             ContratistasDisponibles = await _context.Contratistas
-                .Select(c => new ContratistaSeleccionable
-                {
-                    Id = c.Id,
-                    RazonSocial = c.RazonSocial,
-                    RFC = c.RFC,
-                    YaEstaInvitado = idsContratistasYaInvitados.Contains(c.Id)
-                })
-                .ToListAsync()
+    .Where(c => !idsContratistasYaInvitados.Contains(c.Id)) // <-- LÍNEA CLAVE
+    .Select(c => new ContratistaSeleccionable
+    {
+        Id = c.Id,
+        RazonSocial = c.RazonSocial,
+        RFC = c.RFC,
+        YaEstaInvitado = false // Esto ya no es necesario, pero lo dejamos por consistencia
+    })
+    .OrderBy(c => c.RazonSocial) // Es bueno ordenar la lista
+    .ToListAsync()
         };
 
         return View(viewModel);
@@ -311,15 +344,16 @@ public class LicitacionesController : Controller
             NumeroLicitacion = licitacion.NumeroLicitacion,
             ProyectoNombre = licitacion.Proyecto.NombreProyecto,
             ContratistasDisponibles = await query
-                .Select(c => new ContratistaSeleccionable
-                {
-                    Id = c.Id,
-                    RazonSocial = c.RazonSocial,
-                    RFC = c.RFC,
-                    YaEstaInvitado = idsContratistasYaInvitados.Contains(c.Id)
-                })
-                .OrderBy(c => c.RazonSocial)
-                .ToListAsync()
+    .Where(c => !idsContratistasYaInvitados.Contains(c.Id)) // <-- MISMA LÍNEA CLAVE
+    .Select(c => new ContratistaSeleccionable
+    {
+        Id = c.Id,
+        RazonSocial = c.RazonSocial,
+        RFC = c.RFC,
+        YaEstaInvitado = false
+    })
+    .OrderBy(c => c.RazonSocial)
+    .ToListAsync()
         };
 
         return PartialView("_InvitarContratistasPartial", viewModel);
@@ -389,5 +423,251 @@ public class LicitacionesController : Controller
 
         return RedirectToAction("Index", "PanelDeFases");
     }
+    // POST: Licitaciones/Activar/5
+    // Esta acción se encarga de cambiar el estado de la licitación a "Activo".
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Activar(int id)
+    {
+        var licitacion = await _context.Licitaciones.FindAsync(id);
+
+        if (licitacion == null) return NotFound();
+
+        if (licitacion.Estado == "Preparacion")
+        {
+            licitacion.Estado = "Activo";
+            // Usamos la variable corregida _userManager
+            licitacion.UsuarioIdActivacion = _userManager.GetUserId(User);
+
+            _context.Update(licitacion);
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "La licitación ha sido activada.";
+        }
+        else
+        {
+            TempData["Error"] = "Esta licitación no se puede activar.";
+        }
+
+        return RedirectToAction("Detalles", new { id = id });
+    }
+
+    // GET: Licitaciones/VerPropuestas/5
+    // Esta acción prepara los datos para la nueva página que muestra todas las propuestas.
+    public async Task<IActionResult> VerPropuestas(int id)
+    {
+        var licitacion = await _context.Licitaciones
+                                        .Include(l => l.Proyecto)
+                                        .FirstOrDefaultAsync(l => l.Id == id);
+
+        if (licitacion == null)
+        {
+            return NotFound();
+        }
+
+        var viewModel = new VerPropuestasViewModel
+        {
+            LicitacionId = licitacion.Id,
+            NumeroLicitacion = licitacion.NumeroLicitacion,
+            ProyectoNombre = licitacion.Proyecto.NombreProyecto,
+            EstadoLicitacion = licitacion.Estado,
+            Contratistas = await _context.LicitacionContratistas
+                .Where(lc => lc.LicitacionId == id)
+                .Include(lc => lc.Contratista)
+                .Select(lc => new ContratistaConPropuestasViewModel
+                {
+                    // --- LÍNEA CORREGIDA ---
+                    ContratistaId = lc.Contratista.Id, // <-- ¡Aquí estaba el error! Mapeamos el Id del modelo.
+
+                    RazonSocial = lc.Contratista.RazonSocial,
+                    RFC = lc.Contratista.RFC,
+                    Propuestas = _context.PropuestasContratistas
+                                            .Where(p => p.LicitacionId == id && p.ContratistaId == lc.ContratistaId)
+                                            .Select(p => new PropuestaResumenViewModel
+                                            {
+                                                NombreArchivo = p.NombreArchivo,
+                                                RutaArchivo = p.RutaArchivo,
+                                                Descripcion = p.Descripcion,
+                                                FechaSubida = p.FechaSubida
+                                            }).ToList()
+                }).ToListAsync()
+        };
+
+        return View(viewModel);
+    }
+    // POST: Licitaciones/Cerrar/5
+    // Esta acción cambia el estado de una licitación Activa a Cerrada.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Cerrar(int id)
+    {
+        var licitacion = await _context.Licitaciones.FindAsync(id);
+
+        if (licitacion == null)
+        {
+            return NotFound();
+        }
+
+        // Solo se puede cerrar si el estado actual es "Activo".
+        if (licitacion.Estado == "Activo")
+        {
+            licitacion.Estado = "Cerrado";
+            _context.Update(licitacion);
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "La licitación ha sido cerrada. Ya no se aceptan más propuestas.";
+        }
+        else
+        {
+            TempData["Error"] = "Esta licitación no se puede cerrar porque no está activa.";
+        }
+
+        return RedirectToAction("Detalles", new { id = id });
+    }
+
+    // POST: Licitaciones/QuitarInvitacion
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> QuitarInvitacion(int licitacionId, int contratistaId)
+    {
+        // Buscamos la licitación para asegurarnos de que está en el estado correcto.
+        var licitacion = await _context.Licitaciones.FindAsync(licitacionId);
+
+        // Solo permitimos quitar contratistas si la licitación está en "Preparacion".
+        if (licitacion == null || licitacion.Estado != "Preparacion")
+        {
+            TempData["Error"] = "No se puede quitar a un contratista de una licitación que no está en preparación.";
+            return RedirectToAction("Detalles", new { id = licitacionId });
+        }
+
+        // Buscamos la invitación específica que queremos eliminar.
+        var invitacion = await _context.LicitacionContratistas
+            .FirstOrDefaultAsync(lc => lc.LicitacionId == licitacionId && lc.ContratistaId == contratistaId);
+
+        if (invitacion != null)
+        {
+            _context.LicitacionContratistas.Remove(invitacion);
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Contratista quitado de la licitación correctamente.";
+        }
+
+        return RedirectToAction("Detalles", new { id = licitacionId });
+    }
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AdjudicarGanador(int licitacionId, int contratistaGanadorId)
+    {
+        // IDs de las fases para mayor claridad. Búscalos en tu tabla [Fases]
+        const int faseLicitacionId = 4;
+        const int faseEjecucionId = 5;
+
+        // Usamos una transacción para asegurar que todas las operaciones se completen con éxito o ninguna lo haga.
+        using var transaction = await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            var licitacion = await _context.Licitaciones
+                                           .Include(l => l.Proyecto)
+                                           .FirstOrDefaultAsync(l => l.Id == licitacionId);
+
+            if (licitacion == null)
+            {
+                return NotFound("Licitación no encontrada.");
+            }
+
+            // 1. Validar que el proyecto y la licitación estén en el estado correcto
+            if (licitacion.Proyecto.IdFaseFk != faseLicitacionId)
+            {
+                TempData["Error"] = "El proyecto no se encuentra en la fase de licitación.";
+                return RedirectToAction("Detalles", new { id = licitacionId });
+            }
+            if (licitacion.Estado != "Cerrado") // Idealmente, solo adjudicar licitaciones cerradas.
+            {
+                TempData["Error"] = "La licitación debe estar en estado 'Cerrado' para poder adjudicar un ganador.";
+                return RedirectToAction("Detalles", new { id = licitacionId });
+            }
+            if (licitacion.Estado != "Cerrado")
+            {
+                TempData["Error"] = "Esta acción no se puede realizar. La licitación debe estar en estado 'Cerrado' para poder adjudicar un ganador.";
+                // Lo devolvemos a la página de propuestas.
+                return RedirectToAction("VerPropuestas", new { id = licitacionId });
+            }
+            // 2. Actualizar el estado de la licitación
+            licitacion.Estado = "Adjudicada";
+            _context.Licitaciones.Update(licitacion);
+
+            // 3. Actualizar el estado de todos los participantes
+            var participantes = await _context.LicitacionContratistas
+            // --- NECESITAMOS INCLUIR AL CONTRATISTA PARA OBTENER SU USERID ---
+            .Include(lc => lc.Contratista)
+            .Where(lc => lc.LicitacionId == licitacionId)
+            .ToListAsync();
+            foreach (var participante in participantes)
+            {
+                // --- CÓDIGO AÑADIDO PARA NOTIFICAR ---
+                var notificacion = new Notificacion
+                {
+                    UsuarioId = participante.Contratista.UsuarioId,
+                    Url = "/Contratista/DetallesLicitacion/" + licitacionId,
+                    FechaCreacion = DateTime.Now,
+                    Leida = false
+                };
+
+                if (participante.ContratistaId == contratistaGanadorId)
+                {
+                    participante.EstadoParticipacion = "Ganador";
+                    // Mensaje para el ganador
+                    notificacion.Mensaje = $"¡Felicidades! Has sido adjudicado como ganador de la licitación '{licitacion.NumeroLicitacion}'.";
+                }
+                else
+                {
+                    participante.EstadoParticipacion = "No Seleccionado";
+                    // Mensaje para los demás
+                    notificacion.Mensaje = $"El proceso para la licitación '{licitacion.NumeroLicitacion}' ha concluido. Agradecemos tu participación.";
+                }
+
+                _context.Notificaciones.Add(notificacion);
+                // --- FIN DEL CÓDIGO AÑADIDO ---
+            }
+            _context.LicitacionContratistas.UpdateRange(participantes);
+
+            // 4. Mover el proyecto a la siguiente fase
+            var proyecto = licitacion.Proyecto;
+            proyecto.IdFaseFk = faseEjecucionId;
+            _context.Proyectos.Update(proyecto);
+
+            // 5. Registrar el cambio en el historial
+            var historial = new HistorialFase
+            {
+                ProyectoId = proyecto.Id,
+                FaseAnteriorId = faseLicitacionId,
+                FaseNuevaId = faseEjecucionId,
+                FechaCambio = DateTime.Now,
+                Comentario = "Licitación adjudicada. El proyecto avanza a la fase de ejecución.",
+                TipoCambio = "Aprobado"
+                // Opcional: podrías guardar el ID del usuario que realizó la acción
+                // UsuarioId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+            };
+            _context.HistorialFases.Add(historial);
+
+            // 6. Guardar todos los cambios en la base de datos
+            await _context.SaveChangesAsync();
+
+            // 7. Si todo salió bien, confirmar la transacción
+            await transaction.CommitAsync();
+
+            TempData["Success"] = $"El proyecto '{proyecto.NombreProyecto}' ha sido adjudicado y movido a la fase de 'Ejecución'.";
+
+            // Redirigir al panel de fases para ver el proyecto en su nueva columna
+            return RedirectToAction("Index", "PanelDeFases");
+        }
+        catch (Exception ex)
+        {
+            // Si algo falla, revertimos todos los cambios.
+            await transaction.RollbackAsync();
+            // Opcional: Registrar el error 'ex' en un sistema de logs.
+            TempData["Error"] = "Ocurrió un error al intentar adjudicar la licitación. La operación ha sido revertida.";
+            return RedirectToAction("VerPropuestas", new { id = licitacionId });
+        }
+    }
+
 
 }

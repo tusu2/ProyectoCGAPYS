@@ -1,4 +1,5 @@
-﻿/* --- Paleta de Colores Premium --- */
+﻿@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+/* --- Paleta de Colores Premium --- */
 :root {
     --color-azul-fondo: #f0f2f5; /* Un gris azulado muy claro para el fondo */
     --color-azul-oscuro: #0B2D48; /* El azul principal de tu layout */
@@ -8,7 +9,10 @@
     --sombra-tarjeta: 0 4px 15px rgba(0, 0, 0, 0.07);
     --sombra-tarjeta-hover: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
-
+body {
+ 
+    font-family: 'Poppins', sans-serif;
+}
 /* --- Contenedor Principal --- */
 .projects-container {
     display: grid;

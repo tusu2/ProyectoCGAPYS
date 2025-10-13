@@ -30,5 +30,7 @@ namespace ProyectoCGAPYS.Models
 
         // Relaciones
         public virtual ICollection<LicitacionContratista> ContratistasParticipantes { get; set; }
+
+        public string? UsuarioIdActivacion { get; set; }
     }
 }

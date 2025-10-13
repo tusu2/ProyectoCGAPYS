@@ -1,9 +1,10 @@
 ﻿/* ========================================================= */
 /* =         DISEÑO PREMIUM PARA PLATAFORMA DE PROYECTOS         = */
 /* ========================================================= */
-
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
 /* --- 1. Variables y Estilo Base --- */
 /* Se mantienen tus excelentes variables de color y fuente */
+
 :root {
     --color-fondo-pagina: #EFF2F5;
     --color-fondo-container: #FFFFFF;
@@ -21,7 +22,12 @@
     --radio-borde-inputs: 0.3rem;
     --sombra-suave: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
-
+body {
+    font-family: var(--fuente-principal);
+    background-color: var(--color-fondo-pagina);
+    color: var(--color-texto-principal);
+    line-height: 1.6;
+}
 /* El body hereda el fondo dinámico del layout principal */
 
 /* --- 2. Títulos y Contenedores Principales --- */

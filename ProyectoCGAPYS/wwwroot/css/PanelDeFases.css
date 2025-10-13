@@ -1,12 +1,18 @@
 ﻿/* ============== Estilos para el Panel de Fases Kanban ============== */
 
 /* --- Paleta de Colores (opcional, pero buena práctica) --- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
 :root {
     --color-azul-fondo: #f4f7fa;
     --color-borde-columna: #e9ecef;
     --color-texto-titulo: #0B2D48;
     --color-texto-secundario: #6c757d;
     --sombra-tarjeta: 0 4px B 12px rgba(0, 0, 0, 0.08);
+}
+body {
+
+    font-family: 'Poppins', sans-serif;
 }
 
 /* --- Contenedor Principal del Tablero (La Magia Flexbox) --- */

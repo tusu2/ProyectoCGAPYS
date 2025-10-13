@@ -12,5 +12,6 @@ namespace ProyectoCGAPYS.ViewModels
             Invitaciones = new List<InvitacionViewModel>();
             HistorialProyectos = new List<HistorialProyectoViewModel>();
         }
+        public List<Notificacion> Notificaciones { get; set; }
     }
 }

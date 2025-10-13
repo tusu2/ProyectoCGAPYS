@@ -1,9 +1,11 @@
-﻿/* --- Estilos para la Página de Autenticación Split-Screen --- */
+﻿@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+/* --- Estilos para la Página de Autenticación Split-Screen --- */
 html, body {
     height: 100%;
     margin: 0;
     padding: 0;
     overflow: hidden; /* ¡Clave! Esto deshabilita el scroll en el body */
+    font-family: 'Poppins', sans-serif;
 }
 body {
     display: flex;
@@ -12,6 +14,7 @@ body {
     min-height: 100vh; /* Asegura que ocupe toda la altura de la pantalla */
     /* Este fondo se verá si tu imagen de ondas no cubre todo */
     background-color: #f0f2f5;
+    font-family: 'Poppins', sans-serif;
 }
 /* Contenedor principal que divide la pantalla */
 .auth-wrapper {

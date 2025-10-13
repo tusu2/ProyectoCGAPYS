@@ -1,0 +1,268 @@
+﻿/*
+    ======================================
+    Hoja de Estilos para Detalles de Licitación
+    ======================================
+*/
+
+/* --- Importamos la tipografía profesional --- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* --- Variables de Color (Consistentes con el Lobby) --- */
+:root {
+    --color-oro: #FFD700;
+    --color-plata: #C0C0C0;
+    --color-azul: #0000FF;
+    --color-fondo: #f8f9fa;
+    --color-cabecera: #0d2d5e;
+    --color-texto-principal: #34495e;
+    --color-texto-secundario: #7f8c8d;
+    --color-blanco: #ffffff;
+    --color-acento-primario: var(--color-azul);
+    --color-acento-secundario: var(--color-oro);
+    --sombra-tarjeta: 0 4px 15px rgba(0, 0, 0, 0.07);
+}
+
+/* --- Estilos Generales y Fondo SVG --- */
+body {
+    background-color: var(--color-fondo);
+    font-family: 'Poppins', sans-serif;
+    color: var(--color-texto-principal);
+    background-image: url('/svg/blob-scene-haikei (4).svg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+/* --- Cabecera (Navbar) --- */
+.navbar-custom {
+    background-color: var(--color-cabecera);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+    .navbar-custom .navbar-brand,
+    .navbar-custom .nav-link {
+        color: var(--color-blanco) !important;
+        font-weight: 500;
+    }
+
+        .navbar-custom .nav-link i {
+            margin-right: 8px;
+        }
+
+/* --- Títulos de la Página --- */
+.container h2 {
+    font-weight: 600;
+    color: var(--color-cabecera);
+}
+
+/* --- Nuevo Diseño para Tarjetas de Detalles --- */
+.detail-card {
+    background-color: var(--color-blanco);
+    border: none; /* Eliminamos el borde anterior */
+    [cite: 3] border-radius: 10px; /* Esquinas más redondeadas */
+    box-shadow: var(--sombra-tarjeta);
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+    border-top: 4px solid var(--color-acento-secundario); /* Borde superior dorado */
+    overflow: hidden; /* Asegura que el contenido respete el borde redondeado */
+}
+
+    .detail-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+.detail-card-header {
+    background-color: transparent; /* Quitamos el fondo gris */
+    border-bottom: 1px solid #ecf0f1; /* Una línea divisoria más sutil */
+    padding: 1rem 1.5rem;
+    [cite: 5] font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-cabecera);
+}
+    .detail-card-header h4 {
+        color: #212529; /* Negro/oscuro, como pediste */
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+        .detail-card-header h4 .fas {
+            color: #0000FF; /* Iconos también en Azul */
+        }
+
+
+.detail-card-body {
+    padding: 1.5rem;
+}
+
+
+/* --- Lista de Documentos Mejorada --- */
+.list-group-item {
+    border: none;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+    .list-group-item:last-child {
+        border-bottom: none;
+    }
+
+    .list-group-item a {
+        text-decoration: none;
+        color: var(--color-texto-principal);
+        font-weight: 500;
+        transition: color 0.3s ease;
+    }
+
+        .list-group-item a:hover {
+            color: var(--color-acento-primario);
+        }
+
+    .list-group-item i {
+        color: var(--color-acento-primario);
+        margin-right: 8px; /* Era me-2, lo estandarizamos */
+        [cite: 12]
+    }
+
+/* --- Estilo del Formulario --- */
+.form-label {
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    border-radius: 5px;
+    border: 1px solid #ced4da;
+}
+    .form-control:focus {
+        border-color: var(--color-acento-primario);
+        box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2);
+        outline: none;
+    }
+    }
+
+/* --- Botón Principal de Acción --- */
+.btn-primary {
+    background-color: var(--color-acento-primario);
+    border-color: var(--color-acento-primario);
+    font-weight: 500;
+    padding: 10px 25px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+    .btn-primary:hover {
+        background-color: #0000cc;
+        border-color: #0000cc;
+    }
+
+
+
+.titulo-proyecto {
+    color: #0000FF; /* Azul Corporativo */
+    font-weight: 700;
+}
+.subtitulo-licitacion {
+    color: #6b7280; /* Un gris complementario (plata oscuro) */
+    font-size: 1.2rem;
+}
+
+
+/* Botón Principal (DORADO) */
+.btn-dorado {
+    background: linear-gradient(145deg, #FFD700, #ffc700);
+    color: #212529; /* Texto oscuro para mejor contraste con el oro */
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 12px 24px;
+    border: none;
+    transition: all 0.2s;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+}
+
+    .btn-dorado:hover {
+        background: linear-gradient(145deg, #ffde2e, #FFD700);
+        color: #212529;
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(255, 215, 0, 0.3);
+    }
+
+/* Botón de Peligro (Rojo consistente) */
+.btn-danger-custom {
+    background-color: #dc2626;
+    color: #ffffff;
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 6px 14px; /* AJUSTE: Un poco menos de relleno vertical y horizontal */
+    border: none;
+    transition: all 0.2s;
+}
+
+    .btn-danger-custom:hover {
+        background-color: #b91c1c;
+        transform: translateY(-2px);
+    }
+
+
+.btn-warning-custom {
+    background-color: #f59e0b;
+    color: #ffffff;
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 6px 14px; /* AJUSTE: Un poco menos de relleno vertical y horizontal */
+    border: none;
+    transition: all 0.2s;
+}
+
+    .btn-warning-custom:hover {
+        background-color: #d97706;
+        transform: translateY(-2px);
+    }
+
+
+/* 7. Estilos para la tabla personalizada */
+.table-custom {
+    width: 100%;
+    border-collapse: separate; /* Permite usar border-radius en celdas */
+    border-spacing: 0;
+    margin-top: 1rem;
+}
+
+    .table-custom th {
+        font-weight: 500;
+        color: #6b7280; /* Tono plata oscuro */
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        text-align: left;
+        padding: 12px 16px;
+        border-bottom: 2px solid #C0C0C0; /* Borde Plata */
+    }
+
+    .table-custom td {
+        color: #374151;
+        padding: 16px;
+        border-bottom: 1px solid #eef2f7; /* Borde plata muy sutil */
+        font-size: 0.95rem;
+    }
+
+    .table-custom tbody tr:hover {
+        background-color: #f9fafb;
+    }
+
+/* Mapa con bordes redondeados */
+.map-container {
+    height: 400px;
+    border-radius: 12px;
+    z-index: 0;
+    overflow: hidden; /* Asegura que el mapa respete el borde redondeado */
+}
+
+.actions-container {
+    display: flex;
+    flex-wrap: nowrap; /* Evita que los botones salten a la siguiente línea */
+    gap: 8px; /* Define el espacio horizontal entre los botones */
+}

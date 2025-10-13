@@ -70,13 +70,17 @@
                         <th>RFC</th>
                         <th>Invitación</th>
                         <th>Estado</th>
+                        @if (Model.Estado == "Preparacion")
+                        {
+                            <th class="text-end">Acciones</th>
+                        }
                     </tr>
                 </thead>
                 <tbody>
                     @if (!Model.Participantes.Any())
                     {
                         <tr>
-                            <td colspan="4" class="text-center text-muted py-4">Aún no se han invitado contratistas.</td>
+                            <td colspan="5" class="text-center text-muted py-4">Aún no se han invitado contratistas.</td>
                         </tr>
                     }
                     @foreach (var contratista in Model.Participantes)
@@ -86,6 +90,19 @@
                             <td>@contratista.RFC</td>
                             <td>@(contratista.FechaInvitacion.HasValue ? contratista.FechaInvitacion.Value.ToShortDateString() : "--")</td>
                             <td>@contratista.EstadoParticipacion</td>
+
+                            @if (Model.Estado == "Preparacion")
+                            {
+                                <td class="text-end">
+                                    <form asp-action="QuitarInvitacion" method="post" class="form-quitar-invitacion">
+                                        <input type="hidden" name="licitacionId" value="@Model.LicitacionId" />
+                                        <input type="hidden" name="contratistaId" value="@contratista.ContratistaId" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash-alt"></i> Quitar
+                                        </button>
+                                    </form>
+                                </td>
+                            }
                         </tr>
                     }
                 </tbody>
@@ -102,22 +119,44 @@
                 <input type="hidden" name="LicitacionId" value="@Model.LicitacionId" />
                 <div class="mb-3">
                     <label class="form-label">Fecha de Inicio</label>
-                    <input type="date" name="FechaInicio" class="form-control" value="@Model.FechaInicio.ToString("yyyy-MM-dd")" required />
+                    @* No es necesario cambiar la fecha de inicio, pero lo hacemos por consistencia *@
+                    <input type="datetime-local" name="FechaInicio" class="form-control" value="@Model.FechaInicio.ToString("yyyy-MM-ddTHH:mm")" required />
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Fecha Límite para Propuestas</label>
-                    <input type="date" name="FechaFinPropuestas" class="form-control" value="@(Model.FechaFinPropuestas?.ToString("yyyy-MM-dd"))" />
+                    <label class="form-label">Fecha y Hora Límite para Propuestas</label>
+
+                    @* --- CAMBIO PRINCIPAL AQUÍ --- *@
+                    <input type="datetime-local" name="FechaFinPropuestas" class="form-control"
+                           value="@(Model.FechaFinPropuestas?.ToString("yyyy-MM-ddTHH:mm"))" />
                 </div>
                 <button type="submit" class="btn btn-secondary w-100">Guardar Fechas</button>
             </form>
 
             <div class="d-grid gap-2">
-                <button type="button" class="btn btn-success-custom" disabled>
-                    <i class="fas fa-check-circle me-2"></i>Activar Licitación
-                </button>
-                <button type="button" class="btn btn-danger-custom" id="btnDevolverFase">
+              
+                @if (Model.Estado == "Preparacion")
+                {
+                    <form id="formActivarLicitacion" asp-action="Activar" asp-route-id="@Model.LicitacionId" method="post">
+                        <button type="button" id="btnActivarLicitacion" class="btn btn-success-custom w-100">
+                            <i class="fas fa-check-circle me-2"></i>Activar Licitación
+                        </button>
+                    </form>
+                }
+                else if (Model.Estado == "Activo")
+                {
+                    <form id="formCerrarLicitacion" asp-action="Cerrar" asp-route-id="@Model.LicitacionId" method="post">
+                        <button type="button" id="btnCerrarLicitacion" class="btn btn-warning-custom w-100 text-dark">
+                            <i class="fas fa-lock me-2"></i>Cerrar Licitación
+                        </button>
+                    </form>
+                }
+                <a asp-action="VerPropuestas" asp-route-id="@Model.LicitacionId" class="btn-dorado">
+                    <i class="fas fa-eye me-2"></i>Ver Propuestas de Contratistas
+                </a>
+                <button type="button" class="btn btn-danger-custom" id="btnDevolverFase" @(Model.Estado == "Activo" ? "disabled" : "")>
                     <i class="fas fa-undo me-2"></i>Devolver a Fase Anterior
                 </button>
+
             </div>
         </div>
 
@@ -244,6 +283,69 @@
                     error: function () {
                         // Podríamos mostrar un error dentro del modal, pero por ahora cerramos.
                         Swal.fire('Error', 'Ocurrió un error al invitar.', 'error');
+                    }
+                });
+            });
+            $('#btnActivarLicitacion').on('click', function (e) {
+                e.preventDefault(); // Prevenir cualquier comportamiento por defecto
+
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: "Al activar, la licitación será visible para los contratistas invitados y ya no podrás quitar participantes.",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, activar ahora',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Si el usuario confirma, enviamos el formulario.
+                        $('#formActivarLicitacion').submit();
+                    }
+                });
+            });
+
+            $('.form-quitar-invitacion').on('submit', function (e) {
+                // Prevenimos que el formulario se envíe automáticamente
+                e.preventDefault();
+
+                var form = $(this); // Guardamos una referencia al formulario
+
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: "Se quitará al contratista de la licitación. Si ya había subido propuestas, también serán eliminadas. ¡Esta acción no se puede deshacer!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, ¡quítalo!',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    // Si el usuario confirma la acción...
+                    if (result.isConfirmed) {
+                        // ...enviamos el formulario.
+                        form.get(0).submit();
+                    }
+                });
+            });
+            // Para el botón de CERRAR
+            $('#btnCerrarLicitacion').on('click', function (e) {
+                e.preventDefault();
+
+                Swal.fire({
+                    title: '¿Confirmas que quieres cerrar?',
+                    text: "Una vez cerrada, los contratistas ya no podrán subir propuestas. Esta acción no se puede deshacer.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, cerrar licitación',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Si el usuario confirma, enviamos el formulario.
+                        $('#formCerrarLicitacion').submit();
                     }
                 });
             });

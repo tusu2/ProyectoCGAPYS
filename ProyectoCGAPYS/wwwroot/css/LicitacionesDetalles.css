@@ -1,8 +1,12 @@
 ﻿/* ---- ESTILOS MODERNOS UNIFICADOS PARA PÁGINAS DE DETALLES Y FORMULARIOS ---- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
 
 /* 1. Fondo suave para toda la página */
 body {
     background-color: #f8f9fc;
+    font-family: 'Poppins', sans-serif;
+
 }
 
 /* 2. Tarjetas de contenido con bordes más suaves y efecto hover */
@@ -154,3 +158,30 @@ body {
     .table-custom tbody tr:hover {
         background-color: #f9fafb; /* Efecto hover sutil */
     }
+/* Sugerencia: Añadir al final de /css/LicitacionesDetalles.css */
+
+.btn-dorado {
+    /* Color de fondo */
+    background-color: #FFC107; /* Un tono de amarillo dorado estándar */
+    /* Color del texto */
+    color: #ffffff;
+    /* Estilos para que se vea como un botón */
+    padding: 10px 15px;
+    border-radius: 8px;
+    text-align: center;
+    text-decoration: none; 
+    display: block;
+    font-weight: 500;
+}
+
+    /* Efecto al pasar el mouse por encima */
+    .btn-dorado:hover {
+        background-color: #ffca2c;
+        color: #ffffff;
+        transform: translateY(-2px);
+    }
+.btn-warning-custom {
+    background-color: #ff9800; /* Un color naranja */
+    color: white;
+    /* ... otros estilos de botón que ya usas ... */
+}

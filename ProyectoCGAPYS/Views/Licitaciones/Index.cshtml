@@ -2,22 +2,21 @@
 
 @{
     ViewData["Title"] = "Listado de Licitaciones";
-
-
     string GetStatusClass(string estado)
     {
-        switch (estado?.ToLower()) // Usamos ToLower() para no distinguir mayúsculas/minúsculas
+        switch (estado?.ToLower())
         {
-            case "abierta":
+            case "preparacion":
+                return "status-preparacion";
+            case "activo":
                 return "status-abierta";
-            case "adjudicada": // Ejemplo de otro estado
-                return "status-adjudicada";
-            case "cancelada": // Ejemplo de otro estado
-                return "status-cancelada";
-            case "cerrada":
+            case "cerrado":
                 return "status-cerrada";
+            // --- NUEVO ESTADO AÑADIDO ---
+            case "adjudicada":
+                return "status-adjudicada";
             default:
-                return "status-cerrada"; // Un color por defecto si el estado no coincide
+                return "status-cerrada";
         }
     }
 }
@@ -28,7 +27,18 @@
 </br>
 <div class="card-licitaciones">
     <h1 class="mb-4">@ViewData["Title"]</h1>
-
+    @if (ViewBag.NuevasNotificaciones != null)
+    {
+        <div class="alert alert-info" role="alert">
+            <h4 class="alert-heading">¡Novedades!</h4>
+            <ul class="mb-0">
+                @foreach (var notificacion in ViewBag.NuevasNotificaciones)
+                {
+                    <li>@notificacion.Mensaje</li>
+                }
+            </ul>
+        </div>
+    }
     <table class="table-custom">
         <thead>
             <tr>
@@ -73,7 +83,18 @@
                         </span>
                     </td>
                     <td class="text-right">
-                        <a asp-action="Detalles" asp-route-id="@item.Id" class="btn-details-custom">Detalles</a>
+
+                        @* --- LÓGICA MODIFICADA PARA EL BOTÓN --- *@
+                        @if (item.Estado == "Adjudicada")
+                        {
+                            <span class="btn-disabled-custom">Adjudicada</span>
+                        }
+                        else
+                        {
+                            <a asp-action="Detalles" asp-route-id="@item.Id" class="btn-details-custom">Detalles</a>
+                        }
+                        @* --- FIN DE LA MODIFICACIÓN --- *@
+
                     </td>
                 </tr>
             }

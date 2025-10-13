@@ -1,11 +1,30 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @inject SignInManager<IdentityUser> SignInManager
 @inject UserManager<IdentityUser> UserManager
+@inject ProyectoCGAPYS.Datos.ApplicationDbContext DbContext
+
 @{
-    // Obtenemos el nombre del controlador y la acción de la página actual
+    // --- VARIABLES UNIFICADAS EN UN SOLO BLOQUE ---
+
+    // 1. Obtenemos el controlador y la acción actual
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
 
+    // 2. Obtenemos las notificaciones sin leer
+    var notificacionesSinLeer = 0;
+    if (ViewBag.ConteoNotificacionesBadge != null && ViewBag.ConteoNotificacionesBadge > 0)
+    {
+        notificacionesSinLeer = ViewBag.ConteoNotificacionesBadge;
+    }
+    // Si no, hacemos la consulta normal a la base de datos (para las otras páginas).
+    else if (SignInManager.IsSignedIn(User))
+    {
+        var userId = UserManager.GetUserId(User);
+        if (userId != null)
+        {
+            notificacionesSinLeer = DbContext.Notificaciones.Count(n => n.UsuarioId == userId && !n.Leida);
+        }
+    }
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -24,6 +43,13 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+    <div style="background: #FFF3CD; color: #664d03; padding: 15px; position: fixed; top: 80px; left: 10px; z-index: 9999; border: 2px solid #FFC107; border-radius: 8px; font-family: monospace; font-size: 14px;">
+        <strong>DEBUGGER:</strong><br>
+        <span>Página: <strong>@ViewContext.RouteData.Values["controller"]?.ToString() / @ViewContext.RouteData.Values["action"]?.ToString()</strong></span><br>
+        <span>ViewBag Count: <strong>@(ViewBag.ConteoNotificacionesBadge ?? "ES NULO")</strong></span><br>
+        <span>Conteo Final para Badge: <strong>@notificacionesSinLeer</strong></span>
+    </div>
+
     @Html.Partial("_Splash")
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background-color: #0B2D48;">
@@ -37,13 +63,13 @@
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item">
                             <a class="nav-link @(currentController == "Dashboard" ? "active" : "")" asp-controller="Dashboard" asp-action="Index">
-                                <i class="bi bi-grid-1x2-fill"></i>
+                                <i class="bi bi-kanban-fill"></i>
                                 <span>Dashboard</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link @(currentController == "PanelDeFases" ? "active" : "")" asp-controller="PanelDeFases" asp-action="Index">
-                                <i class="bi bi-kanban-fill"></i>
+                                <i class="bi bi-grid-1x2-fill"></i>
                                 <span>Panel de fases</span>
                             </a>
                                 
@@ -63,10 +89,18 @@
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link @(currentController == "Licitaciones" ? "active" : "")" asp-controller="Licitaciones" asp-action="Index">
-                                <i class="bi bi-briefcase-fill"></i>
-                                <span>Licitaciones</span>
-                            </a>
+                            @* --- CONTENEDOR PARA POSICIONAR EL BADGE --- *@
+                            <div class="nav-link-container">
+                                <a class="nav-link @(currentController == "Licitaciones" ? "active" : "")" asp-controller="Licitaciones" asp-action="Index">
+                                    <i class="bi bi-briefcase-fill"></i>
+                                    <span>Licitaciones</span>
+                                </a>
+
+                                @if (notificacionesSinLeer > 0)
+                                {
+                                    <span class="notification-badge">@notificacionesSinLeer</span>
+                                }
+                            </div>
                         </li>
                         @if (SignInManager.IsSignedIn(User))
                         {

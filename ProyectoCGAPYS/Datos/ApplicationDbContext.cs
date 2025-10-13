@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using ProyectoCGAPYS.Models;
-using ProyectoCGAPYS.ViewModels; // <-- ¡ESTA ES LA LÍNEA QUE SOLUCIONA EL ERROR!
+using ProyectoCGAPYS.ViewModels; 
 
 namespace ProyectoCGAPYS.Datos
 {
@@ -37,6 +37,7 @@ namespace ProyectoCGAPYS.Datos
         public DbSet<Licitacion> Licitaciones { get; set; }
         public DbSet<LicitacionContratista> LicitacionContratistas { get; set; }
         public DbSet<PropuestaContratista> PropuestasContratistas { get; set; }
+        public DbSet<Notificacion> Notificaciones { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

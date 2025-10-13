@@ -29,6 +29,9 @@ builder.Services.AddAuthorization(options =>
            .RequireRole("Jefa")
            .Build();
 });
+
+builder.Services.AddHostedService<ProyectoCGAPYS.Services.VerificadorLicitacionesService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

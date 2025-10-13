@@ -7,12 +7,6 @@ namespace ProyectoCGAPYS.ViewModels
 {
     public class LicitacionDetalleViewModel
     {
-        public class DocumentoViewModel
-        {
-            public string NombreArchivo { get; set; }
-            public string RutaArchivo { get; set; }
-        }
-
         public int LicitacionId { get; set; }
         public string ProyectoId { get; set; }
         public string NumeroLicitacion { get; set; }

@@ -1,4 +1,6 @@
 ﻿/* --- Variables de Color Institucionales --- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
 :root {
     --azul-institucional: #003366; /* Un azul marino profundo */
     --oro-institucional: #D4AF37; /* Un tono dorado elegante */
@@ -14,8 +16,10 @@
 }
 
 body {
+    font-family: 'Poppins', sans-serif;
     background-color: var(--azul-claro-fondo);
 }
+
 
 /* --- Encabezado del Proyecto --- */
 .project-header {

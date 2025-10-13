@@ -8,89 +8,281 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Detalles de Licitación - Portal Contratistas</title>
+    <title>Detalles: @Model.NombreProyecto</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <link rel="stylesheet" href="~/css/detalles-licitacion.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+   
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 </head>
 <body>
-
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark border-bottom box-shadow mb-3" style="background-color: #003366;">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark navbar-custom border-bottom box-shadow mb-3">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-action="Index" asp-controller="Contratista">Portal Contratistas</a>
-                <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout">
-                    <button type="submit" class="nav-link btn btn-link text-light">Cerrar Sesión</button>
-                </form>
+                <a class="navbar-brand" href="#">
+                    <img src="/path/to/your/logo.png" alt="Logo" style="height: 30px;" />
+                </a>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-end">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                                <button type="submit" class="nav-link btn btn-link text-light">
+                                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </nav>
     </header>
 
-    <div class="container mt-4">
+    <div class="container my-5">
 
-        <div class="card mb-4">
-            <div class="card-header">
-                <h4 class="mb-0">Proyecto: @Model.NombreProyecto</h4>
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success" role="alert">
+                @TempData["SuccessMessage"]
             </div>
-            <div class="card-body">
-                <h6 class="card-subtitle mb-2 text-muted">Licitación No. @Model.NumeroLicitacion</h6>
-                <p class="card-text">@Model.DescripcionProyecto</p>
-                <p class="card-text text-danger"><strong>Fecha límite para propuestas: @Model.FechaFinPropuestas.ToString("dd MMMM, yyyy")</strong></p>
-            </div>
-        </div>
+        }
+
+        <h2 class="titulo-proyecto">@Model.NombreProyecto</h2>
+        <p class="subtitulo-licitacion">Licitación No. @Model.NumeroLicitacion</p>
+        <hr class="mb-4" />
 
         <div class="row">
-            <div class="col-md-5">
-                <h3>Subir Nueva Propuesta</h3>
-                <div class="card">
-                    <div class="card-body">
+            <div class="col-lg-8">
+                <div class="detail-card">
+                    <div class="detail-card-header"><h4><i class="fas fa-info-circle me-2"></i>Información del Proyecto</h4></div>
+                    <div class="detail-card-body">
+                        <h5>Descripción</h5>
+                        <p>@Model.DescripcionProyecto</p>
+                        <h5 class="mt-4">Documentos Adjuntos del Proyecto</h5>
+                        @if (Model.DocumentosProyecto.Any())
+                        {
+                            <ul class="list-group list-group-flush">
+                                @foreach (var doc in Model.DocumentosProyecto)
+                                {
+                                    <li class="list-group-item px-0"><a href="@doc.RutaArchivo" target="_blank" class="text-decoration-none fw-bold"><i class="fas fa-file-alt text-primary me-2"></i>@doc.NombreArchivo</a></li>
+                                }
+                            </ul>
+                        }
+                        else
+                        {
+                            <p class="text-muted">No hay documentos adjuntos para este proyecto.</p>
+                        }
+                    </div>
+                </div>
+
+                @if (Model.PropuestasSubidas.Any())
+                {
+                    <div class="detail-card">
+                        <div class="detail-card-header"><h4><i class="fas fa-archive me-2"></i>Mis Propuestas Enviadas</h4></div>
+                        <div class="detail-card-body table-responsive">
+                            <table class="table-custom">
+                                <thead><tr><th>Archivo</th><th>Descripción</th><th>Fecha</th><th style="width: 200px;">Acciones</th></tr></thead>
+                                <tbody>
+                                    @foreach (var propuesta in Model.PropuestasSubidas)
+                                    {
+                                        <tr>
+                                            <td><a href="@propuesta.RutaArchivo" target="_blank" class="text-decoration-none fw-bold"><i class="fas fa-file-pdf me-2 text-danger"></i>@propuesta.NombreArchivo</a></td>
+                                            <td>@propuesta.Descripcion</td>
+                                            <td>@propuesta.FechaSubida.ToString("dd/MM/yy HH:mm")</td>
+                                            <td>
+                                                <div class="actions-container">
+                                                    <button type="button" class="btn btn-warning-custom"
+                                                            data-propuesta-id="@propuesta.Id"
+                                                            data-descripcion="@propuesta.Descripcion"
+                                                            onclick="abrirModalModificar(this)">
+                                                        Modificar
+                                                    </button>
+
+                                                    <form asp-action="EliminarPropuesta" method="post"
+                                                          data-nombre-archivo="@propuesta.NombreArchivo"
+                                                          onsubmit="return confirmarEliminacion(event)">
+                                                        <input type="hidden" name="propuestaId" value="@propuesta.Id" />
+                                                        <button type="submit" class="btn btn-danger-custom">
+                                                            Eliminar
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+
+
+                <div class="detail-card">
+                    <div class="detail-card-header"><h4><i class="fas fa-paper-plane me-2"></i>Enviar Mi Propuesta</h4></div>
+                    <div class="detail-card-body">
                         <form method="post" enctype="multipart/form-data" asp-action="DetallesLicitacion">
-                            <input type="hidden" asp-for="LicitacionId" />
-
+                            <input type="hidden" asp-for="PropuestaInput.LicitacionId" />
                             <div class="mb-3">
-                                <label asp-for="DescripcionPropuesta" class="form-label">Descripción o Anotaciones</label>
-                                <textarea asp-for="DescripcionPropuesta" class="form-control" rows="3"></textarea>
-                                <span asp-validation-for="DescripcionPropuesta" class="text-danger"></span>
+                                <label asp-for="PropuestaInput.DescripcionPropuesta" class="form-label"></label>
+                                <textarea asp-for="PropuestaInput.DescripcionPropuesta" class="form-control" rows="3"></textarea>
+                                <span asp-validation-for="PropuestaInput.DescripcionPropuesta" class="text-danger"></span>
                             </div>
-
                             <div class="mb-3">
-                                <label asp-for="ArchivoPropuesta" class="form-label">Seleccionar Archivo (PDF, Word, Excel, etc.)</label>
-                                <input asp-for="ArchivoPropuesta" class="form-control" type="file">
-                                <span asp-validation-for="ArchivoPropuesta" class="text-danger"></span>
+                                <label asp-for="PropuestaInput.ArchivoPropuesta" class="form-label"></label>
+                                <input asp-for="PropuestaInput.ArchivoPropuesta" class="form-control" type="file">
+                                <span asp-validation-for="PropuestaInput.ArchivoPropuesta" class="text-danger"></span>
                             </div>
-
-                            <button type="submit" class="btn btn-success w-100">Subir Archivo</button>
+                            <button type="submit" class="btn btn-dorado w-100"><i class="fas fa-upload me-2"></i>Subir Archivo</button>
                         </form>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-7">
-                <h3>Propuestas Enviadas</h3>
-                @if (Model.PropuestasSubidas.Any())
-                {
-                    <ul class="list-group">
-                        @foreach (var propuesta in Model.PropuestasSubidas)
-                        {
-                            <li class="list-group-item">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h5 class="mb-1"><a href="@propuesta.RutaArchivo" target="_blank">@propuesta.NombreArchivo</a></h5>
-                                    <small>@propuesta.FechaSubida.ToString("g")</small>
-                                </div>
-                                <p class="mb-1">@propuesta.Descripcion</p>
-                            </li>
-                        }
-                    </ul>
-                }
-                else
-                {
-                    <p class="text-muted">Aún no has subido ninguna propuesta para esta licitación.</p>
-                }
+            <div class="col-lg-4">
+                <div class="detail-card p-3">
+                    <div class="detail-card-header bg-white border-0 px-1 pb-3"><h4><i class="fas fa-map-marker-alt me-2"></i>Ubicación</h4></div>
+                    <div id="mapa-proyecto" class="map-container"></div>
+                </div>
             </div>
         </div>
     </div>
 
-    <script src="~/lib/jquery/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+ 
+    <form id="form-modificar" asp-action="ModificarPropuesta" method="post" enctype="multipart/form-data" style="display:none;">
+        <input type="hidden" id="modificar-propuestaId" name="propuestaId" />
+        <textarea id="modificar-nuevaDescripcion" name="nuevaDescripcion"></textarea>
+        <input type="file" id="modificar-nuevoArchivo" name="nuevoArchivo" />
+    </form>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function confirmarEliminacion(event) {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const nombreArchivo = form.dataset.nombreArchivo; // Leemos el dato desde el atributo
+
+            Swal.fire({
+                title: '¿Estás seguro?',
+                text: `No podrás revertir la eliminación de "${nombreArchivo}"`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, ¡eliminar!',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+            return false;
+        }
+
+        // Función para abrir el modal de modificación (ahora lee desde data-*)
+        function abrirModalModificar(button) {
+            const propuestaId = button.dataset.propuestaId; // Leemos el ID
+            const descripcionActual = button.dataset.descripcion; // Leemos la descripción
+
+            Swal.fire({
+                title: 'Modificar Propuesta',
+                html: `
+                            <div class="text-start">
+                                <div class="mb-3">
+                                    <label for="swal-descripcion" class="form-label">Descripción</label>
+                                    <textarea id="swal-descripcion" class="form-control" rows="3">${descripcionActual}</textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="swal-archivo" class="form-label">Reemplazar Archivo (Opcional)</label>
+                                    <input id="swal-archivo" type="file" class="form-control">
+                                </div>
+                            </div>
+                        `,
+                showCancelButton: true,
+                confirmButtonText: 'Guardar Cambios',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#FFD700',
+                customClass: { confirmButton: 'text-dark' },
+                preConfirm: () => { return true; }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const nuevaDescripcion = document.getElementById('swal-descripcion').value;
+                    const nuevoArchivoInput = document.getElementById('swal-archivo');
+
+                    document.getElementById('modificar-propuestaId').value = propuestaId;
+                    document.getElementById('modificar-nuevaDescripcion').value = nuevaDescripcion;
+
+                    if (nuevoArchivoInput.files.length > 0) {
+                        document.getElementById('modificar-nuevoArchivo').files = nuevoArchivoInput.files;
+                    }
+
+                    document.getElementById('form-modificar').submit();
+                }
+            });
+        }
+        
+        document.addEventListener("DOMContentLoaded", function () {
+            const mapaDiv = document.getElementById('mapa-proyecto');
+            if (mapaDiv) {
+                try {
+                    const latitud = parseFloat('@Model.Latitud'.replace(',', '.'));
+                    const longitud = parseFloat('@Model.Longitud'.replace(',', '.'));
+                    const nombreProyecto = "@Html.Raw(Model.NombreProyecto.Replace("'", "\\'"))";
+
+                    if (!isNaN(latitud) && !isNaN(longitud)) {
+                        var map = L.map('mapa-proyecto').setView([latitud, longitud], 15);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        }).addTo(map);
+
+                        L.marker([latitud, longitud]).addTo(map).bindPopup(`<strong>${nombreProyecto}</strong>`).openPopup();
+
+                        // ---- ¡LA SOLUCIÓN! ----
+                        // Forzamos al mapa a recalcular su tamaño después de un breve instante.
+                        // Esto asegura que las "baldosas" del mapa se carguen correctamente.
+                        setTimeout(function () {
+                            map.invalidateSize();
+                        }, 200);
+
+                    } else {
+                        mapaDiv.innerHTML = '<p class="text-center text-muted m-4">Ubicación no disponible.</p>';
+                    }
+                } catch (e) {
+                    console.error("Error al inicializar el mapa: ", e);
+                    mapaDiv.innerHTML = '<p class="text-center text-danger m-4">No se pudo cargar el mapa.</p>';
+                }
+            }
+
+        @if (ViewBag.MostrarAnimacionGanador == true)
+        {
+            <text>
+                    // El código de la animación se ejecutará solo si ViewBag es true
+                    setTimeout(() => {
+                        Swal.fire({
+                            title: "¡Felicidades, has ganado esta licitación!",
+                            text: "Este proyecto ha sido adjudicado a tu favor. ¡Gracias por tu excelente propuesta!",
+                            icon: 'success',
+                            confirmButtonText: '¡Excelente!',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                confetti({
+                                    particleCount: 150,
+                                    spread: 180,
+                                    origin: { y: 0.6 }
+                                });
+                            }
+                        });
+                    }, 500);
+            </text>
+        }
+        });
+    </script>
 </body>
 </html>

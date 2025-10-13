@@ -13,24 +13,11 @@
     <title>Portal de Contratistas - @Model.NombreContratista</title>
     
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    
-    <style>
-        body {
-            background-color: #f4f7f6; /* Un fondo ligeramente diferente */
-        }
-        .navbar-custom {
-            background-color: #003366; /* Color institucional de ejemplo */
-        }
-        .invitacion-card {
-            border-left: 5px solid #ffc107; /* Un borde para destacar */
-            margin-bottom: 1.5rem;
-        }
-        .placeholder-text {
-            color: #6c757d;
-            font-style: italic;
-        }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/lobby-contratista.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
 </head>
 <body>
 
@@ -44,11 +31,15 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-end">
                     <ul class="navbar-nav">
                         <li class="nav-item">
-                            <span class="nav-link text-light">Bienvenido, @Model.NombreContratista</span>
+                            <span class="nav-link text-light">
+                                <i class="fas fa-user-circle"></i> Bienvenido, @Model.NombreContratista
+                            </span>
                         </li>
                         <li class="nav-item">
                             <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-                                <button type="submit" class="nav-link btn btn-link text-light">Cerrar Sesión</button>
+                                <button type="submit" class="nav-link btn btn-link text-light">
+                                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                                </button>
                             </form>
                         </li>
                     </ul>
@@ -58,7 +49,25 @@
     </header>
 
     <div class="container mt-4">
-        
+        @if (Model.Notificaciones.Any())
+        {
+            foreach (var notificacion in Model.Notificaciones)
+            {
+                <div class="alert alert-primary alert-dismissible fade show" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    @notificacion.Mensaje
+                    @if (!string.IsNullOrEmpty(notificacion.Url))
+                    {
+                        <a href="@notificacion.Url" class="alert-link"> Ver detalles</a>
+
+                    }
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+        }
+       
+
+
         <div class="row">
             <div class="col-12">
                 <h2 class="display-4">Invitaciones de Licitación</h2>
@@ -85,7 +94,7 @@
                 }
                 else
                 {
-                    <div class="text-center p-5">
+                    <div class="placeholder-card">
                         <h4 class="placeholder-text">A la espera de una nueva invitación</h4>
                         <p class="text-muted">No tienes licitaciones pendientes en este momento.</p>
                     </div>
@@ -121,9 +130,8 @@
         </div>
     </div>
 
-    <script src="~/lib/jquery/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
-
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
 </body>
 </html>
