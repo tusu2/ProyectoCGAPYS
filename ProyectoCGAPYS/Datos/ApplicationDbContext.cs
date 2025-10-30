@@ -38,6 +38,7 @@ namespace ProyectoCGAPYS.Datos
         public DbSet<LicitacionContratista> LicitacionContratistas { get; set; }
         public DbSet<PropuestaContratista> PropuestasContratistas { get; set; }
         public DbSet<Notificacion> Notificaciones { get; set; }
+        public DbSet<LicitacionDocumento> LicitacionDocumentos { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

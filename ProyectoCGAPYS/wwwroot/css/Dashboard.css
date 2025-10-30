@@ -223,3 +223,117 @@
         min-width: 0; /* Permite que el input se encoja y crezca */
         flex-grow: 1; /* El input ocupa todo el espacio sobrante */
     }
+
+/* --- Estilos del Asistente IA --- */
+.ia-chat-widget {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 350px;
+    max-width: 90vw;
+    z-index: 1050;
+    /* Usamos el mismo estilo glass-card */
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.8) 100%);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+    .ia-chat-widget.minimized .ia-chat-body {
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+    .ia-chat-widget.minimized #ia-chat-toggle i {
+        transform: rotate(180deg);
+    }
+
+.ia-chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    cursor: pointer;
+}
+
+    .ia-chat-header h5 {
+        margin: 0;
+        color: var(--color-text-primary);
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    .ia-chat-header #ia-chat-toggle {
+        background: transparent;
+        border: none;
+        color: var(--color-text-primary);
+    }
+
+        .ia-chat-header #ia-chat-toggle i {
+            transition: transform 0.3s ease;
+        }
+
+
+.ia-chat-body {
+    display: flex;
+    flex-direction: column;
+    max-height: 400px; /* Altura del chat */
+    transition: all 0.3s ease;
+}
+
+.ia-chat-messages {
+    flex-grow: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ia-message {
+    padding: 0.5rem 0.75rem;
+    border-radius: 10px;
+    max-width: 85%;
+    word-wrap: break-word;
+    font-size: 0.9rem;
+}
+
+    .ia-message.user {
+        background-color: var(--color-blue-accent);
+        color: white;
+        align-self: flex-end;
+        border-bottom-right-radius: 2px;
+    }
+
+    .ia-message.assistant {
+        background-color: #e9ecef;
+        color: var(--color-text-primary);
+        align-self: flex-start;
+        border-bottom-left-radius: 2px;
+    }
+
+
+.ia-chat-input-container {
+    display: flex;
+    padding: 1rem;
+    border-top: 1px solid rgba(0,0,0,0.1);
+}
+
+    .ia-chat-input-container input {
+        flex-grow: 1;
+        border-right: none;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+
+    .ia-chat-input-container button {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        min-width: 45px; /* Ancho fijo para el botón */
+    }

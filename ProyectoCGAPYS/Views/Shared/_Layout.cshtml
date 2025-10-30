@@ -43,13 +43,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <div style="background: #FFF3CD; color: #664d03; padding: 15px; position: fixed; top: 80px; left: 10px; z-index: 9999; border: 2px solid #FFC107; border-radius: 8px; font-family: monospace; font-size: 14px;">
-        <strong>DEBUGGER:</strong><br>
-        <span>Página: <strong>@ViewContext.RouteData.Values["controller"]?.ToString() / @ViewContext.RouteData.Values["action"]?.ToString()</strong></span><br>
-        <span>ViewBag Count: <strong>@(ViewBag.ConteoNotificacionesBadge ?? "ES NULO")</strong></span><br>
-        <span>Conteo Final para Badge: <strong>@notificacionesSinLeer</strong></span>
-    </div>
-
+  
     @Html.Partial("_Splash")
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background-color: #0B2D48;">

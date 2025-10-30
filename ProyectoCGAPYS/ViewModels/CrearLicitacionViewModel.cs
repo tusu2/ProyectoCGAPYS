@@ -27,5 +27,9 @@ namespace ProyectoCGAPYS.ViewModels // Reemplaza "TuProyecto" con el namespace r
         [Display(Name = "Fecha Límite para Propuestas")]
         [DataType(DataType.Date)]
         public DateTime FechaFinPropuestas { get; set; }
+
+
+        [Display(Name = "Tipo de Proceso")]
+        public string TipoProceso { get; set; }
     }
 }

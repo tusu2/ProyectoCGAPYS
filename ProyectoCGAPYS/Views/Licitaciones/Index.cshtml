@@ -12,7 +12,6 @@
                 return "status-abierta";
             case "cerrado":
                 return "status-cerrada";
-            // --- NUEVO ESTADO AÑADIDO ---
             case "adjudicada":
                 return "status-adjudicada";
             default:
@@ -34,6 +33,7 @@
             <ul class="mb-0">
                 @foreach (var notificacion in ViewBag.NuevasNotificaciones)
                 {
+
                     <li>@notificacion.Mensaje</li>
                 }
             </ul>
@@ -43,17 +43,21 @@
         <thead>
             <tr>
                 <th>
+
                     Número de Licitación
                 </th>
                 <th>
                     Proyecto Asociado
                 </th>
+
+                @* --- COLUMNA MODIFICADA --- *@
                 <th>
-                    Fecha Límite (Propuestas)
+                    Fecha Clave
                 </th>
                 <th>
                     Estado
                 </th>
+
                 <th></th>
             </tr>
         </thead>
@@ -61,43 +65,80 @@
             @foreach (var item in Model)
             {
                 <tr>
+
                     <td>
                         <strong>@Html.DisplayFor(modelItem => item.NumeroLicitacion)</strong>
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.Proyecto.NombreProyecto)
-                    </td>
-                    <td>
-                        @if (item.FechaFinPropuestas.HasValue)
+
+                        @* --- TIPO DE PROCESO AÑADIDO --- *@
+                        <br>
+                        @if (item.TipoProceso == "Adjudicación Directa")
                         {
-                            @item.FechaFinPropuestas.Value.ToString("dd MMM, yyyy")
+                            <span class="badge bg-info">@item.TipoProceso</span>
                         }
                         else
                         {
-                            <span class="text-muted">No definida</span>
+                            <span class="badge bg-warning">@item.TipoProceso</span>
                         }
                     </td>
                     <td>
+                        @Html.DisplayFor(modelItem => item.Proyecto.NombreProyecto)
+
+                    </td>
+
+                    @* --- LÓGICA CONDICIONAL AÑADIDA --- *@
+                    <td>
+                        @if (item.TipoProceso == "Adjudicación Directa")
+                        {
+                            @if (item.FechaFallo.HasValue)
+                            {
+                                <small class="text-muted">(Fallo)</small>
+                                <strong>@item.FechaFallo.Value.ToString("dd MMM, yyyy")</strong>
+                            }
+                            else
+                            {
+                                <span class="text-muted">N/A (Directa)</span>
+                            }
+                        }
+                        else
+                        {
+                            @if (item.FechaFinPropuestas.HasValue)
+                            {
+                                <small class="text-muted">(Límite)</small>
+                                <strong>@item.FechaFinPropuestas.Value.ToString("dd MMM, yyyy")</strong>
+                            }
+                            else
+                            {
+                                <span class="text-muted">No definida</span>
+                            }
+                        }
+                    </td>
+
+                    <td>
+
                         <span class="status-badge @GetStatusClass(item.Estado)">
                             @Html.DisplayFor(modelItem => item.Estado)
                         </span>
                     </td>
+
                     <td class="text-right">
 
                         @* --- LÓGICA MODIFICADA PARA EL BOTÓN --- *@
                         @if (item.Estado == "Adjudicada")
                         {
+
                             <span class="btn-disabled-custom">Adjudicada</span>
                         }
                         else
                         {
+
                             <a asp-action="Detalles" asp-route-id="@item.Id" class="btn-details-custom">Detalles</a>
                         }
                         @* --- FIN DE LA MODIFICACIÓN --- *@
 
                     </td>
+
                 </tr>
             }
         </tbody>
     </table>
-</div>
+</div>>

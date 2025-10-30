@@ -382,6 +382,7 @@
                     }
                 }
             });
+           
         });
         function generarReporte(proyectoId, buttonElement) {
             const statusSpan = document.getElementById(`status-${proyectoId}`);
@@ -446,6 +447,8 @@
         statusSpan.textContent = 'Error de conexión.';
         statusSpan.className = 'text-danger';
     });
+
+           
 }
 
         function verificarEstado(jobId, statusSpan, buttonElement) {

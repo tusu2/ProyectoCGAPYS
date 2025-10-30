@@ -15,7 +15,11 @@ using System;
 using SendGrid.Helpers.Mail;
 using SendGrid;
 using Microsoft.AspNetCore.Authorization;
-
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using Microsoft.Data.SqlClient;
+using System.Data;
+using Newtonsoft.Json; 
 namespace ProyectoCGAPYS.Controllers
 {
     [Authorize(Roles = "Jefa")]
@@ -29,15 +33,19 @@ namespace ProyectoCGAPYS.Controllers
         private readonly IServiceProvider _serviceProvider;
         private static readonly ConcurrentDictionary<string, string> ReportGenerationStatus = new ConcurrentDictionary<string, string>();
         private readonly IConfiguration _configuration;
-        // Inyectamos el contexto de la base de datos
-        public DashboardController(ApplicationDbContext context, IWebHostEnvironment hostingEnvironment  , ILogger<DashboardController> logger, IServiceProvider serviceProvider, IConfiguration configuration)
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        // 2. Modifica tu constructor para recibirlo:
+        public DashboardController(ApplicationDbContext context, IWebHostEnvironment hostingEnvironment,
+                                   ILogger<DashboardController> logger, IServiceProvider serviceProvider,
+                                   IConfiguration configuration, IHttpClientFactory httpClientFactory) // <--- AÑADE ESTO
         {
             _context = context;
             _hostingEnvironment = hostingEnvironment;
             _logger = logger;
             _serviceProvider = serviceProvider;
             _configuration = configuration;
-            
+            _httpClientFactory = httpClientFactory; // <--- AÑADE ESTO
         }
 
         public async Task<IActionResult> Index()
@@ -74,6 +82,210 @@ namespace ProyectoCGAPYS.Controllers
 
             // Pasamos el ViewModel completamente poblado a la vista
             return View(dashboardViewModel);
+        }
+        [HttpPost]
+        public async Task<IActionResult> AskAiAssistant([FromBody] AskAiRequest request)
+        {
+            if (string.IsNullOrEmpty(request.Prompt))
+            {
+                return BadRequest("El prompt no puede estar vacío.");
+            }
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
+
+                // --- PASO 1: GENERAR EL SQL (Llamada 1 a Ollama) ---
+
+                // Describimos las tablas clave. Eres el "dueño" de este prompt.
+                // Si añades más tablas, la IA podrá consultarlas.
+                string schemaDescription = @"
+        [Proyectos]:
+        - Id (nvarchar, PK): ID único del proyecto (Ej: 'PROY-001').
+        - NombreProyecto (nvarchar): Nombre descriptivo.
+        - Presupuesto (decimal): Monto asignado.
+        - Estatus (nvarchar): **MUY IMPORTANTE: El nombre es 'Estatus' (con E), NO 'Status' (con S).** Representa el estado actual (Ej: 'Activo', 'Finalizado').
+        - IdCampusFk (int, FK): Referencia a la tabla Campus.
+        - IdDependenciaFk (nvarchar, FK): Referencia a la tabla Dependencias.
+        - IdTipoFondoFk (nvarchar, FK): Referencia a la tabla TiposFondo.
+        - IdFaseFk (int, FK): Referencia a la tabla Fases.
+
+    [Fases]:
+        - Id (int, PK): ID.
+        - Nombre (nvarchar): Nombre de la fase. Los valores posibles son: 'Recepción / Análisis', 'En Elaboración de Anteproyecto', 'En Elaboración de Presupuesto', 'En Licitación', 'En Ejecución', 'Finalizado', 'Cancelado'.
+
+   [Campus]:
+- Id (int, PK): ID.
+- Nombre (nvarchar): Nombre del campus. Los valores posibles son: 'NORTE', 'LAGUNA', 'SURESTE'.
+- **IMPORTANTE: El usuario puede escribir 'Unidad Sureste', 'unidad laguna', etc. TÚ DEBES TRADUCIRLO a los valores exactos 'NORTE', 'LAGUNA' o 'SURESTE' en mayúsculas.**
+        
+        [Dependencias]:
+        - Id (nvarchar, PK): ID.
+        - Nombre (nvarchar): Nombre de la dependencia (Ej: 'ESCUELA DE BACHILLERES...', 'FACULTAD DE...').
+
+        [TiposFondo]:
+        - Id (nvarchar, PK): ID.
+        - Nombre (nvarchar): Nombre del fondo (Ej: 'ESCUELAS AL CIEN', 'FAM SUPERIOR 2025').
+        ";
+
+                var systemMessageSql = new OllamaMessage
+                {
+                    role = "system",
+                    content = $@"Eres un asistente experto en bases de datos SQL Server. Tu única tarea es convertir la pregunta del usuario en una consulta SQL segura y eficiente.
+- USA SOLAMENTE las tablas y columnas descritas en el siguiente esquema:
+{schemaDescription}
+- DEBES usar los nombres exactos de tablas y columnas como 'IdCampusFk', 'NombreProyecto', etc.
+- La consulta DEBE ser una única instrucción SELECT.
+- NO uses comillas triples (''') ni nada que no sea T-SQL válido.
+- NO respondas con nada más que la consulta SQL.
+- REGLA IMPORTANTE: Cuando uses subconsultas (sub-queries) para IDs (como IdFaseFk o IdCampusFk), SIEMPRE usa 'IN' en lugar de '='. (Ejemplo: 'IdCampusFk IN (SELECT Id ...)' en lugar de 'IdCampusFk = (SELECT Id ...)'.)**
+- Envuelve la consulta final en etiquetas <SQL> y </SQL>."
+                };
+
+                var userMessageSql = new OllamaMessage
+                {
+                    role = "user",
+                    content = request.Prompt
+                };
+
+                var ollamaRequestSql = new OllamaChatRequest();
+                ollamaRequestSql.messages.Add(systemMessageSql);
+                ollamaRequestSql.messages.Add(userMessageSql);
+
+                var responseSql = await client.PostAsJsonAsync("http://localhost:11434/api/chat", ollamaRequestSql);
+
+                if (!responseSql.IsSuccessStatusCode)
+                {
+                    return StatusCode(500, new { message = "Error en la Llamada 1 a la IA (Generación de SQL)." });
+                }
+
+                var ollamaResponseSql = await responseSql.Content.ReadFromJsonAsync<OllamaChatResponse>();
+                string rawResponse = ollamaResponseSql.message.content;
+
+                // --- PASO 2: EXTRAER Y EJECUTAR EL SQL (Lógica de C#) ---
+                string sqlQuery = "";
+             
+
+                // 1. Limpiamos el Markdown (```sql ... ```) si existe
+                if (rawResponse.Contains("```sql"))
+                {
+                    rawResponse = rawResponse.Replace("```sql", "").Replace("```", "");
+                }
+
+                // 2. Buscamos el SQL usando Regex o por "SELECT"
+                Match match = Regex.Match(rawResponse, @"<SQL>(.*?)<\/SQL>", RegexOptions.Singleline);
+                if (match.Success)
+                {
+                    sqlQuery = match.Groups[1].Value.Trim();
+                }
+                else if (rawResponse.Trim().StartsWith("SELECT", StringComparison.OrdinalIgnoreCase))
+                {
+                    sqlQuery = rawResponse.Trim();
+                }
+                else
+                {
+                    // No es un SQL, es charla casual.
+                    _logger.LogWarning("La IA no devolvió un SQL válido. Respuesta: {Response}", rawResponse);
+                    return Ok(new { responseText = rawResponse });
+                }
+
+                // 3. Limpiamos texto conversacional que la IA pega al final
+                // (Buscamos el último ';' o el último ')' y cortamos ahí)
+                int lastSemicolon = sqlQuery.LastIndexOf(';');
+                int lastParenthesis = sqlQuery.LastIndexOf(')');
+
+                if (lastSemicolon > -1)
+                {
+                    sqlQuery = sqlQuery.Substring(0, lastSemicolon + 1);
+                }
+                else if (lastParenthesis > -1)
+                {
+                    // Si no hay ';', confiamos en el último ')'
+                    sqlQuery = sqlQuery.Substring(0, lastParenthesis + 1);
+                }
+
+                // 4. --- 🚨 FILTRO DE SEGURIDAD MEJORADO (PERMITE ';') 🚨 ---
+                if (!sqlQuery.Trim().StartsWith("SELECT", StringComparison.OrdinalIgnoreCase) ||
+                    sqlQuery.Contains("--") ||
+                    sqlQuery.Contains("DROP", StringComparison.OrdinalIgnoreCase) ||
+                    sqlQuery.Contains("INSERT", StringComparison.OrdinalIgnoreCase) ||
+                    sqlQuery.Contains("UPDATE", StringComparison.OrdinalIgnoreCase) ||
+                    sqlQuery.Contains("DELETE", StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogError("Intento de SQL inseguro bloqueado: {Query}", sqlQuery);
+                    return BadRequest("La consulta generada no es segura y ha sido bloqueada.");
+                }
+
+                // 5. Usamos ADO.NET para ejecutar la consulta
+                string jsonData = "[]";
+                try
+                {
+                    var connectionString = _context.Database.GetConnectionString();
+                    using (var connection = new SqlConnection(connectionString))
+                    {
+                        await connection.OpenAsync();
+                        using (var command = new SqlCommand(sqlQuery, connection))
+                        {
+                            var adapter = new SqlDataAdapter(command);
+                            var dataTable = new DataTable();
+                            await Task.Run(() => adapter.Fill(dataTable));
+
+                            // Esta es la versión corregida
+                            jsonData = JsonConvert.SerializeObject(dataTable);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // ¡Aquí es donde debería haber fallado tu consulta!
+                    _logger.LogError(ex, "Error al ejecutar el SQL generado por la IA: {Query}", sqlQuery);
+                    // Devolvemos el error a la IA para que intente corregirlo (o simplemente nos informe)
+                    return StatusCode(500, new { message = $"La IA generó un SQL que falló: '{sqlQuery}'. Error: {ex.Message}" });
+                }
+
+
+                // --- PASO 3: RESUMIR LOS DATOS (Llamada 2 a Ollama) ---
+
+                var systemMessageSummary = new OllamaMessage
+                {
+                    role = "system",
+                    content = @"Eres un asistente experto de CGAPYS. Te proporcionaré datos en formato JSON y la pregunta original del usuario.
+Tu trabajo es formular una respuesta amigable y concisa en español, basándote ÚNICAMENTE en los datos JSON.
+No inventes información. Si el JSON está vacío, informa al usuario que no se encontraron resultados."
+                };
+
+                var userMessageSummary = new OllamaMessage
+                {
+                    role = "user",
+                    content = $@"**Datos JSON:**
+{jsonData}
+
+**Pregunta Original:**
+{request.Prompt}
+
+**Tu Respuesta Amigable:**"
+                };
+
+                var ollamaRequestSummary = new OllamaChatRequest();
+                ollamaRequestSummary.messages.Add(systemMessageSummary);
+                ollamaRequestSummary.messages.Add(userMessageSummary);
+
+                var responseSummary = await client.PostAsJsonAsync("http://localhost:11434/api/chat", ollamaRequestSummary);
+
+                if (!responseSummary.IsSuccessStatusCode)
+                {
+                    return StatusCode(500, new { message = "Error en la Llamada 2 a la IA (Resumen de datos)." });
+                }
+
+                var ollamaResponseSummary = await responseSummary.Content.ReadFromJsonAsync<OllamaChatResponse>();
+
+                return Ok(new { responseText = ollamaResponseSummary.message.content });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Excepción al llamar a AskAiAssistant");
+                return StatusCode(500, new { message = "Error interno del servidor." });
+            }
         }
 
         [HttpGet]
@@ -267,10 +479,36 @@ namespace ProyectoCGAPYS.Controllers
         }
     }
 
-   
+    // Clases para enviar la solicitud a Ollama
+    public class OllamaChatRequest
+    {
+        public string model { get; set; } = "phi3"; // El modelo que descargaste
+        public List<OllamaMessage> messages { get; set; } = new List<OllamaMessage>();
+        public bool stream { get; set; } = false; // Por ahora, no usaremos streaming
+    }
+
+    public class OllamaMessage
+    {
+        public string role { get; set; } // "user" o "assistant"
+        public string content { get; set; }
+    }
+
+    // Clases para recibir la respuesta de Ollama
+    public class OllamaChatResponse
+    {
+        public OllamaMessage message { get; set; }
+        // Aquí vendrían otras propiedades si las necesitaras (como 'done', 'total_duration', etc.)
+    }
+
+    // Clase para la solicitud desde nuestra vista
+    public class AskAiRequest
+    {
+        public string Prompt { get; set; }
+    }
 }
 public class EnvioCorreoRequest
 {
     public string ProyectoId { get; set; }
     public string EmailDestino { get; set; }
 }
+

@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Detalles de la Licitación";
+    bool estaAdjudicada = Model.Estado == "Adjudicada";
     // Usamos la misma función auxiliar de la vista anterior para los badges
     string GetStatusClass(string estado)
     {
@@ -15,6 +16,9 @@
         }
     }
 }
+<link rel="stylesheet" href="~/css/LicitacionesDetalles.css" asp-append-version="true" />
+@if (ViewBag.ModoGestionHabilitado == true && Model.TipoProceso == "Licitación Pública")
+{
 <link rel="stylesheet" href="~/css/LicitacionesDetalles.css" asp-append-version="true" />
 <h2 class="mb-4">@ViewData["Title"]: <strong>@Model.NumeroLicitacion</strong></h2>
 
@@ -191,7 +195,199 @@
         </div>
     </div>
 </div>
+}
+else
+{
+    @* *************************************************************** *@
+    @* --- CASO B: MODO CONTROL (TU NUEVA SOLICITUD) --- *@
+    @* *************************************************************** *@
+    <br>
+    <br>
+    <br>
+    <div class="container-fluid mt-4">
+        <div class="row">
 
+            <div class="col-lg-8">
+
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Información General</h6>
+                    </div>
+                    <div class="card-body">
+                        <h4 class="mb-3">@Model.ProyectoNombre</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Folio Proyecto:</strong> @Model.FolioProyecto</p>
+                                <p><strong>Estado Licitación:</strong> <span class="badge bg-secondary">@Model.Estado</span></p>
+                                <p><strong>Tipo Proceso:</strong> <span class="badge bg-info">@Model.TipoProceso.Replace("_", " ")</span></p>
+                                <p><strong>Descripción:</strong> @Model.DescripcionLicitacion</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Dependencia:</strong> @Model.DependenciaNombre</p>
+                                <p><strong>Campus:</strong> @Model.CampusNombre</p>
+                                <p><strong>Presupuesto Aprobado:</strong> @Model.PresupuestoProyecto.ToString("C")</p>
+                                <p><strong>Fuente de Financiamiento:</strong> @Model.TipoFondoNombre</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                        <h6 class="m-0 font-weight-bold text-primary">Contratista Ganador</h6>
+
+                        @if (!estaAdjudicada)
+                        {
+                            <button type="button" class="btn-dorado" id="btnAsignarGanador">
+                                @(Model.ContratistaGanador == null ? "Asignar Ganador" : "Cambiar Ganador")
+                            </button>
+                        }
+                    </div>
+                    <div class="card-body">
+                        @if (Model.ContratistaGanador != null)
+                        {
+                            <div class="alert alert-success">
+                                <h5 class="alert-heading">@Model.ContratistaGanador.RazonSocial</h5>
+                                <p class="mb-0"><strong>RFC:</strong> @Model.ContratistaGanador.RFC</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning">
+                                <p class="mb-0">Aún no se ha asignado un contratista ganador para esta adjudicación.</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Documentos de Licitación (Fallo, Contrato, Fianza)</h6>
+                    </div>
+                    <div class="card-body">
+
+                        @if (!estaAdjudicada)
+                        {
+                            <form asp-action="SubirDocumentoLicitacion" method="post" enctype="multipart/form-data">
+                                <input type="hidden" name="LicitacionId" value="@Model.LicitacionId" />
+                                <div class="row g-3">
+                                    <div class="col-md-5">
+                                        <label class="form-label">Archivo</label>
+                                        <input type="file" name="archivo" class="form-control" required />
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label class="form-label">Tipo de Documento</label>
+                                        <select name="TipoDocumento" class="form-select" required>
+                                            <option value="">Seleccione...</option>
+                                            <option value="Fallo">Dictamen / Fallo</option>
+                                            <option value="Contrato">Contrato</option>
+                                            <option value="Fianza">Fianza</option>
+                                            <option value="Otro">Otro</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2 d-flex align-items-end">
+                                        <button type="submit" class="btn btn-success w-100">Subir</button>
+                                    </div>
+                                </div>
+                            </form>
+                            <hr />
+                        }
+
+                        @if (Model.LicitacionDocumentos.Any())
+                        {
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Tipo</th>
+                                        <th>Nombre de Archivo</th>
+                                        <th>Fecha</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var doc in Model.LicitacionDocumentos)
+                                    {
+                                        <tr>
+                                            <td><span class="badge bg-secondary">@doc.TipoDocumento</span></td>
+                                            <td>@doc.NombreArchivo</td>
+                                            <td>@doc.FechaSubida.ToString("dd/MM/yyyy")</td>
+                                            <td>
+                                                <a href="@doc.RutaArchivo" target="_blank" class="btn btn-outline-primary btn-sm">Ver</a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <p class="text-center text-muted">No hay documentos de licitación cargados.</p>
+                        }
+                    </div>
+                </div>
+
+            </div> <div class="col-lg-4">
+
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Acciones y Registro</h6>
+                    </div>
+                    <div class="card-body">
+
+                        @if (estaAdjudicada)
+                        {
+                            <div class="alert alert-success text-center">
+                                <h5 class="mb-0">LICITACIÓN ADJUDICADA</h5>
+                                <p><small>Este proyecto ya fue enviado a Ejecución.</small></p>
+                            </div>
+                        }
+                        else
+                        {
+                            <form asp-action="ActualizarDatosControl" method="post">
+                                <input type="hidden" name="LicitacionId" value="@Model.LicitacionId" />
+                                <div class="mb-3">
+                                    <label class="form-label">Fecha de Fallo / Adjudicación</label>
+                                    <input type="date" name="FechaFallo" value="@Model.FechaFallo?.ToString("yyyy-MM-dd")" class="form-control" />
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Número de Contrato</label>
+                                    <input type="text" name="NumeroContrato" value="@Model.NumeroContrato" class="form-control" />
+                                </div>
+                                <button type="submit" class="btn-outline-primary-custom w-100 mb-3">Guardar Datos de Registro</button>
+                            </form>
+
+                            <hr>
+
+                            <div class="d-grid gap-2">
+                                <form asp-action="MandarAEjecutar" method="post" id="formMandarAEjecutar">
+                                    <input type="hidden" name="LicitacionId" value="@Model.LicitacionId" />
+                                    <button type="button" class="btn btn-success-custom w-100 btn-pulse" id="btnMandarAEjecutar">
+                                        Mandar a Fase de Ejecución
+                                    </button>
+                                </form>
+
+                                <button type="button" class="btn-outline-danger-custom w-100" id="btnDevolverFase">
+                                    Devolver a Fase Anterior
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Ubicación del Proyecto</h6>
+                    </div>
+                    <div class="card-body" style="height: 300px;">
+                        <div id="mapa-proyecto" style="height: 100%;"></div>
+                        <p class="text-muted small">Lat: @Model.Latitud, Lon: @Model.Longitud</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
 <div class="mt-4">
     <a asp-action="Index"><i class="fas fa-arrow-left me-2"></i>Volver al listado</a>
 </div>
@@ -202,13 +398,42 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
             crossorigin=""></script>
+
     <script>
         $(document).ready(function () {
 
             const licitacionId = @Model.LicitacionId;
 
             // ==========================================================
-            // --- MANEJO DE DEVOLUCIÓN DE FASE CON SWEETALERT2 ---
+            // --- SCRIPT ÚNICO PARA EL MAPA (FUNCIONA EN AMBOS MODOS) ---
+            // ==========================================================
+            if ($('#mapa-proyecto').length > 0) {
+                try {
+                    const latitud = parseFloat('@Model.Latitud'.replace(',', '.'));
+                    const longitud = parseFloat('@Model.Longitud'.replace(',', '.'));
+                    const nombreProyecto = "@Html.Raw(Model.ProyectoNombre.Replace("'", "\\'"))";
+
+                    if (!isNaN(latitud) && !isNaN(longitud)) {
+                        var map = L.map('mapa-proyecto').setView([latitud, longitud], 15);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        }).addTo(map);
+                        L.marker([latitud, longitud]).addTo(map)
+                            .bindPopup(`<strong>${nombreProyecto}</strong>`)
+                            .openPopup();
+                    } else {
+                        $('#mapa-proyecto').html('<p class="text-center text-muted m-4">Ubicación no disponible.</p>');
+                    }
+                } catch (e) {
+                    console.error("Error al inicializar el mapa: ", e);
+                    $('#mapa-proyecto').html('<p class="text-center text-danger m-4">No se pudo cargar el mapa.</p>');
+                }
+            } else {
+                console.error("Error de inicialización: No se encontró el elemento con ID 'mapa-proyecto'.");
+            }
+
+            // ==========================================================
+            // --- DEVOLVER FASE (FUNCIONA EN AMBOS MODOS) ---
             // ==========================================================
             $('#btnDevolverFase').on('click', function () {
                 Swal.fire({
@@ -231,22 +456,111 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         const motivo = result.value;
-                        // Aquí va la llamada AJAX para devolver la fase
-                        $.post('@Url.Action("DevolverFase")', { licitacionId: licitacionId, comentario: motivo })
-                            .done(function () {
+                        const token = $('input[name="__RequestVerificationToken"]').val();
+                        const data = {
+                            __RequestVerificationToken: token,
+                            licitacionId: licitacionId,
+                            comentario: motivo
+                        };
+
+                        $.post('@Url.Action("DevolverFase", "Licitaciones")', data)
+                            .done(function (response) {
                                 Swal.fire('¡Devuelto!', 'El proyecto ha sido regresado a la fase anterior.', 'success')
-                                    .then(() => window.location.href = '@Url.Action("Index", "PanelDeFases")');
+                                    .then(() => {
+                                        window.location.href = '@Url.Action("Index", "PanelDeFases")';
+                                    });
                             })
                             .fail(function () {
-                                Swal.fire('Error', 'No se pudo devolver el proyecto.', 'error');
+                                Swal.fire('Error', 'No se pudo devolver el proyecto. Revisa la consola para más detalles.', 'error');
                             });
                     }
                 });
             });
 
             // ==========================================================
-            // --- MANEJO DE INVITACIÓN DE CONTRATISTAS CON SWEETALERT2 ---
+            // --- MANDAR A EJECUTAR (MODO CONTROL) ---
             // ==========================================================
+            $('#btnMandarAEjecutar').on('click', function (e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: '¿Mandar a Ejecución?',
+                    text: "Se adjudicará la licitación y se moverá el proyecto a la fase de 'Ejecución'. ¿Estás seguro?",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, mandar a ejecución',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $('#formMandarAEjecutar').submit();
+                    }
+                });
+            });
+
+
+            // ==========================================================
+            // --- ASIGNAR GANADOR (MODO CONTROL) ---
+            // ==========================================================
+            $('#btnAsignarGanador').on('click', function () {
+                cargarContenidoModalAsignar();
+            });
+            function cargarContenidoModalAsignar(terminoBusqueda = '') {
+                const url = '@Url.Action("_AsignarGanadorPartial", "Licitaciones", new { licitacionId = Model.LicitacionId })' + `?busqueda=${encodeURIComponent(terminoBusqueda)}`;
+
+                $.get(url).done(function (data) {
+                    Swal.fire({
+                        title: 'Asignar Ganador',
+                        html: data,
+                        width: '800px',
+                        showConfirmButton: false,
+                        showCancelButton: true,
+                        cancelButtonText: 'Cerrar'
+                    });
+                }).fail(function () {
+                    Swal.fire('Error', 'No se pudo cargar la lista de contratistas.', 'error');
+                });
+            }
+
+            // --- ¡NUEVO MANEJADOR DE SUBMIT! ---
+            // Esto intercepta el clic en "Asignar" desde el modal
+            $(document).on('submit', '.form-asignar-ganador', function (e) {
+                e.preventDefault(); // Detenemos el envío normal del formulario
+                var form = $(this);
+
+                $.ajax({
+                    url: form.attr('action'),
+                    type: form.attr('method'),
+                    data: form.serialize(), // Tomamos los datos del form (LicitacionId, ContratistaId, Token)
+                    success: function (response) {
+                        Swal.fire({
+                            title: '¡Asignado!',
+                            text: 'El contratista ha sido asignado como ganador.',
+                            icon: 'success'
+                        }).then(() => {
+                            location.reload(); // Recargamos la página para ver al ganador
+                        });
+                    },
+                    error: function (xhr) {
+                        // Si algo sale mal (ej. validación), mostramos el error
+                        Swal.fire('Error', 'Ocurrió un error al asignar el ganador. (Error: ' + xhr.status + ')', 'error');
+                    }
+                });
+            });
+            // --- FIN DEL NUEVO MANEJADOR ---
+
+            // (El script para el botón de búsqueda 'btnBuscarContratistaAsignar' sigue aquí...)
+            $(document).on('click', '#btnBuscarContratistaAsignar', function () {
+                var busqueda = $('#busquedaContratistaAsignar').val();
+                cargarContenidoModalAsignar(busqueda);
+            });
+
+
+            // ==========================================================
+            // --- SCRIPTS DE MODO GESTIÓN (No afectan al Modo Control) ---
+            // ==========================================================
+
+            // --- INVITAR CONTRATISTAS (MODO GESTIÓN) ---
             $('#btnInvitarContratista').on('click', function () {
                 cargarContenidoModalInvitar();
             });
@@ -257,9 +571,9 @@
                 $.get(url).done(function (data) {
                     Swal.fire({
                         title: 'Invitar Contratistas',
-                        html: data, // El contenido del Partial View se carga aquí
+                        html: data,
                         width: '800px',
-                        showConfirmButton: false, // Ocultamos el botón por defecto, el formulario tendrá el suyo
+                        showConfirmButton: false,
                         showCancelButton: true,
                         cancelButtonText: 'Cerrar'
                     });
@@ -268,7 +582,6 @@
                 });
             }
 
-            // Usamos delegación de eventos en 'document' porque el contenido del modal es dinámico
             $(document).on('submit', '#formInvitarContratistas', function (e) {
                 e.preventDefault();
                 var form = $(this);
@@ -278,74 +591,10 @@
                     data: form.serialize(),
                     success: function (response) {
                         Swal.close();
-                        location.reload(); // Recarga la página para mostrar los nuevos invitados
+                        location.reload();
                     },
                     error: function () {
-                        // Podríamos mostrar un error dentro del modal, pero por ahora cerramos.
                         Swal.fire('Error', 'Ocurrió un error al invitar.', 'error');
-                    }
-                });
-            });
-            $('#btnActivarLicitacion').on('click', function (e) {
-                e.preventDefault(); // Prevenir cualquier comportamiento por defecto
-
-                Swal.fire({
-                    title: '¿Estás seguro?',
-                    text: "Al activar, la licitación será visible para los contratistas invitados y ya no podrás quitar participantes.",
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#28a745',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Sí, activar ahora',
-                    cancelButtonText: 'Cancelar'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Si el usuario confirma, enviamos el formulario.
-                        $('#formActivarLicitacion').submit();
-                    }
-                });
-            });
-
-            $('.form-quitar-invitacion').on('submit', function (e) {
-                // Prevenimos que el formulario se envíe automáticamente
-                e.preventDefault();
-
-                var form = $(this); // Guardamos una referencia al formulario
-
-                Swal.fire({
-                    title: '¿Estás seguro?',
-                    text: "Se quitará al contratista de la licitación. Si ya había subido propuestas, también serán eliminadas. ¡Esta acción no se puede deshacer!",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Sí, ¡quítalo!',
-                    cancelButtonText: 'Cancelar'
-                }).then((result) => {
-                    // Si el usuario confirma la acción...
-                    if (result.isConfirmed) {
-                        // ...enviamos el formulario.
-                        form.get(0).submit();
-                    }
-                });
-            });
-            // Para el botón de CERRAR
-            $('#btnCerrarLicitacion').on('click', function (e) {
-                e.preventDefault();
-
-                Swal.fire({
-                    title: '¿Confirmas que quieres cerrar?',
-                    text: "Una vez cerrada, los contratistas ya no podrán subir propuestas. Esta acción no se puede deshacer.",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#dc3545',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Sí, cerrar licitación',
-                    cancelButtonText: 'Cancelar'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Si el usuario confirma, enviamos el formulario.
-                        $('#formCerrarLicitacion').submit();
                     }
                 });
             });
@@ -361,37 +610,64 @@
                     $('#btnBuscarContratista').click();
                 }
             });
-            if ($('#mapa-proyecto').length > 0) {
-                try {
-                    // Obtenemos las coordenadas y el nombre del proyecto desde el modelo.
-                    const latitud = parseFloat('@Model.Latitud'.replace(',', '.'));
-                    const longitud = parseFloat('@Model.Longitud'.replace(',', '.'));
-                    const nombreProyecto = "@Html.Raw(Model.ProyectoNombre.Replace("'", "\\'"))";
 
-                    if (!isNaN(latitud) && !isNaN(longitud)) {
-                        // 2. Inicializamos el mapa en el div 'mapa-proyecto'.
-                        var map = L.map('mapa-proyecto').setView([latitud, longitud], 15);
-
-                        // 3. Añadimos una capa de mapa base.
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                        }).addTo(map);
-
-                        // 4. Creamos y añadimos un marcador (pin).
-                        L.marker([latitud, longitud]).addTo(map)
-                            .bindPopup(`<strong>${nombreProyecto}</strong>`)
-                            .openPopup();
-                    } else {
-                        $('#mapa-proyecto').html('<p class="text-center text-muted m-4">Ubicación no disponible.</p>');
+            // --- ACTIVAR LICITACIÓN (MODO GESTIÓN) ---
+            $('#btnActivarLicitacion').on('click', function (e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: "Al activar, la licitación será visible para los contratistas invitados y ya no podrás quitar participantes.",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, activar ahora',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $('#formActivarLicitacion').submit();
                     }
-                } catch (e) {
-                    console.error("Error al inicializar el mapa: ", e);
-                    $('#mapa-proyecto').html('<p class="text-center text-danger m-4">No se pudo cargar el mapa.</p>');
-                }
-            } else {
-                // Si el contenedor no existe, lo notificamos en la consola del navegador.
-                console.error("Error de inicialización: No se encontró el elemento con ID 'mapa-proyecto'.");
-            }
+                });
+            });
+
+            // --- QUITAR INVITACIÓN (MODO GESTIÓN) ---
+            $('.form-quitar-invitacion').on('submit', function (e) {
+                e.preventDefault();
+                var form = $(this);
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: "Se quitará al contratista de la licitación. Si ya había subido propuestas, también serán eliminadas. ¡Esta acción no se puede deshacer!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, ¡quítalo!',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.get(0).submit();
+                    }
+                });
+            });
+
+            // --- CERRAR LICITACIÓN (MODO GESTIÓN) ---
+            $('#btnCerrarLicitacion').on('click', function (e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: '¿Confirmas que quieres cerrar?',
+                    text: "Una vez cerrada, los contratistas ya no podrán subir propuestas. Esta acción no se puede deshacer.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, cerrar licitación',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $('#formCerrarLicitacion').submit();
+                    }
+                });
+            });
 
         });
     </script>

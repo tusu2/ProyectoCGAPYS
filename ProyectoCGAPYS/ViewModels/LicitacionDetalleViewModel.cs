@@ -27,6 +27,25 @@ namespace ProyectoCGAPYS.ViewModels
         public string DependenciaNombre { get; set; }
         public string TipoFondoNombre { get; set; }
         public decimal PresupuestoProyecto { get; set; }
+        public string TipoProceso { get; set; }
+
+        // Para los nuevos campos de control
+        public DateTime? FechaFallo { get; set; }
+        public string NumeroContrato { get; set; }
+
+        // Para mostrar al ganador único
+        public ContratistaViewModel ContratistaGanador { get; set; }
+
+        // Para la nueva sección de documentos (Fallo, Contrato, Fianza)
+        public List<LicitacionDocumentoViewModel> LicitacionDocumentos { get; set; }
+
+        // --- PROPIEDADES EXISTENTES (Se mantienen para el Modo Gestión) ---
+
+        // Sigue existiendo para el flujo de "Licitación Pública"
+     
+
+  
+       
 
         public LicitacionDetalleViewModel()
         {
@@ -34,6 +53,8 @@ namespace ProyectoCGAPYS.ViewModels
             Documentos = new List<DocumentoViewModel>(); // Asegúrate de inicializar esta lista también
         }
     }
+
+
 
     // Sub-modelo para representar a cada contratista en la lista.
     public class ParticipanteViewModel
@@ -43,5 +64,22 @@ namespace ProyectoCGAPYS.ViewModels
         public string RFC { get; set; }
         public string EstadoParticipacion { get; set; }
         public DateTime? FechaInvitacion { get; set; }
+    }
+    public class ContratistaViewModel
+    {
+        public int Id { get; set; }
+        public string RazonSocial { get; set; }
+        public string RFC { get; set; }
+    }
+
+    // --- CLASE NUEVA ---
+    // Para la nueva lista de documentos de licitación
+    public class LicitacionDocumentoViewModel
+    {
+        public int Id { get; set; }
+        public string TipoDocumento { get; set; }
+        public string NombreArchivo { get; set; }
+        public string RutaArchivo { get; set; }
+        public DateTime FechaSubida { get; set; }
     }
 }
