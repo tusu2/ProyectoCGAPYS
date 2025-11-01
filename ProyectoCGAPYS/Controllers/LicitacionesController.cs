@@ -16,7 +16,7 @@ public class LicitacionesController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly UserManager<IdentityUser> _userManager;
-    private readonly bool _habilitarModoGestion = false;
+    private readonly bool _habilitarModoGestion = true;
 
     // Inyectamos el DbContext para poder interactuar con la base de datos.
     public LicitacionesController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
@@ -807,16 +807,16 @@ public class LicitacionesController : Controller
     // [POST] Asigna al ganador (llamado desde el modal)
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AsignarGanador(int licitacionId, int contratistaGanadorId)
+    public async Task<IActionResult> AsignarGanador(int LicitacionId, int contratistaGanadorId)
     {
-        var licitacion = await _context.Licitaciones.FindAsync(licitacionId);
+        var licitacion = await _context.Licitaciones.FindAsync(LicitacionId);
         if (licitacion == null) return NotFound();
 
         var contratista = await _context.Contratistas.FindAsync(contratistaGanadorId);
         if (contratista == null)
         {
             TempData["Error"] = "El contratista seleccionado no es válido.";
-            return RedirectToAction("Detalles", new { id = licitacionId });
+            return RedirectToAction("Detalles", new { id = LicitacionId });
         }
 
         if (licitacion.Estado != "Adjudicada")
@@ -827,7 +827,7 @@ public class LicitacionesController : Controller
             TempData["Success"] = $"Se ha asignado a '{contratista.RazonSocial}' como ganador.";
         }
 
-        return RedirectToAction("Detalles", new { id = licitacionId });
+        return RedirectToAction("Detalles", new { id = LicitacionId });
     }
 
     // [POST] Manda el proyecto a la fase de Ejecución (Modo Control)

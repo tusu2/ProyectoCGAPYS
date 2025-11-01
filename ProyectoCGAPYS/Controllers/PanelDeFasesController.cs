@@ -173,7 +173,8 @@ namespace ProyectoCGAPYS.Controllers
                     Descripcion = proyecto.Descripcion, // Usamos la descripción del proyecto.
                     FechaInicio = DateTime.Now, // La fecha y hora actual.
                     FechaFinPropuestas = null, // Como se solicitó, se deja en null.
-                    Estado = "Abierta" // Estado por defecto.
+                    Estado = "Abierta",
+                     TipoProceso = "Adjudicación Directa"// Estado por defecto.
                 };
                 _context.Licitaciones.Add(nuevaLicitacion);
             }
@@ -214,15 +215,17 @@ namespace ProyectoCGAPYS.Controllers
                 return Json(new { success = false, message = "No se recibieron cambios." });
             }
 
+            // ***** SOLUCIÓN 1: Obtener el ID del usuario *****
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             foreach (var cambio in cambios)
             {
                 var proyecto = await _context.Proyectos.FindAsync(cambio.ProyectoId);
                 if (proyecto != null)
                 {
-                    var faseActualId = proyecto.IdFaseFk;
+                    var faseActualId = proyecto.IdFaseFk ?? 0;
 
-                    // ******************** INICIO DE LA MODIFICACIÓN ********************
-                    // Verificamos si el proyecto se está moviendo A la fase 4 y no estaba antes en ella.
+                    // (Tu lógica de Licitaciones está bien)
                     if (cambio.NuevaFaseId == 4 && faseActualId != 4)
                     {
                         var nuevaLicitacion = new Licitacion
@@ -232,11 +235,11 @@ namespace ProyectoCGAPYS.Controllers
                             Descripcion = proyecto.Descripcion,
                             FechaInicio = DateTime.Now,
                             FechaFinPropuestas = null,
-                            Estado = "Abierta"
+                            Estado = "Abierta",
+                            TipoProceso = "Adjudicación Directa"
                         };
                         _context.Licitaciones.Add(nuevaLicitacion);
                     }
-                    // ********************* FIN DE LA MODIFICACIÓN **********************
 
                     proyecto.IdFaseFk = cambio.NuevaFaseId;
 
@@ -247,6 +250,8 @@ namespace ProyectoCGAPYS.Controllers
                         FaseNuevaId = cambio.NuevaFaseId,
                         TipoCambio = cambio.Tipo == "Avance" ? "Aprobado (Arrastre)" : "Devuelto (Arrastre)",
                         Comentario = cambio.Comentario,
+                        // ***** SOLUCIÓN 2: Asignar el ID del usuario *****
+                        UsuarioId = userId
                     };
                     _context.HistorialFases.Add(registroHistorial);
                 }

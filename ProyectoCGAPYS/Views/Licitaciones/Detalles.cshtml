@@ -524,26 +524,45 @@ else
 
             // --- ¡NUEVO MANEJADOR DE SUBMIT! ---
             // Esto intercepta el clic en "Asignar" desde el modal
+            // --- ¡NUEVO MANEJADOR DE SUBMIT! (VERSIÓN DE DEPURACIÓN) ---
             $(document).on('submit', '.form-asignar-ganador', function (e) {
-                e.preventDefault(); // Detenemos el envío normal del formulario
+                e.preventDefault();
                 var form = $(this);
+
+                var token = form.find('input[name="__RequestVerificationToken"]').val();
+
+                // ***** INICIO DE LA CORRECCIÓN *****
+                // Leemos el valor del contratista (que es un string '3')
+                var contIdString = form.find('input[name="contratistaGanadorId"]').val();
+
+                // ¡LO CONVERTIMOS A NÚMERO!
+                var contIdNumero = parseInt(contIdString, 10);
+                // ***** FIN DE LA CORRECCIÓN *****
+
+                var dataObj = {
+                    __RequestVerificationToken: token,
+                    licitacionId: licitacionId,         // Esto ya es un número (14)
+                    contratistaGanadorId: contIdNumero  // Esto ahora es un número (3)
+                };
+
+                // (Puedes borrar los console.log y el debugger si quieres)
+                console.log("Datos finales (ambos números):", dataObj);
 
                 $.ajax({
                     url: form.attr('action'),
                     type: form.attr('method'),
-                    data: form.serialize(), // Tomamos los datos del form (LicitacionId, ContratistaId, Token)
+                    data: dataObj,
                     success: function (response) {
                         Swal.fire({
                             title: '¡Asignado!',
                             text: 'El contratista ha sido asignado como ganador.',
                             icon: 'success'
                         }).then(() => {
-                            location.reload(); // Recargamos la página para ver al ganador
+                            location.reload();
                         });
                     },
                     error: function (xhr) {
-                        // Si algo sale mal (ej. validación), mostramos el error
-                        Swal.fire('Error', 'Ocurrió un error al asignar el ganador. (Error: ' + xhr.status + ')', 'error');
+                        Swal.fire('Error', 'No se pudo asignar. (Error: ' + xhr.status + ')', 'error');
                     }
                 });
             });

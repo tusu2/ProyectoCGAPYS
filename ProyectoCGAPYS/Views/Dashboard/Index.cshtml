@@ -141,7 +141,44 @@
     </div>
 </div>
 
+<div class="ia-robot-container" id="iaRobotTrigger">
+    <div class="ia-robot-bubble">
+        ¡Hola! Soy tu asistente. ¡Presióname para hablar!
+    </div>
+    <img src="~/Img/Asistente.png" alt="Asistente IA" class="ia-robot-image" />
+</div>
 
+<div class="ia-chat-widget" id="iaChatWidget">
+    <div class="ia-chat-header" id="iaChatHeader">
+        <h5><i class="fas fa-robot"></i> Asistente IA</h5>
+
+        @* --- CORRECCIÓN 1: Este es el botón de CERRAR --- *@
+        @* Le ponemos el ícono correcto (fa-times) *@
+        <button class="btn-icon" id="ia-chat-close">
+            <i class="bi bi-x-lg"></i>
+        </button>
+
+    </div>
+
+    <div class="ia-chat-body">
+        <div class="ia-chat-messages" id="iaChatMessages">
+            <div class="ia-message assistant">
+                ¡Hola! Soy tu asistente de IA. ¿Cómo puedo ayudarte hoy con los datos de tus proyectos?
+            </div>
+        </div>
+
+        <div class="ia-chat-input-container">
+            <input type="text" id="iaChatInput" class="form-control" placeholder="Escribe tu pregunta...">
+
+            @* --- CORRECCIÓN 2: Este es el botón de ENVIAR --- *@
+            @* Le ponemos el ID correcto (iaChatSend) y el ícono de enviar *@
+            <button class="btn btn-primary" id="iaChatSend">
+                <i class="bi bi-send"></i>
+            </button>
+
+        </div>
+    </div>
+</div>
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
@@ -382,6 +419,220 @@
                     }
                 }
             });
+
+            const iaChatWidget = document.getElementById('iaChatWidget');
+            const iaChatHeader = document.getElementById('iaChatHeader');
+            const iaChatMessages = document.getElementById('iaChatMessages');
+            const iaChatInput = document.getElementById('iaChatInput');
+            const iaChatSend = document.getElementById('iaChatSend');
+            // const iaChatToggle = document.getElementById('ia-chat-toggle');
+            const iaRobotTrigger = document.getElementById('iaRobotTrigger');
+            const iaChatClose = document.getElementById('ia-chat-close');
+            const iaProjectModal = new bootstrap.Modal(document.getElementById('projectListModal'));
+            const iaModalTitle = document.getElementById('modalProjectListTitle');
+            const iaModalBody = document.getElementById('modalProjectListBody');
+            const iaModalTitle_IA = document.getElementById('modalProjectListTitle');
+            const iaModalBody_IA = document.getElementById('modalProjectListBody')
+            // Variable para controlar la animación de escritura
+            let typingTimer;
+
+
+            iaRobotTrigger.addEventListener('click', () => {
+                console.log("Clic en Robot: Abriendo chat...");
+
+                iaChatWidget.classList.add('visible');    // <-- CORREGIDO
+                iaRobotTrigger.classList.add('hidden'); // <-- CORREGIDO
+
+                // Pequeño retraso para que el 'focus' funcione después de la animación
+                setTimeout(() => {
+                    iaChatInput.focus();
+                }, 400); // 400ms (igual que la animación)
+            });
+
+            // Evento para CERRAR el chat (Con Animación)
+            iaChatClose.addEventListener('click', () => {
+                console.log("Clic en Cerrar: Ocultando chat...");
+
+                iaChatWidget.classList.remove('visible');    // <-- CORREGIDO
+                iaRobotTrigger.classList.remove('hidden'); // <-- CORREGIDO
+            });
+
+            // 3. Lógica para enviar el mensaje
+            const enviarMensajeIA = () => {
+                const prompt = iaChatInput.value.trim();
+                if (prompt === "") return;
+
+                // Detenemos cualquier animación de escritura anterior
+                if (typingTimer) clearTimeout(typingTimer);
+
+                appendMessage(prompt, 'user');
+                iaChatInput.value = "";
+                appendMessage("...", 'assistant', true); // "isTyping"
+
+                // Hacemos la llamada al backend (que ahora usa Gemini)
+                fetch('/Dashboard/AskAiAssistant', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ Prompt: prompt })
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(err => Promise.reject(err));
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // 'data' ahora es { responseType: "...", content: "...", title: "..." }
+
+                        if (data.responseType === 'modal') {
+                            // --- ¡Respuesta de Modal! ---
+
+                            // 1. Actualizamos el chat
+                            updateTypingMessage("¡Claro! Preparando los detalles de ese proyecto...");
+
+                            // 2. Preparamos el modal
+                            iaModalTitle.textContent = data.title || "Información del Asistente";
+
+                            const saludoAmable = "<p class='text-center mb-3 fst-italic'>¡Claro! Aquí están los datos del proyecto que me pediste:</p>";
+
+                            iaModalBody.innerHTML = ""; // Limpiamos el cuerpo para la animación
+
+                            // 3. Mostramos el modal
+                            iaProjectModal.show();
+
+                            typewriter(data.content, iaModalBody, 15); // 15ms de velocidad
+
+                        } else {
+                            // --- Respuesta de Texto Plano (como antes) ---
+                            // Actualizamos el mensaje "..." con la respuesta real
+                            updateTypingMessage(data.content);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error al llamar al Asistente IA:', error);
+                        let errorMessage = "Lo siento, ocurrió un error. Revisa la consola para más detalles.";
+                        if (error && error.message) {
+                            errorMessage = `Error: ${error.message}`;
+                        }
+                        updateTypingMessage(errorMessage);
+                    });
+            };
+
+            // 4. Asignamos los eventos de envío (clic y tecla Enter)
+            iaChatSend.addEventListener('click', enviarMensajeIA);
+            iaChatInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') {
+                    enviarMensajeIA();
+                }
+            });
+
+            // 5. Función para añadir un mensaje nuevo a la lista
+            const appendMessage = (text, role, isTyping = false) => {
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('ia-message', role);
+
+                if (isTyping) {
+                    messageDiv.id = 'ia-typing-indicator';
+                    // Creamos un efecto de "..." pulsante
+                    messageDiv.innerHTML = '<span class="pulsate">.</span><span class="pulsate" style="animation-delay: 0.2s">.</span><span class="pulsate" style="animation-delay: 0.4s">.</span>';
+                } else {
+                    messageDiv.textContent = text;
+                }
+
+                iaChatMessages.appendChild(messageDiv);
+                iaChatMessages.scrollTop = iaChatMessages.scrollHeight;
+            };
+
+            // 6. Función para actualizar el mensaje "..." con la respuesta final
+            const updateTypingMessage = (text) => {
+                const typingIndicator = document.getElementById('ia-typing-indicator');
+                if (typingIndicator) {
+                    typingIndicator.innerHTML = text; // Reemplazamos el "..."
+                    typingIndicator.id = "";
+                } else {
+                    appendMessage(text, 'assistant');
+                }
+            };
+
+            // 7. --- ¡NUEVA FUNCIÓN DE MÁQUINA DE ESCRIBIR! ---
+            const typewriter = (htmlContent, targetElement, speed) => {
+                // Usamos un div temporal para "leer" el HTML como nodos
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = htmlContent;
+
+                // Obtenemos todos los elementos (ul, li, span, etc.)
+                const elements = Array.from(tempDiv.querySelectorAll('*'));
+                const containerStack = [targetElement]; // Pila para saber dónde añadir nodos
+                let elementIndex = 0;
+
+                const type = () => {
+                    if (elementIndex >= elements.length) return; // Terminamos
+
+                    const currentEl = elements[elementIndex];
+                    const parentEl = currentEl.parentElement === tempDiv
+                        ? targetElement
+                        : containerStack[containerStack.length - 1];
+
+                    // 1. Creamos el nuevo elemento (ej: <li>) y lo añadimos al DOM
+                    const newNode = document.createElement(currentEl.tagName);
+                    currentEl.getAttributeNames().forEach(attr => {
+                        newNode.setAttribute(attr, currentEl.getAttribute(attr)); // Copiamos clases, etc.
+                    });
+                    parentEl.appendChild(newNode);
+
+                    // Si el elemento puede contener otros (como <ul>), lo metemos a la pila
+                    if (currentEl.children.length > 0) {
+                        containerStack.push(newNode);
+                    }
+
+                    // 2. Animamos la escritura del TEXTO de ese elemento
+                    const text = currentEl.textContent.trim();
+                    let charIndex = 0;
+
+                    const typeChar = () => {
+                        if (charIndex < text.length) {
+                            // Si el texto es del elemento actual (no de un hijo)
+                            if (currentEl.childNodes[0] && currentEl.childNodes[0].nodeType === Node.TEXT_NODE) {
+                                newNode.innerHTML += text.charAt(charIndex);
+                            }
+                            charIndex++;
+                            typingTimer = setTimeout(typeChar, speed);
+                        } else {
+                            // Terminamos con este elemento, vamos al siguiente
+
+                            // Si este elemento no tenía más hijos, salimos de la pila
+                            if (currentEl.children.length === 0 && elements[elementIndex + 1] && !currentEl.contains(elements[elementIndex + 1])) {
+                                if (containerStack.length > 1) containerStack.pop();
+                            }
+
+                            elementIndex++;
+                            type(); // Llamamos a la función principal para el siguiente elemento
+                        }
+                    };
+
+                    typeChar(); // Empezamos a escribir los caracteres
+                };
+
+                type(); // Empezamos a procesar los elementos
+            };
+
+            // 8. --- CSS PARA LA ANIMACIÓN "..." ---
+            // (Lo inyectamos aquí para no tener que tocar Dashboard.css)
+            const style = document.createElement('style');
+            style.innerHTML = `
+                            .pulsate {
+                                animation: pulsate 1.4s infinite;
+                                opacity: 0;
+                            }
+                @@keyframes pulsate {
+                                0% { opacity: 0; }
+                                50% { opacity: 1; }
+                                100% { opacity: 0; }
+                            }
+                        `;
+            document.head.appendChild(style);
            
         });
         function generarReporte(proyectoId, buttonElement) {
@@ -475,5 +726,6 @@
                     });
             }, 3000);
         }
+      
     </script>
 }

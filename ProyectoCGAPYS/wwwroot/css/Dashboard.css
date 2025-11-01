@@ -7,6 +7,9 @@
     --color-gold-accent: #efb810;
     --color-blue-accent: #3A7CA5;
     --color-grey-accent: #6c757d;
+    --azul-profundo: #0b2d48;
+    --oro: #D4AF37;
+    --oro-oscuro: #b38f29;
 }
 
 /* --- Estilos Generales del Contenido --- */
@@ -229,28 +232,29 @@
     position: fixed;
     bottom: 20px;
     right: 20px;
-    width: 350px;
+    width: 480px; /* (Mantengo tu tamaño) */
     max-width: 90vw;
     z-index: 1050;
-    /* Usamos el mismo estilo glass-card */
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.8) 100%);
+    /* ... (Todos tus estilos premium de fondo, borde, sombra, etc.) ... */
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.75) 100%);
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
     border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.7);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
-    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.2);
     overflow: hidden;
+    /* --- ¡NUEVO! --- */
+    /* Estado por defecto: Oculto */
+    opacity: 0;
+    visibility: hidden;
+    /* Efecto de "aparecer" desde abajo y creciendo */
+    transform: translateY(20px) scale(0.95);
+    transition: all 0.4s ease-in-out; /* Misma duración */
 }
-
-    .ia-chat-widget.minimized .ia-chat-body {
-        max-height: 0;
-        padding-top: 0;
-        padding-bottom: 0;
-    }
-
-    .ia-chat-widget.minimized #ia-chat-toggle i {
-        transform: rotate(180deg);
+    .ia-chat-widget.visible {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0) scale(1); /* Posición final */
     }
 
 .ia-chat-header {
@@ -258,62 +262,70 @@
     justify-content: space-between;
     align-items: center;
     padding: 0.75rem 1.25rem;
-    border-bottom: 1px solid rgba(0,0,0,0.1);
-    cursor: pointer;
+    /* Borde dorado sutil como separador */
+    border-bottom: 1px solid rgba(212, 175, 55, 0.4);
+    cursor: default;
 }
 
     .ia-chat-header h5 {
         margin: 0;
-        color: var(--color-text-primary);
+        color: var(--azul-profundo); /* TU AZUL */
         font-weight: 600;
-        font-size: 1rem;
+        font-size: 1.1rem;
     }
+        .ia-chat-header h5 i {
+            color: var(--oro); /* TU DORADO */
+            margin-right: 8px;
+        }
 
-    .ia-chat-header #ia-chat-toggle {
+    .ia-chat-header #ia-chat-close {
         background: transparent;
         border: none;
-        color: var(--color-text-primary);
+        color: var(--azul-profundo); /* TU AZUL */
+        transition: color 0.3s ease;
     }
 
-        .ia-chat-header #ia-chat-toggle i {
-            transition: transform 0.3s ease;
+        .ia-chat-header #ia-chat-close:hover {
+            color: var(--oro); /* Hover dorado */
         }
 
 
 .ia-chat-body {
     display: flex;
     flex-direction: column;
-    max-height: 400px; /* Altura del chat */
+    max-height: 750px;
     transition: all 0.3s ease;
 }
 
 .ia-chat-messages {
     flex-grow: 1;
-    padding: 1rem;
+    padding: 1.25rem; /* Más "aire" (padding) */
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px; /* Más espacio entre burbujas */
 }
 
 .ia-message {
-    padding: 0.5rem 0.75rem;
-    border-radius: 10px;
+    padding: 0.6rem 1rem;
+    border-radius: 12px;
     max-width: 85%;
     word-wrap: break-word;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Sombra muy sutil */
 }
 
     .ia-message.user {
-        background-color: var(--color-blue-accent);
+        background-color: var(--azul-profundo); /* TU AZUL */
         color: white;
         align-self: flex-end;
         border-bottom-right-radius: 2px;
     }
 
     .ia-message.assistant {
-        background-color: #e9ecef;
-        color: var(--color-text-primary);
+        background-color: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        color: var(--azul-profundo); /* Texto en TU AZUL */
         align-self: flex-start;
         border-bottom-left-radius: 2px;
     }
@@ -321,19 +333,133 @@
 
 .ia-chat-input-container {
     display: flex;
+    align-items: center; /* Para centrar verticalmente */
     padding: 1rem;
-    border-top: 1px solid rgba(0,0,0,0.1);
+    border-top: 1px solid rgba(212, 175, 55, 0.4); /* Borde dorado */
+    /* Fondo blanco-glass sutil para legibilidad */
+    background-color: rgba(255, 255, 255, 0.8);
 }
-
     .ia-chat-input-container input {
         flex-grow: 1;
-        border-right: none;
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
+        border: 1px solid #ccc;
+        border-radius: 8px; /* Bordes redondeados */
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+        color: var(--azul-profundo);
+        transition: all 0.3s ease;
+        margin-right: 10px; /* Espacio para el botón */
+        /* Sobreescribimos Bootstrap para que no se pegue al botón */
+        border-right: 1px solid #ccc !important;
+        border-top-right-radius: 8px !important;
+        border-bottom-right-radius: 8px !important;
+    }
+        .ia-chat-input-container input:focus {
+            border-color: var(--oro);
+            box-shadow: 0 0 5px rgba(212, 175, 55, 0.5);
+            outline: none; /* Quitamos el feo borde azul de Chrome */
+        }
+    .ia-chat-input-container button {
+        background-color: var(--oro); /* TU DORADO */
+        border: none;
+        color: #FFFFFF; /* Texto blanco */
+        border-radius: 8px !important; /* Bordes redondeados */
+        min-width: 45px;
+        height: 38px; /* Misma altura que el input */
+        transition: background-color 0.3s ease;
+        font-size: 1rem;
+    }
+        .ia-chat-input-container button:hover {
+            background-color: var(--oro-oscuro); /* El dorado oscuro que definimos */
+        }
+            .ia-robot-container {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                z-index: 1049;
+                cursor: pointer;
+                display: flex;
+                align-items: flex-end;
+                transform: translateZ(0); /* (Esto lo mantengo para el z-index) */
+                /* --- ¡NUEVO! --- */
+                /* Estas son las propiedades de la animación */
+                opacity: 1;
+                visibility: visible;
+                transform: scale(1);
+                transition: all 0.4s ease-in-out; /* Duración de 400ms */
+            }
+.ia-robot-image {
+    width: 110px; 
+    height: auto;
+    transition: transform 0.3s ease;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3)); 
+}
+.ia-robot-container.hidden {
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.8); /* Efecto de "encogerse" */
+}
+.ia-robot-container:hover .ia-robot-image {
+    transform: scale(1.1); 
+}
+
+.ia-robot-bubble {
+    background-color: #ffffff;
+    color: var(--color-text-primary);
+    padding: 15px;
+    border-radius: 15px;
+    border-bottom-right-radius: 0; 
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+    margin-right: 10px;
+    margin-bottom: 30px; 
+    font-size: 0.9rem;
+    font-weight: 500;
+    font-family: 'Poppins', sans-serif;
+    max-width: 200px;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeInBubble 0.5s 0.5s forwards; 
+}
+
+    .ia-robot-bubble::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        right: 0;
+        width: 0;
+        height: 0;
+        border: 10px solid transparent;
+        border-top-color: #ffffff;
+        border-right-color: #ffffff;
     }
 
-    .ia-chat-input-container button {
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
-        min-width: 45px; /* Ancho fijo para el botón */
+@keyframes fadeInBubble {
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
+}
+
+.ia-chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    cursor: default;
+}
+    /* --- FIX: Forzar visibilidad del botón de cerrar --- */
+
+    /* Seleccionamos el botón específico dentro del header */
+    .ia-chat-header button#ia-chat-close {
+        display: inline-block !important; /* Forzar a que se muestre */
+        color: #555555 !important; /* Forzar un color oscuro */
+        opacity: 1 !important;
+        visibility: visible !important;
+        background: transparent !important; /* Sin fondo */
+        border: none !important; /* Sin borde */
+    }
+
+        /* Cambiamos el color al pasar el mouse */
+        .ia-chat-header button#ia-chat-close:hover {
+            color: #0A2240 !important; /* Color más oscuro */
+        }

@@ -19,7 +19,8 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Data.SqlClient;
 using System.Data;
-using Newtonsoft.Json; 
+using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 namespace ProyectoCGAPYS.Controllers
 {
     [Authorize(Roles = "Jefa")]
@@ -94,13 +95,18 @@ namespace ProyectoCGAPYS.Controllers
             try
             {
                 var client = _httpClientFactory.CreateClient();
+                var apiKey = _configuration["Gemini:ApiKey"];
+                if (string.IsNullOrEmpty(apiKey) || apiKey == "TU_API_KEY_DE_GEMINI_VA_AQUI")
+                {
+                    return StatusCode(500, new { message = "Error: La API Key de Gemini no está configurada en appsettings.json." });
+                }
+                var geminiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={apiKey}";
 
-                // --- PASO 1: GENERAR EL SQL (Llamada 1 a Ollama) ---
 
-                // Describimos las tablas clave. Eres el "dueño" de este prompt.
-                // Si añades más tablas, la IA podrá consultarlas.
-                string schemaDescription = @"
-        [Proyectos]:
+                // --- PASO 1: GENERAR EL SQL (Llamada 1 a Gemini) ---
+
+                // El esquema de la base de datos (que ya tenías) es perfecto. No lo cambiamos.
+                string schemaDescription = @"[Proyectos]:
         - Id (nvarchar, PK): ID único del proyecto (Ej: 'PROY-001').
         - NombreProyecto (nvarchar): Nombre descriptivo.
         - Presupuesto (decimal): Monto asignado.
@@ -109,6 +115,10 @@ namespace ProyectoCGAPYS.Controllers
         - IdDependenciaFk (nvarchar, FK): Referencia a la tabla Dependencias.
         - IdTipoFondoFk (nvarchar, FK): Referencia a la tabla TiposFondo.
         - IdFaseFk (int, FK): Referencia a la tabla Fases.
+        - Prioridad (nvarchar): Nivel de prioridad (ej: 'verde', 'rojo').
+        - FechaSolicitud (datetime2): Cuándo se pidió.
+        - FechaFinalizacionAprox (datetime2): Cuándo debe terminar.
+        - NombreResponsable (nvarchar):
 
     [Fases]:
         - Id (int, PK): ID.
@@ -127,52 +137,65 @@ namespace ProyectoCGAPYS.Controllers
         - Id (nvarchar, PK): ID.
         - Nombre (nvarchar): Nombre del fondo (Ej: 'ESCUELAS AL CIEN', 'FAM SUPERIOR 2025').
         ";
-
-                var systemMessageSql = new OllamaMessage
-                {
-                    role = "system",
-                    content = $@"Eres un asistente experto en bases de datos SQL Server. Tu única tarea es convertir la pregunta del usuario en una consulta SQL segura y eficiente.
+                string promptSql = $@"Eres un asistente experto en bases de datos SQL Server. Tu única tarea es convertir la pregunta del usuario en una consulta SQL segura y eficiente.
 - USA SOLAMENTE las tablas y columnas descritas en el siguiente esquema:
 {schemaDescription}
 - DEBES usar los nombres exactos de tablas y columnas como 'IdCampusFk', 'NombreProyecto', etc.
 - La consulta DEBE ser una única instrucción SELECT.
-- NO uses comillas triples (''') ni nada que no sea T-SQL válido.
 - NO respondas con nada más que la consulta SQL.
 - REGLA IMPORTANTE: Cuando uses subconsultas (sub-queries) para IDs (como IdFaseFk o IdCampusFk), SIEMPRE usa 'IN' en lugar de '='. (Ejemplo: 'IdCampusFk IN (SELECT Id ...)' en lugar de 'IdCampusFk = (SELECT Id ...)'.)**
-- Envuelve la consulta final en etiquetas <SQL> y </SQL>."
-                };
+- Envuelve la consulta final en etiquetas <SQL> y </SQL>.
 
-                var userMessageSql = new OllamaMessage
+**Pregunta del Usuario:**
+{request.Prompt}";
+                // CAMBIO: Gemini no usa "roles" (system/user). Combinamos las instrucciones 
+                // del sistema y la pregunta del usuario en un solo "prompt".
+
+
+                // CAMBIO: Usamos las nuevas clases de DTO de Gemini
+                var geminiRequestSql = new GeminiChatRequest();
+                geminiRequestSql.Contents.Add(new GeminiContent
                 {
-                    role = "user",
-                    content = request.Prompt
-                };
+                    Parts = new List<GeminiPart> { new GeminiPart { Text = promptSql } }
+                });
 
-                var ollamaRequestSql = new OllamaChatRequest();
-                ollamaRequestSql.messages.Add(systemMessageSql);
-                ollamaRequestSql.messages.Add(userMessageSql);
-
-                var responseSql = await client.PostAsJsonAsync("http://localhost:11434/api/chat", ollamaRequestSql);
+                // CAMBIO: Llamamos a la URL de Gemini
+                var responseSql = await client.PostAsJsonAsync(geminiUrl, geminiRequestSql);
 
                 if (!responseSql.IsSuccessStatusCode)
                 {
+                    _logger.LogError("Error en la Llamada 1 a Gemini (SQL): {StatusCode} - {Reason}", responseSql.StatusCode, await responseSql.Content.ReadAsStringAsync());
                     return StatusCode(500, new { message = "Error en la Llamada 1 a la IA (Generación de SQL)." });
                 }
 
-                var ollamaResponseSql = await responseSql.Content.ReadFromJsonAsync<OllamaChatResponse>();
-                string rawResponse = ollamaResponseSql.message.content;
+                // CAMBIO: Leemos la respuesta usando las DTO de Gemini
+                var geminiResponseSql = await responseSql.Content.ReadFromJsonAsync<GeminiChatResponse>();
+
+                // --- 👇 CORRECCIÓN 1: VALIDAR RESPUESTA DE SQL ---
+                if (geminiResponseSql == null ||
+                    geminiResponseSql.Candidates == null ||
+                    geminiResponseSql.Candidates.Count == 0 ||
+                    geminiResponseSql.Candidates[0].Content == null ||
+                    geminiResponseSql.Candidates[0].Content.Parts == null ||
+                    geminiResponseSql.Candidates[0].Content.Parts.Count == 0)
+                {
+                    _logger.LogWarning("La respuesta de Gemini (SQL) no tuvo contenido o fue bloqueada.");
+                    // Devolvemos una respuesta de texto amigable en lugar de crashear
+                    return Ok(new { responseType = "text", content = "Lo siento, la IA no pudo procesar esa solicitud (respuesta bloqueada o vacía)." });
+                }
+                string rawResponse = geminiResponseSql.Candidates[0].Content.Parts[0].Text;
+
 
                 // --- PASO 2: EXTRAER Y EJECUTAR EL SQL (Lógica de C#) ---
+                // Esta parte (limpieza de SQL, seguridad y ejecución con ADO.NET) 
+                // es tuya y es excelente. La conservamos tal cual.
                 string sqlQuery = "";
-             
 
-                // 1. Limpiamos el Markdown (```sql ... ```) si existe
                 if (rawResponse.Contains("```sql"))
                 {
                     rawResponse = rawResponse.Replace("```sql", "").Replace("```", "");
                 }
 
-                // 2. Buscamos el SQL usando Regex o por "SELECT"
                 Match match = Regex.Match(rawResponse, @"<SQL>(.*?)<\/SQL>", RegexOptions.Singleline);
                 if (match.Success)
                 {
@@ -184,27 +207,24 @@ namespace ProyectoCGAPYS.Controllers
                 }
                 else
                 {
-                    // No es un SQL, es charla casual.
-                    _logger.LogWarning("La IA no devolvió un SQL válido. Respuesta: {Response}", rawResponse);
+                    _logger.LogWarning("La IA (Gemini) no devolvió un SQL válido. Respuesta: {Response}", rawResponse);
+                    // Si no es SQL, podría ser charla casual, la devolvemos.
                     return Ok(new { responseText = rawResponse });
                 }
 
-                // 3. Limpiamos texto conversacional que la IA pega al final
-                // (Buscamos el último ';' o el último ')' y cortamos ahí)
+                // Limpieza de texto conversacional
                 int lastSemicolon = sqlQuery.LastIndexOf(';');
                 int lastParenthesis = sqlQuery.LastIndexOf(')');
-
                 if (lastSemicolon > -1)
                 {
                     sqlQuery = sqlQuery.Substring(0, lastSemicolon + 1);
                 }
                 else if (lastParenthesis > -1)
                 {
-                    // Si no hay ';', confiamos en el último ')'
                     sqlQuery = sqlQuery.Substring(0, lastParenthesis + 1);
                 }
 
-                // 4. --- 🚨 FILTRO DE SEGURIDAD MEJORADO (PERMITE ';') 🚨 ---
+                // Filtro de seguridad (¡Muy importante! Lo conservamos)
                 if (!sqlQuery.Trim().StartsWith("SELECT", StringComparison.OrdinalIgnoreCase) ||
                     sqlQuery.Contains("--") ||
                     sqlQuery.Contains("DROP", StringComparison.OrdinalIgnoreCase) ||
@@ -212,11 +232,11 @@ namespace ProyectoCGAPYS.Controllers
                     sqlQuery.Contains("UPDATE", StringComparison.OrdinalIgnoreCase) ||
                     sqlQuery.Contains("DELETE", StringComparison.OrdinalIgnoreCase))
                 {
-                    _logger.LogError("Intento de SQL inseguro bloqueado: {Query}", sqlQuery);
-                    return BadRequest("La consulta generada no es segura y ha sido bloqueada.");
+                    _logger.LogError("Intento de SQL inseguro bloqueado (Gemini): {Query}", sqlQuery);
+                    return BadRequest(new { responseType = "text", content = "La consulta generada no es segura y ha sido bloqueada." });
                 }
 
-                // 5. Usamos ADO.NET para ejecutar la consulta
+                // Ejecución de ADO.NET (La conservamos tal cual)
                 string jsonData = "[]";
                 try
                 {
@@ -229,65 +249,130 @@ namespace ProyectoCGAPYS.Controllers
                             var adapter = new SqlDataAdapter(command);
                             var dataTable = new DataTable();
                             await Task.Run(() => adapter.Fill(dataTable));
-
-                            // Esta es la versión corregida
                             jsonData = JsonConvert.SerializeObject(dataTable);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    // ¡Aquí es donde debería haber fallado tu consulta!
-                    _logger.LogError(ex, "Error al ejecutar el SQL generado por la IA: {Query}", sqlQuery);
-                    // Devolvemos el error a la IA para que intente corregirlo (o simplemente nos informe)
-                    return StatusCode(500, new { message = $"La IA generó un SQL que falló: '{sqlQuery}'. Error: {ex.Message}" });
+                    _logger.LogError(ex, "Error al ejecutar el SQL generado por Gemini: {Query}", sqlQuery);
+                    return StatusCode(500, new { responseType = "text", content = $"La IA generó un SQL que falló: '{sqlQuery}'. Error: {ex.Message}" });
                 }
 
 
-                // --- PASO 3: RESUMIR LOS DATOS (Llamada 2 a Ollama) ---
+                // --- PASO 3: RESUMIR LOS DATOS (Llamada 2 a Gemini) ---
 
-                var systemMessageSummary = new OllamaMessage
-                {
-                    role = "system",
-                    content = @"Eres un asistente experto de CGAPYS. Te proporcionaré datos en formato JSON y la pregunta original del usuario.
-Tu trabajo es formular una respuesta amigable y concisa en español, basándote ÚNICAMENTE en los datos JSON.
-No inventes información. Si el JSON está vacío, informa al usuario que no se encontraron resultados."
-                };
+                // CAMBIO: Combinamos las instrucciones y los datos en un solo prompt para Gemini.
+                string promptSummary = $@"Eres un asistente experto de CGAPYS. Te proporcionaré datos en formato JSON y la pregunta original del usuario.
+Tu trabajo es formular una respuesta amable y profesional en español.
 
-                var userMessageSummary = new OllamaMessage
-                {
-                    role = "user",
-                    content = $@"**Datos JSON:**
+**REGLAS IMPORTANTES:**
+1.  **Conteo:** Si la 'Pregunta Original' pide un conteo (ej: 'cuántos'), responde con una oración simple (ej: ""Hay 12 proyectos..."").
+2.  **JSON Vacío:** Si el JSON está vacío (`[]`), responde: ""No se encontraron proyectos que coincidan con la solicitud.""
+3.  **Listados Múltiples:** Si el JSON contiene varios objetos, resúmelos en texto plano.
+4.  **Formato de Objeto Único (Modal):** Si los 'Datos JSON' contienen **un solo objeto**:
+    * Tu salida DEBE ser solo **HTML**, envuelto entre `<MODAL_HTML>` y `</MODAL_HTML>`.
+    * Tu respuesta DEBE empezar *exactamente* con la etiqueta `<p>` del saludo.
+    * NO incluyas *ningún* otro texto, resumen o saludo fuera de este bloque HTML (esto es para evitar el texto feo que se ve en la imagen).
+    * El título del modal se asigna desde el backend (usando `NombreProyecto`), así que **NO incluyas `NombreProyecto`** en la lista `<ul>`.
+
+    * **ESTRUCTURA DE REPETICIÓN (Para los <li>):**
+        * **INCORRECTO (NO HACER):** `<li ...>ID del Proyecto: PROY-001 <span ...>PROY-001</span></li>`
+        * **CORRECTO (SÍ HACER):** `<li ...>ID del Proyecto: <span class='fw-bold'>PROY-001</span></li>`
+
+    * **Estructura HTML final (DENTRO de <MODAL_HTML>):**
+        <p class='text-center mb-3 fst-italic'>¡Claro! Aquí tienes el resultado, jefa del proyecto:</p>
+        <ul class='list-group list-group-flush'>
+            <li class='list-group-item d-flex justify-content-between align-items-center'>ID del Proyecto: <span class='fw-bold'>[Valor]</span></li>
+            <li class='list-group-item d-flex justify-content-between align-items-center'>Folio: <span class='fw-bold'>[Valor]</span></li>
+            <li class='list-group-item d-flex justify-content-between align-items-center'>ID Campus: <span class='fw-bold'>[Valor]</span></li>
+            <li class='list-group-item d-flex justify-content-between align-items-center'>ID Dependencia: <span class='fw-bold'>[Valor]</span></li>
+            <li class='list-group-item d-flex justify-content-between align-items-center'>ID Fondo: <span class='fw-bold'>[Valor]</span></li>
+            <li class='list-group-item d-flex justify-content-between align-items-center'>Presupuesto: <span class='badge bg-success fs-6'>[Monto en formato $xx,xxx.xx]</span></li>
+            <li class='list-group-item d-flex justify-content-between align-items-center'>Estatus: <span class='fw-bold'>[Valor]</span></li>
+            <li class='list-group-item d-flex justify-content-between align-items-center'>Prioridad: <span class='fw-bold'>[Valor]</span></li>
+            <li class='list-group-item d-flex justify-content-between align-items-center'>Fecha de Solicitud: <span class='fw-bold'>[dd/MM/yyyy]</span></li>
+            <li class='list-group-item d-flex justify-content-between align-items-center'>Fecha de Cierre Aprox.: <span class='fw-bold'>[dd/MM/yyyy]</span></li>
+            <li class='list-group-item d-flex justify-content-between align-items-center'>Responsable: <span class='fw-bold'>[Valor]</span></li>
+        </ul>
+
+**Datos JSON:**
 {jsonData}
 
 **Pregunta Original:**
 {request.Prompt}
 
-**Tu Respuesta Amigable:**"
-                };
+**Tu Respuesta (solo texto o HTML dentro de <MODAL_HTML>):**";
 
-                var ollamaRequestSummary = new OllamaChatRequest();
-                ollamaRequestSummary.messages.Add(systemMessageSummary);
-                ollamaRequestSummary.messages.Add(userMessageSummary);
+                var geminiRequestSummary = new GeminiChatRequest();
+                geminiRequestSummary.Contents.Add(new GeminiContent
+                {
+                    Parts = new List<GeminiPart> { new GeminiPart { Text = promptSummary } }
+                });
 
-                var responseSummary = await client.PostAsJsonAsync("http://localhost:11434/api/chat", ollamaRequestSummary);
+                var responseSummary = await client.PostAsJsonAsync(geminiUrl, geminiRequestSummary);
 
                 if (!responseSummary.IsSuccessStatusCode)
                 {
+                    _logger.LogError("Error en la Llamada 2 a Gemini (Resumen): {StatusCode} - {Reason}", responseSummary.StatusCode, await responseSummary.Content.ReadAsStringAsync());
                     return StatusCode(500, new { message = "Error en la Llamada 2 a la IA (Resumen de datos)." });
                 }
 
-                var ollamaResponseSummary = await responseSummary.Content.ReadFromJsonAsync<OllamaChatResponse>();
+                var geminiResponseSummary = await responseSummary.Content.ReadFromJsonAsync<GeminiChatResponse>();
 
-                return Ok(new { responseText = ollamaResponseSummary.message.content });
+                if (geminiResponseSummary == null ||
+                    geminiResponseSummary.Candidates == null ||
+                    geminiResponseSummary.Candidates.Count == 0 ||
+                    geminiResponseSummary.Candidates[0].Content == null ||
+                    geminiResponseSummary.Candidates[0].Content.Parts == null ||
+                    geminiResponseSummary.Candidates[0].Content.Parts.Count == 0)
+                {
+                    _logger.LogWarning("La respuesta de Gemini (Resumen) no tuvo contenido o fue bloqueada.");
+                    return Ok(new { responseType = "text", content = "Lo siento, la IA no pudo procesar esa respuesta (respuesta bloqueada o vacía)." });
+                }
+
+                var finalResponseText = geminiResponseSummary.Candidates[0].Content.Parts[0].Text;
+
+                Match modalMatch = Regex.Match(finalResponseText, @"<MODAL_HTML>(.*?)<\/MODAL_HTML>", RegexOptions.Singleline | RegexOptions.IgnoreCase);
+
+                if (modalMatch.Success)
+                {
+                    string modalHtml = modalMatch.Groups[1].Value.Trim();
+                    string modalTitle = "Detalle del Proyecto";
+
+                    try
+                    {
+                        using (var jsonDoc = JsonDocument.Parse(jsonData))
+                        {
+                            if (jsonDoc.RootElement.ValueKind == JsonValueKind.Array && jsonDoc.RootElement.GetArrayLength() > 0)
+                            {
+                                var firstProject = jsonDoc.RootElement[0];
+                                if (firstProject.TryGetProperty("NombreProyecto", out var nombreProp))
+                                {
+                                    modalTitle = nombreProp.GetString();
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "No se pudo parsear el JSON para el título del modal, se usará el título por defecto.");
+                    }
+
+                    return Ok(new { responseType = "modal", content = modalHtml, title = modalTitle });
+                }
+                else
+                {
+                    return Ok(new { responseType = "text", content = finalResponseText });
+                }
+
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Excepción al llamar a AskAiAssistant");
+                _logger.LogError(ex, "Excepción al llamar a AskAiAssistant (Gemini)");
                 return StatusCode(500, new { message = "Error interno del servidor." });
             }
         }
-
         [HttpGet]
         public async Task<IActionResult> GetProyectosPorFase(string fase)
         {
@@ -510,5 +595,37 @@ public class EnvioCorreoRequest
 {
     public string ProyectoId { get; set; }
     public string EmailDestino { get; set; }
+}
+
+public class GeminiChatRequest
+{
+    // Usamos JsonPropertyName para asegurarnos de que el nombre sea correcto ("contents")
+    [JsonPropertyName("contents")]
+    public List<GeminiContent> Contents { get; set; } = new List<GeminiContent>();
+}
+
+public class GeminiContent
+{
+    [JsonPropertyName("parts")]
+    public List<GeminiPart> Parts { get; set; } = new List<GeminiPart>();
+}
+
+public class GeminiPart
+{
+    [JsonPropertyName("text")]
+    public string Text { get; set; }
+}
+
+// --- Clases para RECIBIR de la API de Gemini ---
+public class GeminiChatResponse
+{
+    [JsonPropertyName("candidates")]
+    public List<GeminiCandidate> Candidates { get; set; }
+}
+
+public class GeminiCandidate
+{
+    [JsonPropertyName("content")]
+    public GeminiContent Content { get; set; }
 }
 
