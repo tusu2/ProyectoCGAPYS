@@ -263,38 +263,33 @@ namespace ProyectoCGAPYS.Controllers
                 // --- PASO 3: RESUMIR LOS DATOS (Llamada 2 a Gemini) ---
 
                 // CAMBIO: Combinamos las instrucciones y los datos en un solo prompt para Gemini.
-                string promptSummary = $@"Eres un asistente experto de CGAPYS. Te proporcionaré datos en formato JSON y la pregunta original del usuario.
-Tu trabajo es formular una respuesta amable y profesional en español.
+                string promptSummary = $@"Eres un asistente experto de CGAPYS. Te daré datos JSON.
 
-**REGLAS IMPORTANTES:**
-1.  **Conteo:** Si la 'Pregunta Original' pide un conteo (ej: 'cuántos'), responde con una oración simple (ej: ""Hay 12 proyectos..."").
-2.  **JSON Vacío:** Si el JSON está vacío (`[]`), responde: ""No se encontraron proyectos que coincidan con la solicitud.""
-3.  **Listados Múltiples:** Si el JSON contiene varios objetos, resúmelos en texto plano.
-4.  **Formato de Objeto Único (Modal):** Si los 'Datos JSON' contienen **un solo objeto**:
-    * Tu salida DEBE ser solo **HTML**, envuelto entre `<MODAL_HTML>` y `</MODAL_HTML>`.
-    * Tu respuesta DEBE empezar *exactamente* con la etiqueta `<p>` del saludo.
-    * NO incluyas *ningún* otro texto, resumen o saludo fuera de este bloque HTML (esto es para evitar el texto feo que se ve en la imagen).
-    * El título del modal se asigna desde el backend (usando `NombreProyecto`), así que **NO incluyas `NombreProyecto`** en la lista `<ul>`.
+**Regla 1 (Listas/Conteos):**
+Si el JSON tiene 0 o más de 1 objeto, O si la pregunta original pide un conteo (ej: 'cuántos'), responde en texto plano simple.
+EJEMPLO: ""Hay 5 proyectos activos.""
+EJEMPLO: ""No se encontraron proyectos.""
 
-    * **ESTRUCTURA DE REPETICIÓN (Para los <li>):**
-        * **INCORRECTO (NO HACER):** `<li ...>ID del Proyecto: PROY-001 <span ...>PROY-001</span></li>`
-        * **CORRECTO (SÍ HACER):** `<li ...>ID del Proyecto: <span class='fw-bold'>PROY-001</span></li>`
+**Regla 2 (Objeto Único/Modal):**
+Si el JSON tiene **exactamente 1 objeto** Y la pregunta NO es un conteo:
+* Tu respuesta DEBE ser solo HTML, envuelto en `<MODAL_HTML>` y `</MODAL_HTML>`.
+* NO AÑADAS NINGÚN TEXTO fuera del `<p>` y el `<ul>`.
 
-    * **Estructura HTML final (DENTRO de <MODAL_HTML>):**
-        <p class='text-center mb-3 fst-italic'>¡Claro! Aquí tienes el resultado, jefa del proyecto:</p>
-        <ul class='list-group list-group-flush'>
-            <li class='list-group-item d-flex justify-content-between align-items-center'>ID del Proyecto: <span class='fw-bold'>[Valor]</span></li>
-            <li class='list-group-item d-flex justify-content-between align-items-center'>Folio: <span class='fw-bold'>[Valor]</span></li>
-            <li class='list-group-item d-flex justify-content-between align-items-center'>ID Campus: <span class='fw-bold'>[Valor]</span></li>
-            <li class='list-group-item d-flex justify-content-between align-items-center'>ID Dependencia: <span class='fw-bold'>[Valor]</span></li>
-            <li class='list-group-item d-flex justify-content-between align-items-center'>ID Fondo: <span class='fw-bold'>[Valor]</span></li>
-            <li class='list-group-item d-flex justify-content-between align-items-center'>Presupuesto: <span class='badge bg-success fs-6'>[Monto en formato $xx,xxx.xx]</span></li>
-            <li class='list-group-item d-flex justify-content-between align-items-center'>Estatus: <span class='fw-bold'>[Valor]</span></li>
-            <li class='list-group-item d-flex justify-content-between align-items-center'>Prioridad: <span class='fw-bold'>[Valor]</span></li>
-            <li class='list-group-item d-flex justify-content-between align-items-center'>Fecha de Solicitud: <span class='fw-bold'>[dd/MM/yyyy]</span></li>
-            <li class='list-group-item d-flex justify-content-between align-items-center'>Fecha de Cierre Aprox.: <span class='fw-bold'>[dd/MM/yyyy]</span></li>
-            <li class='list-group-item d-flex justify-content-between align-items-center'>Responsable: <span class='fw-bold'>[Valor]</span></li>
-        </ul>
+* **Formato HTML EXACTO:**
+    <p class='text-center mb-3 fst-italic'>¡Claro! Aquí tienes el resultado, jefa del proyecto:</p>
+    <ul class='list-group list-group-flush'>
+        <li class='list-group-item d-flex justify-content-between align-items-center'>ID del Proyecto: <span class='fw-bold'>[Valor ID]</span></li>
+        <li class='list-group-item d-flex justify-content-between align-items-center'>Folio: <span class='fw-bold'>[Valor Folio]</span></li>
+        <li class='list-group-item d-flex justify-content-between align-items-center'>ID Campus: <span class='fw-bold'>[Valor Campus]</span></li>
+        <li class='list-group-item d-flex justify-content-between align-items-center'>ID Dependencia: <span class='fw-bold'>[Valor Dependencia]</span></li>
+        <li class='list-group-item d-flex justify-content-between align-items-center'>ID Fondo: <span class='fw-bold'>[Valor Fondo]</span></li>
+        <li class='list-group-item d-flex justify-content-between align-items-center'>Presupuesto: <span class='badge bg-success fs-6'>[Valor Presupuesto con formato $]</span></li>
+        <li class='list-group-item d-flex justify-content-between align-items-center'>Estatus: <span class='fw-bold'>[Valor Estatus]</span></li>
+        <li class='list-group-item d-flex justify-content-between align-items-center'>Prioridad: <span class='fw-bold'>[Valor Prioridad]</span></li>
+        <li class='list-group-item d-flex justify-content-between align-items-center'>Fecha de Solicitud: <span class='fw-bold'>[Valor Fecha dd/MM/yyyy]</span></li>
+        <li class='list-group-item d-flex justify-content-between align-items-center'>Fecha de Cierre Aprox.: <span class='fw-bold'>[Valor Fecha dd/MM/yyyy]</span></li>
+        <li class='list-group-item d-flex justify-content-between align-items-center'>Responsable: <span class='fw-bold'>[Valor Responsable]</span></li>
+    </ul>
 
 **Datos JSON:**
 {jsonData}
@@ -302,7 +297,9 @@ Tu trabajo es formular una respuesta amable y profesional en español.
 **Pregunta Original:**
 {request.Prompt}
 
-**Tu Respuesta (solo texto o HTML dentro de <MODAL_HTML>):**";
+**Tu Respuesta:**";
+
+              //  Tu Respuesta (solo texto o HTML dentro de <MODAL_HTML>):";
 
                 var geminiRequestSummary = new GeminiChatRequest();
                 geminiRequestSummary.Contents.Add(new GeminiContent
