@@ -15,45 +15,51 @@
 
 
 <div class="row mb-4">
-    <div class="col-lg-3 col-md-6 mb-4">
+ 
+    <div class="col-lg-4 col-md-6 mb-4">
         <div class="glass-card kpi-card">
             <div class="kpi-title">Proyectos Totales (2025)</div>
             <div class="kpi-number">@Model.KPIs.ProyectosTotales</div>
         </div>
     </div>
 
- 
-    <div class="col-lg-3 col-md-6 mb-4">
+    <div class="col-lg-4 col-md-6 mb-4">
         <div class="glass-card kpi-card">
+
             <div class="kpi-title">Proyectos Activos</div>
             <div class="kpi-number">@Model.KPIs.ProyectosActivos</div>
         </div>
     </div>
-    <div class="col-lg-3 col-md-6 mb-4">
-      
+
+    <div class="col-lg-4 col-md-6 mb-4">
         <div class="glass-card kpi-card">
             <div class="kpi-title">Monto Ejercido</div>
             <div class="kpi-number currency">@Model.KPIs.MontoTotalEjercido.ToString("C")</div>
         </div>
     </div>
-    <div class="col-lg col-md-6 mb-4">
+
+    <div class="col-lg-4 col-md-6 mb-4">
         <div class="glass-card kpi-card">
             <div class="kpi-title">Presupuesto Comprometido</div>
             <div class="kpi-comprometido currency">@Model.KPIs.PresupuestoComprometido.ToString("C")</div>
         </div>
     </div>
-    <div class="col-lg-3 col-md-6 mb-4">
+
+    <div class="col-lg-4 col-md-6 mb-4">
         <div class="glass-card kpi-card">
             <div class="kpi-title">Presupuesto Autorizado</div>
             <div class="kpi-Ejercido currency">@Model.KPIs.PresupuestoTotalAutorizado.ToString("C")</div>
+
         </div>
     </div>
-    <div class="col-lg-3 col-md-6 mb-4">
-        <div class="glass-card kpi-card">
-            <div class="kpi-title">Presupuesto Actual</div>
-            <div class="kpi-Ejercido currency">@Model.KPIs.BalanceGeneralDisponible.ToString("C")</div>
-        </div>
+
+<div class="col-lg-4 col-md-6 mb-4">
+    <div class="glass-card kpi-card">
+        <div class="kpi-title">Presupuesto Actual</div>
+        <div class="kpi-Ejercido currency">@Model.KPIs.BalanceGeneralDisponible.ToString("C")</div>
     </div>
+</div>
+
 </div>
 
 <div class="row mb-4">

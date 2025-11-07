@@ -1,0 +1,192 @@
+﻿@model ContratistaEstimacionesViewModel
+@{
+    ViewData["Title"] = "Mis Estimaciones";
+    // Usamos el Layout del portal de contratista (asumo que se llama _LayoutContratista.cshtml o similar)
+    // Si no tienes uno y quieres la página suelta (como el Index), pon: Layout = null;
+    Layout = null; // <- AJUSTA ESTO si tienes un layout de contratista
+
+    // Definimos las columnas del Kanban del Contratista
+    var columnas = new[] {
+        "En Creación", // Estado donde el Supervisor rechazó
+        "En Revisión Supervisor",
+        "En Revisión Control Obra",
+        "Aprobado (Pendiente Factura)",
+        "En Trámite de Pago",
+        "Pagada"
+    };
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Portal Contratista</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <style>
+        .estimacion-columna {
+            background-color: #f4f7f6;
+            min-height: 300px;
+            max-height: 600px;
+            overflow-y: auto;
+            border-radius: 5px;
+        }
+
+        .estimacion-card {
+            transition: box-shadow 0.2s ease-in-out;
+        }
+
+            .estimacion-card:hover {
+                box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+            }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand" asp-controller="Contratista" asp-action="Index">Portal Contratistas</a>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container-fluid mt-4">
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success" role="alert">@TempData["SuccessMessage"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger" role="alert">@TempData["Error"]</div>
+        }
+
+        <div class="row">
+            <div class="col-lg-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0"><i class="fas fa-file-invoice-dollar me-2"></i>Crear Nueva Estimación</h4>
+                    </div>
+                    <div class="card-body">
+                        <form asp-action="CrearEstimacion" asp-controller="Contratista" method="post" enctype="multipart/form-data">
+
+                            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+                            <div class="form-group mb-3">
+                                <label asp-for="NuevaEstimacion.IdProyectoFk" class="control-label fw-bold"></label>
+                                <select asp-for="NuevaEstimacion.IdProyectoFk" class="form-select"
+                                        asp-items="@Model.ProyectosEnEjecucion">
+                                    <option value="">-- Seleccione un Proyecto --</option>
+                                </select>
+                                <span asp-validation-for="NuevaEstimacion.IdProyectoFk" class="text-danger"></span>
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label asp-for="NuevaEstimacion.Monto" class="control-label fw-bold"></label>
+                                <input asp-for="NuevaEstimacion.Monto" class="form-control" type="number" step="0.01" />
+                                <span asp-validation-for="NuevaEstimacion.Monto" class="text-danger"></span>
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label asp-for="NuevaEstimacion.FechaEstimacion" class="control-label fw-bold"></label>
+                                <input asp-for="NuevaEstimacion.FechaEstimacion" class="form-control" />
+                                <span asp-validation-for="NuevaEstimacion.FechaEstimacion" class="text-danger"></span>
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label asp-for="NuevaEstimacion.Descripcion" class="control-label fw-bold"></label>
+                                <textarea asp-for="NuevaEstimacion.Descripcion" class="form-control" rows="3"></textarea>
+                                <span asp-validation-for="NuevaEstimacion.Descripcion" class="text-danger"></span>
+                            </div>
+
+                            <fieldset classs="border-top pt-3 mt-3">
+                                <legend class="h6">Documentos Requeridos</legend>
+                                <div class="form-group mb-3">
+                                    <label asp-for="NuevaEstimacion.ArchivoNumerosGeneradores" class="form-label"></label>
+                                    <input asp-for="NuevaEstimacion.ArchivoNumerosGeneradores" class="form-control" type="file" accept=".pdf" />
+                                    <span asp-validation-for="NuevaEstimacion.ArchivoNumerosGeneradores" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label asp-for="NuevaEstimacion.ArchivoReporteFotografico" class="form-label"></label>
+                                    <input asp-for="NuevaEstimacion.ArchivoReporteFotografico" class="form-control" type="file" accept=".pdf,.zip" />
+                                    <span asp-validation-for="NuevaEstimacion.ArchivoReporteFotografico" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label asp-for="NuevaEstimacion.ArchivoBitacora" class="form-label"></label>
+                                    <input asp-for="NuevaEstimacion.ArchivoBitacora" class="form-control" type="file" accept=".pdf" />
+                                    <span asp-validation-for="NuevaEstimacion.ArchivoBitacora" class="text-danger"></span>
+                                </div>
+                            </fieldset>
+
+                            <div class="form-group mt-3">
+                                <input type="submit" value="Enviar Estimación a Revisión" class="btn btn-primary w-100" />
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <h2 class="display-6">Estatus de mis Estimaciones</h2>
+                <p class="lead">Aquí puedes ver el estado de todos los pagos que has solicitado.</p>
+
+                <div class="row g-3">
+                    @foreach (var estado in columnas)
+                    {
+                        var estimacionesEnEstado = Model.EstimacionesAgrupadas.ContainsKey(estado) ? Model.EstimacionesAgrupadas[estado] : new List<Estimaciones>();
+
+                        <div class="col-md-4">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-header bg-dark text-white">
+                                    <h6 class="mb-0">
+                                        @estado
+                                        <span class="badge bg-light text-dark ms-2">@estimacionesEnEstado.Count</span>
+                                    </h6>
+                                </div>
+                                <div class="card-body estimacion-columna p-2">
+                                    @if (estimacionesEnEstado.Any())
+                                    {
+                                        foreach (var estimacion in estimacionesEnEstado)
+                                        {
+                                            <div class="card mb-2 estimacion-card">
+                                                <div class="card-body p-3">
+                                                    <h6 class="card-title mb-1">
+                                                        @estimacion.Proyecto.NombreProyecto
+                                                    </h6>
+                                                    <p class="mb-1"><strong>Monto:</strong> @estimacion.Monto.ToString("C")</p>
+                                                    <p class="mb-0 small"><strong>Fecha:</strong> @estimacion.FechaEstimacion.ToString("dd/MM/yyyy")</p>
+
+                                                    @if (estado == "En Creación" && estimacion.Historial.Any())
+                                                    {
+                                                        <p class="small text-danger fst-italic mt-1 mb-0">
+                                                            <strong>Rechazado:</strong> @estimacion.Historial.OrderByDescending(h => h.FechaCambio).First().Comentario
+                                                        </p>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <p class="text-center text-muted small p-3">No hay estimaciones aquí.</p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+
+</body>
+</html>

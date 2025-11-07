@@ -14,13 +14,12 @@
 
 /* --- Estilos Generales del Contenido --- */
 .dashboard-title {
-   
     text-align: center;
     margin-bottom: 2.5rem;
     font-size: 1.8rem;
     border-bottom: 1px solid var(--color-borde);
-    font-weight: bold; 
-    font-family: 'Poppins', sans-serif; 
+    font-weight: bold;
+    font-family: 'Poppins', sans-serif;
     color: #1a2c4e;
 }
 
@@ -71,6 +70,7 @@
     .kpi-number.currency {
         font-size: 2.2rem;
     }
+
 .kpi-Ejercido {
     font-size: 2.5rem;
     font-weight: 700;
@@ -81,6 +81,7 @@
     .kpi-Ejercido.currency {
         font-size: 2.2rem;
     }
+
 .kpi-comprometido {
     font-size: 2.5rem;
     font-weight: 700;
@@ -251,6 +252,7 @@
     transform: translateY(20px) scale(0.95);
     transition: all 0.4s ease-in-out; /* Misma duración */
 }
+
     .ia-chat-widget.visible {
         opacity: 1;
         visibility: visible;
@@ -273,6 +275,7 @@
         font-weight: 600;
         font-size: 1.1rem;
     }
+
         .ia-chat-header h5 i {
             color: var(--oro); /* TU DORADO */
             margin-right: 8px;
@@ -339,6 +342,7 @@
     /* Fondo blanco-glass sutil para legibilidad */
     background-color: rgba(255, 255, 255, 0.8);
 }
+
     .ia-chat-input-container input {
         flex-grow: 1;
         border: 1px solid #ccc;
@@ -353,11 +357,13 @@
         border-top-right-radius: 8px !important;
         border-bottom-right-radius: 8px !important;
     }
+
         .ia-chat-input-container input:focus {
             border-color: var(--oro);
             box-shadow: 0 0 5px rgba(212, 175, 55, 0.5);
             outline: none; /* Quitamos el feo borde azul de Chrome */
         }
+
     .ia-chat-input-container button {
         background-color: var(--oro); /* TU DORADO */
         border: none;
@@ -368,38 +374,43 @@
         transition: background-color 0.3s ease;
         font-size: 1rem;
     }
+
         .ia-chat-input-container button:hover {
             background-color: var(--oro-oscuro); /* El dorado oscuro que definimos */
         }
-            .ia-robot-container {
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                z-index: 1049;
-                cursor: pointer;
-                display: flex;
-                align-items: flex-end;
-                transform: translateZ(0); /* (Esto lo mantengo para el z-index) */
-                /* --- ¡NUEVO! --- */
-                /* Estas son las propiedades de la animación */
-                opacity: 1;
-                visibility: visible;
-                transform: scale(1);
-                transition: all 0.4s ease-in-out; /* Duración de 400ms */
-            }
+
+.ia-robot-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1049;
+    cursor: pointer;
+    display: flex;
+    align-items: flex-end;
+    transform: translateZ(0); /* (Esto lo mantengo para el z-index) */
+    /* --- ¡NUEVO! --- */
+    /* Estas son las propiedades de la animación */
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+    transition: all 0.4s ease-in-out; /* Duración de 400ms */
+}
+
 .ia-robot-image {
-    width: 110px; 
+    width: 110px;
     height: auto;
     transition: transform 0.3s ease;
-    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3)); 
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
 }
+
 .ia-robot-container.hidden {
     opacity: 0;
     visibility: hidden;
     transform: scale(0.8); /* Efecto de "encogerse" */
 }
+
 .ia-robot-container:hover .ia-robot-image {
-    transform: scale(1.1); 
+    transform: scale(1.1);
 }
 
 .ia-robot-bubble {
@@ -407,17 +418,17 @@
     color: var(--color-text-primary);
     padding: 15px;
     border-radius: 15px;
-    border-bottom-right-radius: 0; 
+    border-bottom-right-radius: 0;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
     margin-right: 10px;
-    margin-bottom: 30px; 
+    margin-bottom: 30px;
     font-size: 0.9rem;
     font-weight: 500;
     font-family: 'Poppins', sans-serif;
     max-width: 200px;
     opacity: 0;
     transform: translateY(10px);
-    animation: fadeInBubble 0.5s 0.5s forwards; 
+    animation: fadeInBubble 0.5s 0.5s forwards;
 }
 
     .ia-robot-bubble::after {
@@ -463,3 +474,97 @@
         .ia-chat-header button#ia-chat-close:hover {
             color: #0A2240 !important; /* Color más oscuro */
         }
+
+}
+
+/* ======================================= */
+/* =         ESTILOS RESPONSIVOS         = */
+/* =         (AÑADIDOS AHORA)            = */
+/* ======================================= */
+
+/* --- ESTILOS PARA TABLET (Ancho menor a 991.98px) --- */
+/* (Este es el punto donde aparece tu barra de navegación móvil) */
+@media (max-width: 991.98px) {
+
+    /* 1. Modal: Pasamos la cuadrícula de 3 a 2 columnas */
+    .project-cards-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* 2. Asistente IA: Lo subimos para que no tape la barra de navegación */
+    /* La barra móvil mide 65px de alto, lo subimos a 80px */
+    .ia-robot-container {
+        bottom: 80px;
+    }
+
+    .ia-chat-widget {
+        bottom: 80px;
+    }
+}
+
+
+/* --- ESTILOS PARA MÓVIL (Ancho menor a 768px) --- */
+/* (Aquí ajustamos tamaños de texto y espaciado) */
+@media (max-width: 768px) {
+
+    /* 1. Tipografía: Reducimos el tamaño de los textos principales */
+    .dashboard-title {
+        font-size: 1.4rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .kpi-number {
+        font-size: 2.0rem;
+    }
+
+        .kpi-number.currency,
+        .kpi-Ejercido.currency,
+        .kpi-comprometido.currency {
+            font-size: 1.8rem;
+        }
+
+    /* 2. Tarjetas: Reducimos el padding para dar más espacio */
+    .glass-card {
+        padding: 1.25rem;
+    }
+
+    /* 3. Modal: Pasamos la cuadrícula de 2 a 1 columna */
+    .project-cards-container {
+        grid-template-columns: 1fr;
+    }
+
+    /* 4. Asistente IA: Hacemos la ventana de chat más "móvil" */
+    .ia-chat-widget {
+        /* Hacemos que ocupe casi todo el ancho, centrado */
+        left: 10px;
+        right: 10px;
+        width: auto; /* Sobrescribimos el width fijo de 480px */
+        max-width: none;
+    }
+
+    .ia-robot-container {
+        right: 10px; /* Le damos un pequeño margen */
+    }
+
+    .ia-robot-image {
+        width: 90px; /* Hacemos el robot un poco más pequeño */
+    }
+
+    .ia-robot-bubble {
+        max-width: 150px;
+        font-size: 0.8rem;
+        padding: 10px;
+        margin-bottom: 20px;
+    }
+
+
+    .alert-list .list-group-item {
+        flex-direction: column; /* Apila el enlace y el badge */
+        align-items: flex-start;
+        gap: 8px; /* Espacio entre el enlace y el badge */
+    }
+
+        .alert-list .list-group-item a {
+            font-size: 0.9rem; /* Texto del enlace un poco más pequeño */
+        }
+}

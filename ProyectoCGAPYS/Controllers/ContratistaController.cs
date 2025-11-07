@@ -19,6 +19,7 @@ using Microsoft.AspNetCore.Http;
 // clase que necesite (como DetallesLicitacionViewModel, PropuestaViewModel, etc.)
 // dentro de esa carpeta/namespace, sin importar en cuántos archivos estén divididas.
 using ProyectoCGAPYS.ViewModels;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 [Authorize]
 public class ContratistaController : Controller
@@ -100,10 +101,9 @@ public class ContratistaController : Controller
 
         var invitacion = await _context.LicitacionContratistas
           .Include(lc => lc.Licitacion)
-              .ThenInclude(l => l.Proyecto)
+              .ThenInclude(l => l.Proyecto) // <- Ya incluyes el Proyecto, ¡perfecto!
                   .ThenInclude(p => p.Documentos)
           .FirstOrDefaultAsync(lc => lc.LicitacionId == id && lc.ContratistaId == contratista.Id);
-
 
         if (invitacion == null) return Forbid();
 
@@ -124,6 +124,10 @@ public class ContratistaController : Controller
             Latitud = invitacion.Licitacion.Proyecto.Latitud,
             Longitud = invitacion.Licitacion.Proyecto.Longitud,
             EstadoParticipacion = invitacion.EstadoParticipacion,
+
+            // --- PROPIEDAD NUEVA ASIGNADA ---
+            ProyectoId = invitacion.Licitacion.ProyectoId, // <-- La necesitamos
+
             DocumentosProyecto = invitacion.Licitacion.Proyecto.Documentos.Select(d => new DocumentoViewModel
             {
                 NombreArchivo = d.NombreArchivo,
@@ -167,8 +171,40 @@ public class ContratistaController : Controller
 
         // Y aquí se usa "PropuestaInputModel".
         viewModel.PropuestaInput = new PropuestaInputModel { LicitacionId = id };
+        bool esGanadorYEnEjecucion = (viewModel.EstadoParticipacion == "Ganador") &&
+                                     (invitacion.Licitacion.Proyecto.IdFaseFk == 5);
+        ViewBag.MostrarGestionEstimaciones = esGanadorYEnEjecucion;
+
+        if (esGanadorYEnEjecucion)
+        {
+            // 1. Buscamos TODAS las estimaciones de ESTE proyecto
+            var todasMisEstimaciones = await _context.Estimaciones
+                .Include(e => e.Historial) // Para el comentario de rechazo
+                .Where(e => e.IdProyectoFk == invitacion.Licitacion.ProyectoId)
+                .OrderByDescending(e => e.FechaEstimacion)
+                .ToListAsync();
+
+            // 2. Las agrupamos para el Kanban
+            viewModel.EstimacionesAgrupadas = todasMisEstimaciones
+                .GroupBy(e => e.Estado)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            // 3. Preparamos el formulario (sin dropdown)
+            viewModel.NuevaEstimacion = new EstimacionCrearViewModel
+            {
+                FechaEstimacion = DateTime.Today,
+                // ¡Clave! Pre-llenamos el ID del proyecto con un campo oculto
+                IdProyectoFk = invitacion.Licitacion.ProyectoId
+            };
+        }
+        else
+        {
+            // Si no, inicializamos el diccionario vacío para evitar errores
+            viewModel.EstimacionesAgrupadas = new Dictionary<string, List<Estimaciones>>();
+        }
 
         return View(viewModel);
+
     }
 
     [HttpPost]
@@ -333,5 +369,171 @@ public class ContratistaController : Controller
              .ToListAsync();
 
         return viewModel;
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CrearEstimacion([Bind(Prefix = "NuevaEstimacion")] EstimacionCrearViewModel viewModel, int LicitacionId)
+    {
+        
+        ModelState.Remove("NuevaEstimacion.ProyectosAsignados");
+        ModelState.Remove("ProyectosAsignados");
+        // --- FIN DE LA CORRECCIÓN ---
+        if (string.IsNullOrEmpty(viewModel.IdProyectoFk))
+        {
+            ModelState.AddModelError("NuevaEstimacion.IdProyectoFk", "Debe seleccionar un proyecto.");
+        }
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors)
+                                          .Select(e => e.ErrorMessage)
+                                          .ToList();
+            string errorDetallado = "Faltaron datos... " + string.Join("; ", errors);
+            TempData["Error"] = errorDetallado;
+
+            // 2. ¡Redirigimos a DetallesLicitacion!
+            return RedirectToAction("DetallesLicitacion", new { id = LicitacionId });
+        }
+
+        var usuarioActual = await _userManager.GetUserAsync(User);
+
+        // 1. Crear la entidad principal (la Estimación)
+        var estimacion = new Estimaciones
+        {
+            IdProyectoFk = viewModel.IdProyectoFk,
+            Monto = viewModel.Monto,
+            FechaEstimacion = viewModel.FechaEstimacion,
+            Descripcion = viewModel.Descripcion,
+            Estado = "En Revisión Supervisor"
+        };
+
+        _context.Estimaciones.Add(estimacion);
+        await _context.SaveChangesAsync();
+
+        try
+        {
+            // 2. Guardar archivos
+            await GuardarArchivoEstimacion(
+                estimacion.Id,
+                viewModel.ArchivoNumerosGeneradores,
+                "NumerosGeneradores",
+                usuarioActual.Id);
+
+            await GuardarArchivoEstimacion(
+                estimacion.Id,
+                viewModel.ArchivoReporteFotografico,
+                "ReporteFotografico",
+                usuarioActual.Id);
+
+            await GuardarArchivoEstimacion(
+                estimacion.Id,
+                viewModel.ArchivoBitacora,
+                "Bitacora",
+                usuarioActual.Id);
+
+            // 3. Crear el primer registro en el Historial
+            var historial = new EstimacionHistorial
+            {
+                EstimacionId = estimacion.Id,
+                EstadoAnterior = "En Creación",
+                EstadoNuevo = "En Revisión Supervisor",
+                UsuarioId = usuarioActual.Id,
+                Comentario = "Envío inicial del contratista."
+            };
+            _context.EstimacionHistorial.Add(historial);
+
+            // 4. Guardar los documentos y el historial
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "¡Estimación enviada a revisión correctamente!";
+        }
+        catch (Exception ex)
+        {
+            _context.Estimaciones.Remove(estimacion);
+            await _context.SaveChangesAsync();
+            TempData["Error"] = "Error al guardar los archivos: " + ex.Message;
+        }
+
+        return RedirectToAction("DetallesLicitacion", new { id = LicitacionId });
+    }
+    // --- FUNCIÓN HELPER PRIVADA ---
+    // (Pon esto al final de tu ContratistaController.cs)
+    private async Task GuardarArchivoEstimacion(int estimacionId, IFormFile archivo, string tipoDocumento, string usuarioId)
+    {
+        if (archivo == null || archivo.Length == 0)
+            throw new Exception($"El archivo para '{tipoDocumento}' es nulo.");
+
+        // 1. Definir la ruta
+        // ¡USAMOS _webHostEnvironment.WebRootPath como tú lo haces!
+        string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "estimaciones");
+        if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+        string uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(archivo.FileName);
+        string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+        // 2. Guardar el archivo físico
+        using (var fileStream = new FileStream(filePath, FileMode.Create))
+        {
+            await archivo.CopyToAsync(fileStream);
+        }
+
+        // 3. Crear el registro en la BD
+        var documento = new EstimacionDocumentos
+        {
+            EstimacionId = estimacionId,
+            TipoDocumento = tipoDocumento,
+            NombreArchivo = Path.GetFileName(archivo.FileName),
+            RutaArchivo = "/uploads/estimaciones/" + uniqueFileName, // Ruta web
+            UsuarioId = usuarioId,
+            FechaSubida = DateTime.Now
+        };
+
+        _context.EstimacionDocumentos.Add(documento);
+        // (El SaveChangesAsync() se llama desde la acción principal 'CrearEstimacion')
+    }
+    public async Task<IActionResult> MisEstimaciones()
+    {
+        var userId = _userManager.GetUserId(User);
+        var contratista = await _context.Contratistas
+                                        .AsNoTracking()
+                                        .FirstOrDefaultAsync(c => c.UsuarioId == userId);
+        if (contratista == null) return Forbid();
+
+        // 1. Buscar todos los proyectos "En Ejecución" (Fase 5) de este contratista
+        var idsProyectos = await _context.Licitaciones
+            .Where(l => l.ContratistaGanadorId == contratista.Id && l.Proyecto.IdFaseFk == 5)
+            .Select(l => l.ProyectoId)
+            .Distinct()
+            .ToListAsync();
+
+        var proyectosActivos = await _context.Proyectos
+            .Where(p => idsProyectos.Contains(p.Id))
+            .ToListAsync();
+
+        // 2. Buscar TODAS las estimaciones de esos proyectos
+        var todasMisEstimaciones = await _context.Estimaciones
+            .Include(e => e.Proyecto) // Para mostrar el nombre del proyecto en la tarjeta
+            .Where(e => idsProyectos.Contains(e.IdProyectoFk))
+            .OrderByDescending(e => e.FechaEstimacion)
+            .ToListAsync();
+
+        // 3. Agruparlas para el "Kanban" (igual que el supervisor)
+        var agrupadas = todasMisEstimaciones
+            .GroupBy(e => e.Estado)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        // 4. Preparar el ViewModel
+        var viewModel = new ContratistaEstimacionesViewModel
+        {
+            EstimacionesAgrupadas = agrupadas,
+
+            // Preparamos el formulario de "Crear"
+            NuevaEstimacion = new EstimacionCrearViewModel { FechaEstimacion = DateTime.Today },
+
+            // Preparamos el dropdown para el formulario
+            ProyectosEnEjecucion = new SelectList(proyectosActivos, "Id", "NombreProyecto")
+        };
+
+        return View(viewModel); // Enviaremos esto a la nueva vista "MisEstimaciones.cshtml"
     }
 }

@@ -1,0 +1,298 @@
+﻿@model Estimaciones
+@{
+    ViewData["Title"] = "Revisar Estimación";
+    var contratista = ViewBag.Contratista as Contratista;
+
+    // Variables para la Fase 2 (Trámite)
+    var tieneFactura = Model.Documentos.Any(d => d.TipoDocumento == "Factura");
+    var tienePoliza = Model.Documentos.Any(d => d.TipoDocumento == "PolizaPago");
+}
+<link rel="stylesheet" href="~/css/Estimaciones.css" asp-append-version="true" />
+<br>
+<br>
+<br>
+<h2 class="display-4">@ViewData["Title"]</h2>
+<p class="lead">Proceso de Pagos Interno</p>
+<hr />
+
+<div class="row">
+    <div class="col-md-7">
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h4 class="mb-0">Información del Proyecto y Estimación</h4>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Proyecto:</dt>
+                    <dd class="col-sm-8">@Model.Proyecto.NombreProyecto</dd>
+
+                    <dt class="col-sm-4">Contratista:</dt>
+                    <dd class="col-sm-8">@(contratista?.RazonSocial ?? "No asignado")</dd>
+
+                    <dt class="col-sm-4">Estado Actual:</dt>
+                    <dd class="col-sm-8">
+                        @if (Model.Estado == "En Revisión Supervisor")
+                        {
+                            <span class="badge bg-warning text-dark fs-6">@Model.Estado</span>
+                        }
+                        else if (Model.Estado == "En Revisión Control Obra")
+                        {
+                            <span class="badge bg-primary fs-6">@Model.Estado</span>
+                        }
+                        else if (Model.Estado == "Aprobado (Pendiente Factura)")
+                        {
+                            <span class="badge bg-info text-dark fs-6">@Model.Estado</span>
+                        }
+                        else if (Model.Estado == "En Trámite de Pago")
+                        {
+                            <span class="badge bg-success fs-6">@Model.Estado</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary fs-6">@Model.Estado</span>
+                        }
+                    </dd>
+
+                    <hr class="my-2" />
+
+                    <dt class="col-sm-4">Monto Estimación:</dt>
+                    <dd class="col-sm-8"><h5 class="mb-0">@Model.Monto.ToString("C")</h5></dd>
+
+                    <dt class="col-sm-4">Fecha Estimación:</dt>
+                    <dd class="col-sm-8">@Model.FechaEstimacion.ToString("dd/MM/yyyy")</dd>
+
+                    <dt class="col-sm-4">Descripción:</dt>
+                    <dd class="col-sm-8">@Model.Descripcion</dd>
+                </dl>
+            </div>
+        </div>
+
+        @if (Model.Estado == "En Revisión Supervisor")
+        {
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h4 class="mb-0">Acciones: Supervisor (Paso 2/6)</h4>
+                </div>
+                <div class="card-body">
+                    <p>Revisar documentos. Aprobar para enviar a Control de Obra o Rechazar con comentarios.</p>
+                    <div class="d-grid gap-2 d-md-flex">
+                        <form asp-action="AprobarSupervisor" method="post" onsubmit="return confirm('¿Está seguro de APROBAR esta estimación?');">
+                            <input type="hidden" name="estimacionId" value="@Model.Id" />
+                            <button type="submit" class="btn btn-success btn-lg"><i class="fas fa-check-circle me-2"></i> Aprobar</button>
+                        </form>
+                        <button type="button" class="btn btn-danger btn-lg" data-bs-toggle="modal" data-bs-target="#modalRechazarSupervisor">
+                            <i class="fas fa-times-circle me-2"></i> Rechazar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (Model.Estado == "En Revisión Control Obra")
+        {
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h4 class="mb-0">Acciones: Control de Obra (Paso 3/6)</h4>
+                </div>
+                <div class="card-body">
+                    <p>Revisión administrativa. Aprobar para solicitar factura al contratista o Rechazar con comentarios.</p>
+                    <div class="d-grid gap-2 d-md-flex">
+                        <form asp-action="AprobarControlObra" method="post" onsubmit="return confirm('¿Aprobar documentos y solicitar factura al contratista?');">
+                            <input type="hidden" name="estimacionId" value="@Model.Id" />
+                            <button type="submit" class="btn btn-success btn-lg"><i class="fas fa-check-circle me-2"></i> Aprobar Documentos</button>
+                        </form>
+                        <button type="button" class="btn btn-danger btn-lg" data-bs-toggle="modal" data-bs-target="#modalRechazarControlObra">
+                            <i class="fas fa-times-circle me-2"></i> Rechazar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (Model.Estado == "Aprobado (Pendiente Factura)")
+        {
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h4 class="mb-0">Acciones: Trámite de Pago (Paso 4/6)</h4>
+                </div>
+                <div class="card-body">
+                    <p>Subir la Factura (recibida del contratista) y la Póliza de Pago generada para enviar a Tesorería.</p>
+
+                    <form class="mb-3 border p-3 rounded" asp-action="SubirDocumentoInterno" method="post" enctype="multipart/form-data">
+                        <input type="hidden" name="estimacionId" value="@Model.Id" />
+                        <input type="hidden" name="tipoDocumento" value="Factura" />
+                        <label class="form-label fw-bold">1. Adjuntar Factura (.pdf/.xml)</label>
+                        @if (tieneFactura)
+                        {
+                            <p class="text-success"><i class="fas fa-check-circle me-1"></i> Factura cargada.</p>
+                        }
+                        else
+                        {
+                            <div class="input-group">
+                                <input type="file" name="archivo" class="form-control" accept=".pdf,.xml" required />
+                                <button type="submit" class="btn btn-primary">Subir</button>
+                            </div>
+                        }
+                    </form>
+
+                    <form class="mb-3 border p-3 rounded" asp-action="SubirDocumentoInterno" method="post" enctype="multipart/form-data">
+                        <input type="hidden" name="estimacionId" value="@Model.Id" />
+                        <input type="hidden" name="tipoDocumento" value="PolizaPago" />
+                        <label class="form-label fw-bold">2. Adjuntar Póliza de Pago (.pdf)</label>
+                        @if (tienePoliza)
+                        {
+                            <p class="text-success"><i class="fas fa-check-circle me-1"></i> Póliza de Pago cargada.</p>
+                        }
+                        else
+                        {
+                            <div class="input-group">
+                                <input type="file" name="archivo" class="form-control" accept=".pdf" required />
+                                <button type="submit" class="btn btn-primary">Subir</button>
+                            </div>
+                        }
+                    </form>
+
+                    <hr />
+
+                    <form asp-action="EnviarATesoreria" method="post" onsubmit="return confirm('¿Enviar esta estimación a Tesorería para pago?');">
+                        <input type="hidden" name="estimacionId" value="@Model.Id" />
+                        <button type="submit" class="btn btn-vip btn-lg w-100" @(!tieneFactura || !tienePoliza ? "disabled" : "")>
+                            <i class="fas fa-paper-plane me-2"></i> Enviar a Tesorería (Paso 5)
+                        </button>
+                        @if (!tieneFactura || !tienePoliza)
+                        {
+                            <small class="form-text text-danger text-center d-block">Debe subir la Factura y la Póliza para poder continuar.</small>
+                        }
+                    </form>
+                </div>
+            </div>
+        }
+        else if (Model.Estado == "En Trámite de Pago")
+        {
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">Acciones: Tesorería (Paso 5/6)</h4>
+                </div>
+                <div class="card-body">
+                    <p>El expediente está completo. Revise la Póliza de Pago adjunta y proceda con la transferencia. Una vez realizado el pago, marque la estimación como "Pagada" para cerrar el ciclo.</p>
+                    <div class="d-grid gap-2">
+                        <form asp-action="MarcarComoPagada" method="post" onsubmit="return confirm('¿Confirma que esta estimación ha sido PAGADA? Esta acción no se puede revertir.');">
+                            <input type="hidden" name="estimacionId" value="@Model.Id" />
+                            <button type="submit" class="btn btn-vip btn-lg w-100">
+                                <i class="fas fa-dollar-sign me-2"></i> Marcar como Pagada (Paso 6)
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (Model.Estado == "Pagada")
+        {
+            <div class="alert alert-success" role="alert">
+                <h4 class="alert-heading"><i class="fas fa-check-circle me-2"></i> Proceso Finalizado</h4>
+                <p>Esta estimación fue pagada el @Model.Historial.OrderByDescending(h => h.FechaCambio).FirstOrDefault(h => h.EstadoNuevo == "Pagada")?.FechaCambio.ToString("dd 'de' MMMM 'del' yyyy") y el proceso ha concluido.</p>
+            </div>
+        }
+
+    </div>
+
+    <div class="col-md-5">
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Expediente Digital (Todos los Documentos)</h5>
+            </div>
+            <ul class="list-group list-group-flush">
+                @if (!Model.Documentos.Any())
+                {
+                    <li class="list-group-item text-muted">No hay documentos adjuntos.</li>
+                }
+                @foreach (var doc in Model.Documentos.OrderBy(d => d.TipoDocumento))
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            @if (doc.TipoDocumento == "Factura" || doc.TipoDocumento == "PolizaPago")
+                            {
+                                <i class="fas fa-file-invoice-dollar text-success me-2"></i>
+                            }
+                            else
+                            {
+                                <i class="fas fa-file-pdf text-danger me-2"></i>
+                            }
+                            <strong>@doc.TipoDocumento:</strong>
+                            <span class="text-muted">@doc.NombreArchivo</span>
+                        </div>
+                        <a href="@doc.RutaArchivo" target="_blank" class="btn btn-sm btn-outline-primary">
+                            Ver <i class="fas fa-external-link-alt ms-1"></i>
+                        </a>
+                    </li>
+                }
+            </ul>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Bitácora de Cambios</h5>
+            </div>
+            <ul class="list-group list-group-flush small">
+                @foreach (var item in Model.Historial.OrderByDescending(h => h.FechaCambio))
+                {
+                    <li class="list-group-item">
+                        <span class="fw-bold">@item.EstadoNuevo</span>
+                        <span class="badge bg-secondary">@item.FechaCambio.ToString("dd/MM/yy HH:mm")</span>
+                        <p class="mb-0 text-muted">Por: @(item.Usuario?.UserName ?? "Sistema")</p>
+                        @if (!string.IsNullOrEmpty(item.Comentario))
+                        {
+                            <p class="mb-0 fst-italic text-danger">Comentario: "@item.Comentario"</p>
+                        }
+                    </li>
+                }
+            </ul>
+        </div>
+
+    </div>
+</div>
+
+
+<div class="modal fade" id="modalRechazarSupervisor" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="RechazarSupervisor" method="post">
+                <div class="modal-header"><h5 class="modal-title">Rechazar (Supervisor)</h5></div>
+                <div class="modal-body">
+                    <p>Rechazará esta estimación. Se devolverá al contratista.</p>
+                    <input type="hidden" name="estimacionId" value="@Model.Id" />
+                    <div class="mb-3">
+                        <label for="comentario" class="form-label"><strong>Motivo del Rechazo (Obligatorio):</strong></label>
+                        <textarea name="comentario" class="form-control" rows="4" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Confirmar Rechazo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalRechazarControlObra" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="RechazarControlObra" method="post">
+                <div class="modal-header"><h5 class="modal-title">Rechazar (Control de Obra)</h5></div>
+                <div class="modal-body">
+                    <p>Rechazará esta estimación. Se devolverá al contratista para su corrección.</p>
+                    <input type="hidden" name="estimacionId" value="@Model.Id" />
+                    <div class="mb-3">
+                        <label for="comentario" class="form-label"><strong>Motivo del Rechazo (Obligatorio):</strong></label>
+                        <textarea name="comentario" class="form-control" rows="4" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Confirmar Rechazo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

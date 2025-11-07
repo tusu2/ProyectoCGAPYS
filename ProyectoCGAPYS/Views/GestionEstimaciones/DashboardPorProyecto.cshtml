@@ -1,0 +1,83 @@
+﻿@model Dictionary<string, List<Estimaciones>>
+@{
+    ViewData["Title"] = "Dashboard: " + ViewBag.ProyectoNombre;
+
+    // Definimos las columnas y el orden
+    var columnas = new[] {
+        "En Revisión Supervisor",
+        "En Revisión Control Obra",
+        "Aprobado (Pendiente Factura)",
+        "En Trámite de Pago"
+    };
+}
+<link rel="stylesheet" href="~/css/Estimaciones.css" asp-append-version="true" />
+<br>
+<br>
+<br>
+<div class="container-fluid">
+    <h2 class="display-4">@ViewBag.ProyectoNombre</h2>
+    <p class="lead">Bandeja de entrada para el Folio: @ViewBag.ProyectoFolio</p>
+
+    <a asp-action="Index" class="btn btn-secondary mb-3">
+        <i class="fas fa-arrow-left me-1"></i> Volver a la lista de Proyectos
+    </a>
+
+    <div class="row g-3">
+        @foreach (var estado in columnas)
+        {
+            var estimacionesEnEstado = Model.ContainsKey(estado) ? Model[estado] : new List<Estimaciones>();
+
+            <div class="col-md-3">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0">
+                            @estado
+                            <span class="badge bg-light text-dark ms-2">@estimacionesEnEstado.Count</span>
+                        </h5>
+                    </div>
+                    <div class="card-body estimacion-columna p-2">
+                        @if (estimacionesEnEstado.Any())
+                        {
+                            foreach (var estimacion in estimacionesEnEstado)
+                            {
+                                <div class="card mb-2 estimacion-card">
+                                    <div class="card-body p-3">
+                                        <h6 class="card-title mb-1">
+                                            @estimacion.Descripcion
+                                        </h6>
+                                        <p class="mb-1"><strong>Monto:</strong> @estimacion.Monto.ToString("C")</p>
+                                        <p class="mb-0 small"><strong>Fecha:</strong> @estimacion.FechaEstimacion.ToString("dd/MM/yyyy")</p>
+
+                                        <a asp-action="Detalles" asp-route-id="@estimacion.Id" class="btn btn-sm btn-vip w-100 mt-2">
+                                            Revisar
+                                        </a>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-center text-muted p-3">No hay estimaciones en este estado.</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .estimacion-columna {
+        background-color: #f4f7f6;
+        min-height: 400px;
+        overflow-y: auto;
+    }
+
+    .estimacion-card {
+        transition: box-shadow 0.2s ease-in-out;
+    }
+
+        .estimacion-card:hover {
+            box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+        }
+</style>

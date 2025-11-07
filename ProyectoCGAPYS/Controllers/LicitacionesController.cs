@@ -831,6 +831,8 @@ public class LicitacionesController : Controller
     }
 
     // [POST] Manda el proyecto a la fase de Ejecución (Modo Control)
+
+    // POST: Licitaciones/MandarAEjecutar (Modo Control)
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MandarAEjecutar(int licitacionId)
@@ -843,18 +845,17 @@ public class LicitacionesController : Controller
         {
             var licitacion = await _context.Licitaciones
                                            .Include(l => l.Proyecto)
-                                           .Include(l => l.LicitacionDocumentos) // Cargamos documentos para validar
+                                           .Include(l => l.LicitacionDocumentos)
                                            .FirstOrDefaultAsync(l => l.Id == licitacionId);
 
             if (licitacion == null) return NotFound();
 
-            // --- VALIDACIONES DE CONTROL ---
+            // --- VALIDACIONES DE CONTROL (Tú ya las tenías) ---
             if (licitacion.ContratistaGanadorId == null)
             {
                 TempData["Error"] = "No se puede mandar a ejecutar. Debe asignar un contratista ganador primero.";
                 return RedirectToAction("Detalles", new { id = licitacionId });
             }
-            // Validamos que exista al menos el contrato (basado en tu diagrama)
             if (!licitacion.LicitacionDocumentos.Any(d => d.TipoDocumento == "Contrato"))
             {
                 TempData["Error"] = "No se puede mandar a ejecutar. Debe subir el documento del 'Contrato' firmado.";
@@ -866,16 +867,63 @@ public class LicitacionesController : Controller
                 return RedirectToAction("Detalles", new { id = licitacionId });
             }
 
-            // 1. Actualizar estado de licitación
+            // --- INICIO DE LA CORRECCIÓN ---
+
+            // 1. Buscamos al contratista ganador (necesitamos su UsuarioId)
+            var contratistaGanador = await _context.Contratistas
+                .FindAsync(licitacion.ContratistaGanadorId.Value);
+
+            if (contratistaGanador == null)
+            {
+                TempData["Error"] = "El contratista ganador asignado no es válido.";
+                return RedirectToAction("Detalles", new { id = licitacionId });
+            }
+
+            // 2. Buscamos su "invitación" (LicitacionContratistas)
+            var invitacionGanador = await _context.LicitacionContratistas
+                .FirstOrDefaultAsync(lc => lc.LicitacionId == licitacionId && lc.ContratistaId == contratistaGanador.Id);
+
+            if (invitacionGanador == null)
+            {
+                // Si no existía (era Adjudicación Directa pura), la CREAMOS
+                invitacionGanador = new LicitacionContratista
+                {
+                    LicitacionId = licitacionId,
+                    ContratistaId = contratistaGanador.Id,
+                    FechaInvitacion = DateTime.Now,
+                    EstadoParticipacion = "Ganador" // <-- ¡LA CLAVE!
+                };
+                _context.LicitacionContratistas.Add(invitacionGanador);
+            }
+            else
+            {
+                // Si ya existía, solo la ACTUALIZAMOS
+                invitacionGanador.EstadoParticipacion = "Ganador"; // <-- ¡LA CLAVE!
+                _context.LicitacionContratistas.Update(invitacionGanador);
+            }
+
+            // 3. Crear la notificación para el ganador
+            _context.Notificaciones.Add(new Notificacion
+            {
+                UsuarioId = contratistaGanador.UsuarioId,
+                Url = "/Contratista/DetallesLicitacion/" + licitacionId,
+                FechaCreacion = DateTime.Now,
+                Leida = false,
+                Mensaje = $"¡Felicidades! Has sido adjudicado como ganador de la licitación '{licitacion.NumeroLicitacion}'."
+            });
+
+            // --- FIN DE LA CORRECCIÓN ---
+
+            // 4. Actualizar estado de licitación (ya lo tenías)
             licitacion.Estado = "Adjudicada";
             _context.Licitaciones.Update(licitacion);
 
-            // 2. Mover el proyecto
+            // 5. Mover el proyecto (ya lo tenías)
             var proyecto = licitacion.Proyecto;
             proyecto.IdFaseFk = faseEjecucionId;
             _context.Proyectos.Update(proyecto);
 
-            // 3. Registrar historial
+            // 6. Registrar historial (ya lo tenías)
             var historial = new HistorialFase
             {
                 ProyectoId = proyecto.Id,

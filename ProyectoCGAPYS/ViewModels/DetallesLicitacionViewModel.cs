@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using ProyectoCGAPYS.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace ProyectoCGAPYS.ViewModels
 {
@@ -30,7 +31,14 @@ namespace ProyectoCGAPYS.ViewModels
         [Required(ErrorMessage = "La descripción es obligatoria.")]
         [StringLength(500)]
         public string DescripcionPropuesta { get; set; }
+        public string ProyectoId { get; set; }
 
+        // Para el formulario de "Crear Nueva Estimación"
+        public EstimacionCrearViewModel NuevaEstimacion { get; set; }
+
+        // Para mostrar la lista de estimaciones ya enviadas
+        public List<Estimaciones> EstimacionesAnteriores { get; set; }
+        public Dictionary<string, List<Estimaciones>> EstimacionesAgrupadas { get; set; }
         public DetallesLicitacionViewModel()
         {
             PropuestasSubidas = new List<PropuestaViewModel>();
