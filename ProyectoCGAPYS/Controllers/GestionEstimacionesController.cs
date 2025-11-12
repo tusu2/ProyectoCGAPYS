@@ -455,9 +455,130 @@ namespace ProyectoCGAPYS.Controllers
             // 3. Pasamos el nombre del proyecto para usarlo en el título
             ViewBag.ProyectoNombre = proyecto.NombreProyecto;
             ViewBag.ProyectoFolio = proyecto.Folio;
-
-            // 4. Enviamos el diccionario a la NUEVA vista
+            ViewBag.ProyectoId = proyecto.Id;
             return View(viewModel); // Apunta a "DashboardPorProyecto.cshtml"
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CrearEstimacion(EstimacionCrearViewModel viewModel)
+        {
+            // Validar que venga el ID del proyecto
+            if (string.IsNullOrEmpty(viewModel.IdProyectoFk))
+            {
+              ModelState.AddModelError("IdProyectoFk", "El ID del proyecto es requerido.");
+    
+            }
+
+            // Limpiamos validaciones del DropDown que ya no usamos aquí si viene nulo
+
+            ModelState.Remove("ProyectosAsignados");
+            ModelState.Remove("NuevaEstimacion");
+            if (!ModelState.IsValid)
+            {
+                // TRUCO DE DEBUG: Esto imprimirá en tu consola de Visual Studio exactamente qué campo está fallando
+                foreach (var state in ModelState)
+                {
+                    foreach (var error in state.Value.Errors)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"ERROR EN CAMPO: {state.Key} - MENSAJE: {error.ErrorMessage}");
+                    }
+                }
+
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                TempData["Error"] = "Datos inválidos: " + string.Join("; ", errors);
+
+                return RedirectToAction("DashboardPorProyecto", "GestionEstimaciones", new { proyectoId = viewModel.IdProyectoFk });
+            }
+
+            var usuarioActual = await _userManager.GetUserAsync(User);
+
+            // 1. Crear la entidad principal (la Estimación)
+            var estimacion = new Estimaciones
+            {
+                IdProyectoFk = viewModel.IdProyectoFk,
+                Monto = viewModel.Monto,
+                FechaEstimacion = viewModel.FechaEstimacion,
+                Descripcion = viewModel.Descripcion,
+
+                // CAMBIO IMPORTANTE: El estado inicial es directo a Control de Obra
+                Estado = "En Revisión Control Obra"
+            };
+
+            _context.Estimaciones.Add(estimacion);
+            await _context.SaveChangesAsync(); // Guardamos para generar el ID
+
+            try
+            {
+                // 2. Guardar archivos (Usando el Helper privado abajo)
+                await GuardarArchivoEstimacion(estimacion.Id, viewModel.ArchivoNumerosGeneradores, "NumerosGeneradores", usuarioActual.Id);
+                await GuardarArchivoEstimacion(estimacion.Id, viewModel.ArchivoReporteFotografico, "ReporteFotografico", usuarioActual.Id);
+                await GuardarArchivoEstimacion(estimacion.Id, viewModel.ArchivoBitacora, "Bitacora", usuarioActual.Id);
+
+                // 3. Crear el primer registro en el Historial
+                var historial = new EstimacionHistorial
+                {
+                    EstimacionId = estimacion.Id,
+                    EstadoAnterior = "N/A", // No había estado anterior
+                    EstadoNuevo = "En Revisión Control Obra",
+                    UsuarioId = usuarioActual.Id,
+                    Comentario = "Estimación generada por Supervisor. Enviada a Control de Obra."
+                };
+                _context.EstimacionHistorial.Add(historial);
+
+                // 4. Guardar cambios finales
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = "Estimación creada y enviada a Control de Obra exitosamente.";
+            }
+            catch (Exception ex)
+            {
+                // Si falla algo con los archivos, borramos la estimación para no dejar basura
+                _context.Estimaciones.Remove(estimacion);
+                await _context.SaveChangesAsync();
+                TempData["Error"] = "Error al guardar los archivos: " + ex.Message;
+            }
+
+            // Redirigir a la vista donde se ven las estimaciones del proyecto
+            // Aquí asumo que usas la vista que modificamos anteriormente llamada DetallesLicitacion pero usada por admin
+            // O redirigir a donde sea que el supervisor vea el tablero.
+            return RedirectToAction("DashboardPorProyecto", "GestionEstimaciones", new { proyectoId = viewModel.IdProyectoFk });
+        }
+
+        private async Task GuardarArchivoEstimacion(int estimacionId, IFormFile archivo, string tipoDocumento, string usuarioId)
+        {
+            if (archivo == null || archivo.Length == 0)
+            {
+                // Dependiendo de tu regla de negocio, puedes lanzar error o simplemente ignorar si es opcional
+                // throw new Exception($"El archivo para '{tipoDocumento}' es obligatorio.");
+                return;
+            }
+
+            // 1. Definir ruta
+            string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "estimaciones");
+            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+            string uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(archivo.FileName);
+            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            // 2. Guardar en disco
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await archivo.CopyToAsync(fileStream);
+            }
+
+            // 3. Guardar en BD
+            var documento = new EstimacionDocumentos
+            {
+                EstimacionId = estimacionId,
+                TipoDocumento = tipoDocumento,
+                NombreArchivo = Path.GetFileName(archivo.FileName),
+                RutaArchivo = "/uploads/estimaciones/" + uniqueFileName,
+                UsuarioId = usuarioId,
+                FechaSubida = DateTime.Now
+            };
+
+            _context.EstimacionDocumentos.Add(documento);
+            // No hacemos SaveChanges aquí, se hace en el método principal
         }
     }
 

@@ -4,10 +4,8 @@
     var contratista = ViewBag.Contratista as Contratista;
 
     // Variables auxiliares para verificar documentos en la fase de pago
-    var tieneFactura = Model.Documentos.Any(d => d.TipoDocumento == "Factura");
-    var tienePoliza = Model.Documentos.Any(d => d.TipoDocumento == "PolizaPago");
-
-   
+    var tieneFactura = Model.Documentos != null && Model.Documentos.Any(d => d.TipoDocumento == "Factura");
+    var tienePoliza = Model.Documentos != null && Model.Documentos.Any(d => d.TipoDocumento == "PolizaPago");
 }
 
 <link rel="stylesheet" href="~/css/Estimaciones.css" asp-append-version="true" />
@@ -50,6 +48,10 @@
                         else if (Model.Estado == "En Creación" || Model.Estado == "Rechazado")
                         {
                             <span class="badge bg-warning text-dark fs-6">En Corrección / Borrador</span>
+                        }
+                        else if (Model.Estado == "Pagada")
+                        {
+                            <span class="badge bg-secondary fs-6">Pagada</span>
                         }
                         else
                         {
@@ -188,7 +190,7 @@
                 <i class="fas fa-check-circle fa-2x me-3"></i>
                 <div>
                     <h4 class="alert-heading mb-1">Proceso Finalizado</h4>
-                    <p class="mb-0">Esta estimación fue pagada el <strong>@Model.Historial.OrderByDescending(h => h.FechaCambio).FirstOrDefault(h => h.EstadoNuevo == "Pagada")?.FechaCambio.ToString("dd 'de' MMMM 'del' yyyy")</strong>.</p>
+                    <p class="mb-0">Esta estimación fue pagada el <strong>@(Model.Historial?.OrderByDescending(h => h.FechaCambio).FirstOrDefault(h => h.EstadoNuevo == "Pagada")?.FechaCambio.ToString("dd 'de' MMMM 'del' yyyy") ?? "Fecha desconocida")</strong>.</p>
                 </div>
             </div>
         }
@@ -202,30 +204,33 @@
                 <h5 class="mb-0">Expediente Digital</h5>
             </div>
             <ul class="list-group list-group-flush">
-                @if (!Model.Documentos.Any())
+                @if (Model.Documentos == null || !Model.Documentos.Any())
                 {
                     <li class="list-group-item text-muted fst-italic">Aún no hay documentos adjuntos.</li>
                 }
-                @foreach (var doc in Model.Documentos.OrderBy(d => d.TipoDocumento))
+                else
                 {
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div class="text-truncate me-2">
-                            @if (doc.TipoDocumento == "Factura" || doc.TipoDocumento == "PolizaPago")
-                            {
-                                <i class="fas fa-file-invoice-dollar text-success me-2"></i>
-                            }
-                            else
-                            {
-                                <i class="fas fa-file-pdf text-danger me-2"></i>
-                            }
-                            <strong>@doc.TipoDocumento:</strong>
-                            <br>
-                            <small class="text-muted">@doc.NombreArchivo</small>
-                        </div>
-                        <a href="@doc.RutaArchivo" target="_blank" class="btn btn-sm btn-outline-secondary text-nowrap">
-                            <i class="fas fa-download"></i> Ver
-                        </a>
-                    </li>
+                    @foreach (var doc in Model.Documentos.OrderBy(d => d.TipoDocumento))
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="text-truncate me-2">
+                                @if (doc.TipoDocumento == "Factura" || doc.TipoDocumento == "PolizaPago")
+                                {
+                                    <i class="fas fa-file-invoice-dollar text-success me-2"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-file-pdf text-danger me-2"></i>
+                                }
+                                <strong>@doc.TipoDocumento:</strong>
+                                <br>
+                                <small class="text-muted">@doc.NombreArchivo</small>
+                            </div>
+                            <a href="@doc.RutaArchivo" target="_blank" class="btn btn-sm btn-outline-secondary text-nowrap">
+                                <i class="fas fa-download"></i> Ver
+                            </a>
+                        </li>
+                    }
                 }
             </ul>
         </div>
@@ -235,22 +240,25 @@
                 <h5 class="mb-0">Bitácora de Movimientos</h5>
             </div>
             <ul class="list-group list-group-flush small">
-                @foreach (var item in Model.Historial.OrderByDescending(h => h.FechaCambio))
+                @if (Model.Historial != null)
                 {
-                    <li class="list-group-item">
-                        <div class="d-flex justify-content-between">
-                            <span class="fw-bold">@item.EstadoNuevo</span>
-                            <span class="text-muted">@item.FechaCambio.ToString("dd/MM/yy HH:mm")</span>
-                        </div>
-                        <div class="text-muted mb-1">Por: @(item.Usuario?.UserName ?? "Sistema")</div>
-
-                        @if (!string.IsNullOrEmpty(item.Comentario))
-                        {
-                            <div class="alert alert-secondary p-2 mb-0 mt-1 fst-italic">
-                                <i class="fas fa-comment-alt me-1"></i> "@item.Comentario"
+                    @foreach (var item in Model.Historial.OrderByDescending(h => h.FechaCambio))
+                    {
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <span class="fw-bold">@item.EstadoNuevo</span>
+                                <span class="text-muted">@item.FechaCambio.ToString("dd/MM/yy HH:mm")</span>
                             </div>
-                        }
-                    </li>
+                            <div class="text-muted mb-1">Por: @(item.Usuario?.UserName ?? "Sistema")</div>
+
+                            @if (!string.IsNullOrEmpty(item.Comentario))
+                            {
+                                <div class="alert alert-secondary p-2 mb-0 mt-1 fst-italic">
+                                    <i class="fas fa-comment-alt me-1"></i> "@item.Comentario"
+                                </div>
+                            }
+                        </li>
+                    }
                 }
             </ul>
         </div>
