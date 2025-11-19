@@ -38,19 +38,24 @@ namespace ProyectoCGAPYS.ViewModels
 
         // Para la nueva sección de documentos (Fallo, Contrato, Fianza)
         public List<LicitacionDocumentoViewModel> LicitacionDocumentos { get; set; }
+        public DateTime? FechaInicioEjecucion { get; set; }
+        public DateTime? FechaFinEjecucion { get; set; }
+        public string SupervisorAsignadoID { get; set; }
 
         // --- PROPIEDADES EXISTENTES (Se mantienen para el Modo Gestión) ---
 
         // Sigue existiendo para el flujo de "Licitación Pública"
-     
 
-  
-       
+
+
+
 
         public LicitacionDetalleViewModel()
         {
             Participantes = new List<ParticipanteViewModel>();
-            Documentos = new List<DocumentoViewModel>(); // Asegúrate de inicializar esta lista también
+            Documentos = new List<DocumentoViewModel>();
+         
+            LicitacionDocumentos = new List<LicitacionDocumentoViewModel>();
         }
     }
 

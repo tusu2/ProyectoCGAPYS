@@ -42,6 +42,9 @@ namespace ProyectoCGAPYS.Datos
         public DbSet<EstimacionDocumentos> EstimacionDocumentos { get; set; }
         public DbSet<EstimacionHistorial> EstimacionHistorial { get; set; }
 
+        public DbSet<ProyectoHistorialBloqueo> ProyectoHistorialBloqueo { get; set; }
+
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

@@ -427,37 +427,65 @@ namespace ProyectoCGAPYS.Controllers
             // Volvemos al dashboard principal
             return RedirectToAction("Index");
         }
-        public async Task<IActionResult> DashboardPorProyecto(string proyectoId)
+
+        public async Task<IActionResult> DashboardPorProyecto(string proyectoId) // Recibe el ID del proyecto
         {
-            if (string.IsNullOrEmpty(proyectoId))
-            {
-                return NotFound();
-            }
+            if (proyectoId == null) return NotFound();
 
+            // 1. Obtener el proyecto para sacar el nombre y folio
             var proyecto = await _context.Proyectos.FindAsync(proyectoId);
-            if (proyecto == null)
-            {
-                return NotFound("Proyecto no encontrado.");
-            }
+            ViewBag.EstaBloqueado = proyecto.EstaBloqueado;
+            ViewBag.SLAStatus = "N/A"; // (OK, Advertencia, Vencido)
+            ViewBag.SLADias = 0;
 
-            // 1. Obtenemos las estimaciones SOLO de este proyecto
-            var estimacionesProyecto = await _context.Estimaciones
-                .Include(e => e.Proyecto)
+            var licitacion = await _context.Licitaciones
+    .Where(l => l.ProyectoId == proyectoId && l.Estado == "Adjudicada")
+    .OrderByDescending(l => l.FechaFallo)
+    .FirstOrDefaultAsync();
+
+            bool tienePrimeraEstimacion = await _context.Estimaciones.AnyAsync(e => e.IdProyectoFk == proyectoId);
+            if (licitacion?.FechaInicioEjecucion != null && !tienePrimeraEstimacion)
+            {
+                var diasTranscurridos = (DateTime.Now - licitacion.FechaInicioEjecucion.Value).TotalDays;
+                ViewBag.SLADias = (int)Math.Floor(30 - diasTranscurridos); // Días restantes
+
+                if (diasTranscurridos <= 20) ViewBag.SLAStatus = "OK";
+                else if (diasTranscurridos <= 30) ViewBag.SLAStatus = "Advertencia";
+                else if (diasTranscurridos <= 40) ViewBag.SLAStatus = "Vencido";
+                else ViewBag.SLAStatus = "Bloqueado"; // Ya pasó los 40 días
+            }
+            if (proyecto == null) return NotFound();
+
+            // 2. Obtener las estimaciones de este proyecto
+            var estimaciones = await _context.Estimaciones
+                .Include(e => e.Historial)
                 .Where(e => e.IdProyectoFk == proyectoId)
-                .OrderByDescending(e => e.FechaEstimacion)
                 .ToListAsync();
 
-            // 2. Las agrupamos (Esta es la lógica que TENÍAS en tu Index)
-            var viewModel = estimacionesProyecto
+            // 3. Agruparlas por estado (para el Kanban)
+            var diccionarioEstimaciones = estimaciones
                 .GroupBy(e => e.Estado)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
-            // 3. Pasamos el nombre del proyecto para usarlo en el título
+            bool existeFiniquito = estimaciones.Any(e => e.EsFiniquito);
+
+            // Pasamos esta bandera a la vista
+            ViewBag.YaExisteFiniquito = existeFiniquito;
+            // 4. Pasar datos a la vista (IMPORTANTE: ViewBag.ProyectoId)
             ViewBag.ProyectoNombre = proyecto.NombreProyecto;
             ViewBag.ProyectoFolio = proyecto.Folio;
-            ViewBag.ProyectoId = proyecto.Id;
-            return View(viewModel); // Apunta a "DashboardPorProyecto.cshtml"
+            ViewBag.ProyectoId = proyecto.Id; // <--- ESTO ES VITAL PARA EL FORMULARIO DE CREAR
+            var estimacionesProyecto = await _context.Estimaciones
+            .Include(e => e.Proyecto)
+            .Where(e => e.IdProyectoFk == proyectoId)
+            .OrderByDescending(e => e.FechaEstimacion)
+            .ToListAsync();
+            var viewModel = estimacionesProyecto
+             .GroupBy(e => e.Estado)
+             .ToDictionary(g => g.Key, g => g.ToList());
+            return View(viewModel);
         }
+      
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CrearEstimacion(EstimacionCrearViewModel viewModel)

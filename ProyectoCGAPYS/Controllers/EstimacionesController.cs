@@ -68,6 +68,26 @@ namespace ProyectoCGAPYS.Controllers
 
             // 1. Obtener el proyecto para sacar el nombre y folio
             var proyecto = await _context.Proyectos.FindAsync(id);
+            ViewBag.EstaBloqueado = proyecto.EstaBloqueado;
+            ViewBag.SLAStatus = "N/A"; // (OK, Advertencia, Vencido)
+            ViewBag.SLADias = 0;
+
+            var licitacion = await _context.Licitaciones
+    .Where(l => l.ProyectoId == id && l.Estado == "Adjudicada")
+    .OrderByDescending(l => l.FechaFallo)
+    .FirstOrDefaultAsync();
+
+            bool tienePrimeraEstimacion = await _context.Estimaciones.AnyAsync(e => e.IdProyectoFk == id);
+            if (licitacion?.FechaInicioEjecucion != null && !tienePrimeraEstimacion)
+            {
+                var diasTranscurridos = (DateTime.Now - licitacion.FechaInicioEjecucion.Value).TotalDays;
+                ViewBag.SLADias = (int)Math.Floor(30 - diasTranscurridos); // Días restantes
+
+                if (diasTranscurridos <= 20) ViewBag.SLAStatus = "OK";
+                else if (diasTranscurridos <= 30) ViewBag.SLAStatus = "Advertencia";
+                else if (diasTranscurridos <= 40) ViewBag.SLAStatus = "Vencido";
+                else ViewBag.SLAStatus = "Bloqueado"; // Ya pasó los 40 días
+            }
             if (proyecto == null) return NotFound();
 
             // 2. Obtener las estimaciones de este proyecto
@@ -81,6 +101,10 @@ namespace ProyectoCGAPYS.Controllers
                 .GroupBy(e => e.Estado)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
+            bool existeFiniquito = estimaciones.Any(e => e.EsFiniquito);
+
+            // Pasamos esta bandera a la vista
+            ViewBag.YaExisteFiniquito = existeFiniquito;
             // 4. Pasar datos a la vista (IMPORTANTE: ViewBag.ProyectoId)
             ViewBag.ProyectoNombre = proyecto.NombreProyecto;
             ViewBag.ProyectoFolio = proyecto.Folio;
@@ -93,8 +117,13 @@ namespace ProyectoCGAPYS.Controllers
         // Esta es la lógica que antes hacía el Contratista, ahora adaptada para el SUPERVISOR
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CrearEstimacion([Bind(Prefix = "NuevaEstimacion")] EstimacionCrearViewModel viewModel)
+        public async Task<IActionResult> CrearEstimacion(EstimacionCrearViewModel viewModel)
         {
+            string valorCheckbox = Request.Form["CheckFiniquitoManual"];
+            if (!string.IsNullOrEmpty(valorCheckbox) && valorCheckbox.Contains("true"))
+            {
+                viewModel.EsFiniquito = true;
+            }
             // Validar que venga el ID del proyecto
             if (string.IsNullOrEmpty(viewModel.IdProyectoFk))
             {
@@ -115,7 +144,61 @@ namespace ProyectoCGAPYS.Controllers
             }
 
             var usuarioActual = await _userManager.GetUserAsync(User);
+            var proyecto = await _context.Proyectos.FindAsync(viewModel.IdProyectoFk);
 
+            if (proyecto == null)
+            {
+                TempData["Error"] = "El proyecto no existe.";
+                return RedirectToAction("Index", "Proyectos"); // O a donde corresponda
+            }
+
+            // --- INICIO LÓGICA DE SLA (TAREA 2) ---
+
+            // 1. Revisar si el proyecto está bloqueado
+            if (proyecto.EstaBloqueado)
+            {
+                TempData["Error"] = "Este proyecto está bloqueado administrativamente y no puede recibir nuevas estimaciones. Contacte a Control de Obra.";
+                return RedirectToAction("DashboardPorProyecto", "GestionEstimaciones", new { id = viewModel.IdProyectoFk });
+            }
+
+            // 2. Revisar si es la PRIMERA estimación que se intenta crear
+            bool esPrimeraEstimacion = !await _context.Estimaciones.AnyAsync(e => e.IdProyectoFk == viewModel.IdProyectoFk);
+
+            if (esPrimeraEstimacion)
+            {
+                // 3. Buscar la fecha de inicio de ejecución de la licitación (la "Toma 1")
+                var licitacion = await _context.Licitaciones
+                    .Where(l => l.ProyectoId == viewModel.IdProyectoFk && l.Estado == "Adjudicada")
+                    .OrderByDescending(l => l.FechaFallo) // Tomar la más reciente
+                    .FirstOrDefaultAsync();
+
+                if (licitacion?.FechaInicioEjecucion != null)
+                {
+                    var fechaInicio = licitacion.FechaInicioEjecucion.Value;
+                    var diasTranscurridos = (DateTime.Now - fechaInicio).TotalDays;
+
+                    // 4. Aplicar bloqueo automático (30 días de SLA + 10 de gracia)
+                    if (diasTranscurridos > 40)
+                    {
+                        proyecto.EstaBloqueado = true;
+                        _context.Proyectos.Update(proyecto);
+
+                        // 5. Registrar el bloqueo
+                        _context.ProyectoHistorialBloqueo.Add(new ProyectoHistorialBloqueo
+                        {
+                            ProyectoId = proyecto.Id,
+                            UsuarioId = usuarioActual.Id, // O un ID de "Sistema"
+                            Accion = "Bloqueo Automático",
+                            Comentario = $"Bloqueado por exceder 40 días sin la 1ra estimación. ({Math.Floor(diasTranscurridos)} días)"
+                        });
+
+                        await _context.SaveChangesAsync();
+
+                        TempData["Error"] = "Proyecto bloqueado. Se superó el plazo de 40 días para registrar la primera estimación. Contacte a Control de Obra.";
+                        return RedirectToAction("DashboardPorProyecto", "GestionEstimaciones", new { proyectoId = viewModel.IdProyectoFk });
+                    }
+                }
+            }
             // 1. Crear la entidad principal (la Estimación)
             var estimacion = new Estimaciones
             {
@@ -123,9 +206,8 @@ namespace ProyectoCGAPYS.Controllers
                 Monto = viewModel.Monto,
                 FechaEstimacion = viewModel.FechaEstimacion,
                 Descripcion = viewModel.Descripcion,
-
-                // CAMBIO IMPORTANTE: El estado inicial es directo a Control de Obra
-                Estado = "En Revisión Control Obra"
+                Estado = "En Revisión Control Obra",
+                EsFiniquito = viewModel.EsFiniquito
             };
 
             _context.Estimaciones.Add(estimacion);
@@ -148,7 +230,14 @@ namespace ProyectoCGAPYS.Controllers
                     Comentario = "Estimación generada por Supervisor. Enviada a Control de Obra."
                 };
                 _context.EstimacionHistorial.Add(historial);
-
+                if (Request.Form.ContainsKey("CheckFiniquitoManual"))
+                {
+                    string valor = Request.Form["CheckFiniquitoManual"];
+                    if (valor.Contains("true"))
+                    {
+                        viewModel.EsFiniquito = true;
+                    }
+                }
                 // 4. Guardar cambios finales
                 await _context.SaveChangesAsync();
 
@@ -165,7 +254,8 @@ namespace ProyectoCGAPYS.Controllers
             // Redirigir a la vista donde se ven las estimaciones del proyecto
             // Aquí asumo que usas la vista que modificamos anteriormente llamada DetallesLicitacion pero usada por admin
             // O redirigir a donde sea que el supervisor vea el tablero.
-            return RedirectToAction("DashboardPorProyecto", "GestionEstimaciones", new { id = viewModel.IdProyectoFk });
+            
+            return RedirectToAction("DashboardPorProyecto", "GestionEstimaciones", new { proyectoId = viewModel.IdProyectoFk });
         }
 
 
@@ -230,8 +320,163 @@ namespace ProyectoCGAPYS.Controllers
 
         // ... Aquí puedes agregar los métodos de Tesorería (SubirDocumentoInterno, EnviarATesoreria, MarcarComoPagada) ...
         // Si ya los tenías, asegúrate de mantenerlos.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SubirDocumentoInterno(int estimacionId, string tipoDocumento, IFormFile archivo)
+        {
+            // 1. Validar que la estimación exista
+            var estimacion = await _context.Estimaciones.FindAsync(estimacionId);
+            if (estimacion == null)
+            {
+                return NotFound("La estimación no existe.");
+            }
 
+            // 2. Validar el archivo
+            if (archivo == null || archivo.Length == 0)
+            {
+                TempData["Error"] = "No se seleccionó ningún archivo.";
+                return RedirectToAction("Detalles", new { id = estimacionId });
+            }
 
+            // 3. Obtener el usuario que está subiendo el documento
+            var usuarioActual = await _userManager.GetUserAsync(User);
+            if (usuarioActual == null)
+            {
+                return Unauthorized(); // O redirigir a Login
+            }
+
+            try
+            {
+                // 4. Llamar al helper privado que ya tenías
+                // (Este helper crea el registro del documento pero NO guarda cambios)
+                await GuardarArchivoEstimacion(estimacionId, archivo, tipoDocumento, usuarioActual.Id);
+
+                // 5. Guardar los cambios en la base de datos
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = $"Documento '{tipoDocumento}' subido exitosamente.";
+            }
+            catch (Exception ex)
+            {
+                // Si algo falla (ej. permisos de carpeta), mostrar error
+                TempData["Error"] = "Error al guardar el archivo: " + ex.Message;
+            }
+
+            // 6. Regresar al usuario a la misma página de detalles
+            return RedirectToAction("Detalles", new { id = estimacionId });
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EnviarATesoreria(int estimacionId)
+        {
+            var estimacion = await _context.Estimaciones.FindAsync(estimacionId);
+            if (estimacion == null) return NotFound();
+
+            var usuarioActual = await _userManager.GetUserAsync(User);
+
+            // --- Validación de Seguridad (Modificada) ---
+            // Verificamos que los 3 documentos existan.
+            var tieneFacturaPDF = await _context.EstimacionDocumentos
+                .AnyAsync(d => d.EstimacionId == estimacionId && d.TipoDocumento == "Factura (PDF)");
+
+            // --- LÍNEA MODIFICADA ---
+            var tieneFacturaXLSX = await _context.EstimacionDocumentos
+        .AnyAsync(d => d.EstimacionId == estimacionId && d.TipoDocumento == "Factura (XLSX)");// <-- CAMBIO DE XML A XLSX
+
+            var tienePoliza = await _context.EstimacionDocumentos
+                .AnyAsync(d => d.EstimacionId == estimacionId && d.TipoDocumento == "PolizaPago");
+
+            // --- LÍNEA MODIFICADA ---
+            if (!tieneFacturaPDF || !tieneFacturaXLSX || !tienePoliza) // <-- CAMBIO DE XML A XLSX
+            {
+                // --- LÍNEA MODIFICADA ---
+                TempData["Error"] = "Faltan documentos (Factura PDF/XLSX o Póliza) para enviar a tesorería."; // <-- CAMBIO DE XML A XLSX
+                return RedirectToAction("Detalles", new { id = estimacionId });
+            }
+
+            // 1. Cambiar estado
+            string estadoAnterior = estimacion.Estado;
+            estimacion.Estado = "En Trámite de Pago";
+
+            // 2. Historial
+            var historial = new EstimacionHistorial
+            {
+                EstimacionId = estimacion.Id,
+                EstadoAnterior = estadoAnterior,
+                EstadoNuevo = estimacion.Estado,
+                UsuarioId = usuarioActual.Id,
+                Comentario = "Expediente completo. Enviado a Tesorería para pago."
+            };
+            _context.EstimacionHistorial.Add(historial);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Estimación enviada a Tesorería.";
+            return RedirectToAction("Detalles", new { id = estimacionId });
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarcarComoPagada(int estimacionId)
+        {
+            var estimacion = await _context.Estimaciones
+                .Include(e => e.Proyecto)
+                .FirstOrDefaultAsync(e => e.Id == estimacionId);
+
+            if (estimacion == null) return NotFound();
+
+            var usuarioActual = await _userManager.GetUserAsync(User);
+
+            // 1. Cambiar estado
+            string estadoAnterior = estimacion.Estado;
+            estimacion.Estado = "Pagada";
+
+            // 2. Historial
+            var historial = new EstimacionHistorial
+            {
+                EstimacionId = estimacion.Id,
+                EstadoAnterior = estadoAnterior,
+                EstadoNuevo = estimacion.Estado,
+                UsuarioId = usuarioActual.Id,
+                Comentario = "Pago realizado por Tesorería. Estimación cerrada."
+            };
+            _context.EstimacionHistorial.Add(historial);
+
+            // 3. Lógica de Automatización de Cierre
+            if (estimacion.EsFiniquito)
+            {
+                const int FaseFinalizado = 6;
+                var faseAnteriorId = estimacion.Proyecto.IdFaseFk;
+
+                // Actualizamos el Proyecto a FINALIZADO
+                estimacion.Proyecto.IdFaseFk = FaseFinalizado;
+                estimacion.Proyecto.Estatus = "Finalizado";
+
+                // Historial del Proyecto
+                var historialFase = new HistorialFase
+                {
+                    ProyectoId = estimacion.Proyecto.Id,
+                    FaseAnteriorId = faseAnteriorId,
+                    FaseNuevaId = FaseFinalizado,
+                    FechaCambio = DateTime.Now,
+                    TipoCambio = "Aprobado",
+                    UsuarioId = usuarioActual.Id,
+                    Comentario = "Cierre Automático: Se pagó la estimación de Finiquito. Proyecto finalizado."
+                };
+                _context.HistorialFases.Add(historialFase);
+
+                // Mensaje específico para Finiquito
+                TempData["SuccessMessage"] = "Estimación pagada y Proyecto FINALIZADO exitosamente.";
+            }
+            else
+            {
+                // Mensaje normal
+                TempData["SuccessMessage"] = "Estimación marcada como 'Pagada' exitosamente.";
+            }
+
+            await _context.SaveChangesAsync();
+
+            // ¡YA NO PONEMOS NADA AQUÍ PARA NO SOBRESCRIBIR EL MENSAJE!
+            return RedirectToAction("Detalles", new { id = estimacionId });
+        }
         // --- HELPER PRIVADO PARA GUARDAR ARCHIVOS ---
         private async Task GuardarArchivoEstimacion(int estimacionId, IFormFile archivo, string tipoDocumento, string usuarioId)
         {
@@ -268,6 +513,67 @@ namespace ProyectoCGAPYS.Controllers
 
             _context.EstimacionDocumentos.Add(documento);
             // No hacemos SaveChanges aquí, se hace en el método principal
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Jefa,Admin")] // Solo Jefatura puede desbloquear
+        public async Task<IActionResult> DesbloquearProyecto(string proyectoId, string comentario)
+        {
+            var proyecto = await _context.Proyectos.FindAsync(proyectoId);
+            if (proyecto == null) return NotFound();
+
+            proyecto.EstaBloqueado = false;
+            _context.Proyectos.Update(proyecto);
+
+            var usuarioActual = await _userManager.GetUserAsync(User);
+            _context.ProyectoHistorialBloqueo.Add(new ProyectoHistorialBloqueo
+            {
+                ProyectoId = proyecto.Id,
+                UsuarioId = usuarioActual.Id,
+                Accion = "Desbloqueo Manual",
+                Comentario = comentario
+            });
+
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Proyecto desbloqueado exitosamente.";
+            return RedirectToAction("DashboardPorProyecto", "GestionEstimaciones", new { id = proyectoId });
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Jefa,Admin,ControlObra")] // Quienes pueden hacer esto
+        public async Task<IActionResult> TerminarObra(int estimacionId)
+        {
+            var estimacion = await _context.Estimaciones
+                                            .Include(e => e.Proyecto)
+                                            .FirstOrDefaultAsync(e => e.Id == estimacionId);
+
+            if (estimacion == null || estimacion.Proyecto == null) return NotFound();
+
+            // Validar que los documentos existan (seguridad)
+            var documentos = await _context.EstimacionDocumentos
+                .Where(d => d.EstimacionId == estimacionId)
+                .Select(d => d.TipoDocumento)
+                .ToListAsync();
+
+            if (!documentos.Contains("Acta Entrega-Recepción") || !documentos.Contains("Acta Finiquito"))
+            {
+                TempData["Error"] = "Faltan documentos obligatorios (Acta de Entrega o Finiquito) para cerrar la obra.";
+                return RedirectToAction("Detalles", new { id = estimacionId });
+            }
+
+            // Actualizar el estado del PROYECTO
+            var proyecto = estimacion.Proyecto;
+            proyecto.Estatus = "Finiquitado"; // O "Finalizado"
+            _context.Proyectos.Update(proyecto);
+
+            // (Opcional: puedes añadir un historial al proyecto también)
+
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = $"El proyecto '{proyecto.NombreProyecto}' ha sido marcado como 'Finiquitado' exitosamente.";
+            return RedirectToAction("Detalles", new { id = estimacionId });
         }
     }
 }

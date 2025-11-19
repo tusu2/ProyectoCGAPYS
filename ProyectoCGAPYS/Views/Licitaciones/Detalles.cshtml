@@ -265,7 +265,6 @@ else
                         <h6 class="m-0 font-weight-bold text-primary">Documentos de Licitación (Fallo, Contrato, Fianza)</h6>
                     </div>
                     <div class="card-body">
-
                         @if (!estaAdjudicada)
                         {
                             <form asp-action="SubirDocumentoLicitacion" method="post" enctype="multipart/form-data">
@@ -277,13 +276,19 @@ else
                                     </div>
                                     <div class="col-md-5">
                                         <label class="form-label">Tipo de Documento</label>
+
+                                        @* --- INICIO DE MODIFICACIÓN (TAREA 1) --- *@
                                         <select name="TipoDocumento" class="form-select" required>
                                             <option value="">Seleccione...</option>
-                                            <option value="Fallo">Dictamen / Fallo</option>
+                                            <option value="Dictamen">Dictamen</option>
+                                            <option value="Cuadro comparativo">Cuadro comparativo</option>
+                                            <option value="Fallo">Fallo</option>
                                             <option value="Contrato">Contrato</option>
-                                            <option value="Fianza">Fianza</option>
+                                            <option value="Fianzas">Fianzas</option>
                                             <option value="Otro">Otro</option>
                                         </select>
+                                        @* --- FIN DE MODIFICACIÓN (TAREA 1) --- *@
+
                                     </div>
                                     <div class="col-md-2 d-flex align-items-end">
                                         <button type="submit" class="btn btn-success w-100">Subir</button>
@@ -343,6 +348,7 @@ else
                         }
                         else
                         {
+                            @* Este primer formulario (ActualizarDatosControl) se queda como estaba *@
                             <form asp-action="ActualizarDatosControl" method="post">
                                 <input type="hidden" name="LicitacionId" value="@Model.LicitacionId" />
                                 <div class="mb-3">
@@ -359,12 +365,35 @@ else
                             <hr>
 
                             <div class="d-grid gap-2">
+
+                                @* --- INICIO DE MODIFICACIÓN (TAREA 1) --- *@
+                                @* Ahora este formulario contendrá los nuevos campos *@
                                 <form asp-action="MandarAEjecutar" method="post" id="formMandarAEjecutar">
                                     <input type="hidden" name="LicitacionId" value="@Model.LicitacionId" />
+
+                                    @* --- CAMPOS NUEVOS AÑADIDOS --- *@
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-dark">Plazo de Ejecución (Inicio)</label>
+                                        <input type="date" name="FechaInicioEjecucion" value="@Model.FechaInicioEjecucion?.ToString("yyyy-MM-dd")" class="form-control" />
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-dark">Plazo de Ejecución (Fin)</label>
+                                        <input type="date" name="FechaFinEjecucion" value="@Model.FechaFinEjecucion?.ToString("yyyy-MM-dd")" class="form-control" />
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-dark">Supervisor Asignado</label>
+                                        <select name="SupervisorAsignadoID" class="form-select" asp-items="@(new SelectList(ViewBag.SupervisoresDisponibles, "Value", "Text", Model.SupervisorAsignadoID))">
+                                            <option value="">(Ninguno)</option>
+                                        </select>
+                                    </div>
+                                    @* --- FIN DE CAMPOS NUEVOS --- *@
+
                                     <button type="button" class="btn btn-success-custom w-100 btn-pulse" id="btnMandarAEjecutar">
                                         Mandar a Fase de Ejecución
                                     </button>
                                 </form>
+                                @* --- FIN DE MODIFICACIÓN (TAREA 1) --- *@
+
 
                                 <button type="button" class="btn-outline-danger-custom w-100" id="btnDevolverFase">
                                     Devolver a Fase Anterior

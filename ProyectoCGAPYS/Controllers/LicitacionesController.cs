@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using ProyectoCGAPYS.Datos;
 using static ProyectoCGAPYS.ViewModels.LicitacionDetalleViewModel;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 // Solo los usuarios autorizados (administradores/empleados) podrán acceder a este controlador.
 [Authorize(Roles = "Jefa,Empleado1,Empleado2,Empleado3")]
@@ -190,7 +191,8 @@ public class LicitacionesController : Controller
              // --- NUEVO ---
              .Include(l => l.ContratistaGanador) // Cargamos al ganador único
                                                  // --- NUEVO ---
-             .Include(l => l.LicitacionDocumentos) // Cargamos los nuevos documentos
+             .Include(l => l.LicitacionDocumentos)
+             .Include(l => l.SupervisorAsignado)
              .FirstOrDefaultAsync(m => m.Id == id);
 
         if (licitacion == null)
@@ -209,23 +211,25 @@ public class LicitacionesController : Controller
             LicitacionId = licitacion.Id,
             ProyectoId = licitacion.ProyectoId,
             NumeroLicitacion = licitacion.NumeroLicitacion,
-            ProyectoNombre = licitacion.Proyecto.NombreProyecto,
-            DescripcionLicitacion = licitacion.Descripcion,
+            ProyectoNombre = licitacion.Proyecto?.NombreProyecto ?? "Sin Proyecto Asignado",
+            DescripcionLicitacion = licitacion.Descripcion ?? "Sin descripción",
             Estado = licitacion.Estado,
             FechaInicio = licitacion.FechaInicio,
             FechaFinPropuestas = licitacion.FechaFinPropuestas,
-            Latitud = licitacion.Proyecto.Latitud,
-            Longitud = licitacion.Proyecto.Longitud,
-            FolioProyecto = licitacion.Proyecto.Folio,
-            PresupuestoProyecto = licitacion.Proyecto.Presupuesto,
-            CampusNombre = licitacion.Proyecto.Campus?.Nombre,
-            DependenciaNombre = licitacion.Proyecto.Dependencia?.Nombre,
-            TipoFondoNombre = licitacion.Proyecto.TipoFondo?.Nombre,
-
+            Latitud = licitacion.Proyecto?.Latitud ?? "Ubicación no disponible",
+            Longitud = licitacion.Proyecto?.Longitud ?? "Ubicación no disponible",
+            FolioProyecto = licitacion.Proyecto?.Folio ?? "S/F",
+            PresupuestoProyecto = licitacion.Proyecto?.Presupuesto ?? 0m,
+            CampusNombre = licitacion.Proyecto?.Campus?.Nombre ?? "N/D",
+            DependenciaNombre = licitacion.Proyecto?.Dependencia?.Nombre ?? "N/D",
+            TipoFondoNombre = licitacion.Proyecto?.TipoFondo?.Nombre ?? "N/D",
             // --- PROPIEDADES NUEVAS ASIGNADAS ---
             TipoProceso = licitacion.TipoProceso,
             FechaFallo = licitacion.FechaFallo,
             NumeroContrato = licitacion.NumeroContrato,
+            FechaInicioEjecucion = licitacion.FechaInicioEjecucion,
+            FechaFinEjecucion = licitacion.FechaFinEjecucion,
+            SupervisorAsignadoID = licitacion.SupervisorAsignadoId,
 
             // Asignamos al ganador (si existe)
             ContratistaGanador = licitacion.ContratistaGanador == null ? null : new ContratistaViewModel
@@ -234,7 +238,6 @@ public class LicitacionesController : Controller
                 RazonSocial = licitacion.ContratistaGanador.RazonSocial,
                 RFC = licitacion.ContratistaGanador.RFC
             },
-
             // Asignamos los nuevos documentos de la licitación
             LicitacionDocumentos = licitacion.LicitacionDocumentos.Select(d => new LicitacionDocumentoViewModel
             {
@@ -262,6 +265,19 @@ public class LicitacionesController : Controller
             }).ToList()
         };
 
+        if (ViewBag.ModoGestionHabilitado == false || licitacion.TipoProceso == "Adjudicación Directa")
+        {
+            // Asumo que los "supervisores" son todos los usuarios internos.
+            // Si tienes un ROL "Supervisor", puedes filtrar por él aquí.
+            ViewBag.SupervisoresDisponibles = await _userManager.Users
+                                .OrderBy(u => u.UserName)
+                                .Select(u => new SelectListItem
+                                {
+                                    Value = u.Id,
+                                    Text = u.UserName // O Email, o un campo de Nombre si lo tienes
+                                })
+                                .ToListAsync();
+        }
         return View(viewModel);
     }
     // GET: Licitaciones/Invitar/5
@@ -835,7 +851,10 @@ public class LicitacionesController : Controller
     // POST: Licitaciones/MandarAEjecutar (Modo Control)
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> MandarAEjecutar(int licitacionId)
+    public async Task<IActionResult> MandarAEjecutar(int licitacionId,
+        DateTime? FechaInicioEjecucion,
+        DateTime? FechaFinEjecucion,
+        string SupervisorAsignadoID)
     {
         const int faseLicitacionId = 4;
         const int faseEjecucionId = 5;
@@ -912,6 +931,21 @@ public class LicitacionesController : Controller
                 Mensaje = $"¡Felicidades! Has sido adjudicado como ganador de la licitación '{licitacion.NumeroLicitacion}'."
             });
 
+            if (!string.IsNullOrEmpty(SupervisorAsignadoID))
+            {
+                // (No necesitamos consultar al _userManager, ¡ya tenemos el ID!)
+                _context.Notificaciones.Add(new Notificacion
+                {
+                    UsuarioId = SupervisorAsignadoID,
+                    Url = "/Proyectos/Detalles/" + licitacion.ProyectoId, // URL al proyecto
+                    FechaCreacion = DateTime.Now,
+                    Leida = false,
+                    Mensaje = $"Se te ha asignado como supervisor del proyecto '{licitacion.Proyecto.NombreProyecto}'."
+                });
+
+                // NOTA: Si necesitas enviar un EMAIL, aquí iría la lógica
+                // await _emailSender.SendEmailAsync(supervisor.Email, "Nueva Asignación", ...);
+            }
             // --- FIN DE LA CORRECCIÓN ---
 
             // 4. Actualizar estado de licitación (ya lo tenías)

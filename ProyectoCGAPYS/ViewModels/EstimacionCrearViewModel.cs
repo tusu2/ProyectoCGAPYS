@@ -41,8 +41,10 @@ public class EstimacionCrearViewModel
     [Required(ErrorMessage = "Debe adjuntar el Avance de Bitácora.")]
     [Display(Name = "Avance de Bitácora (PDF)")]
     public IFormFile ArchivoBitacora { get; set; }
-    public object NuevaEstimacion { get; internal set; }
+   
 
+    public bool EsFiniquito { get; set; }
+ 
     public EstimacionCrearViewModel()
     {
         FechaEstimacion = DateTime.Today;

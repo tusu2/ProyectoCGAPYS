@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Identity; // Para el UsuarioIdActivacion
 
+
 namespace ProyectoCGAPYS.Models
 {
     public class Licitacion
@@ -71,5 +72,13 @@ namespace ProyectoCGAPYS.Models
 
         // (Nueva) Los documentos de la licitación (Fallo, Contrato, Fianza)
         public virtual ICollection<LicitacionDocumento> LicitacionDocumentos { get; set; }
+
+        public DateTime? FechaInicioEjecucion { get; set; }
+        public DateTime? FechaFinEjecucion { get; set; }
+
+        public string? SupervisorAsignadoId { get; set; }
+
+        [ForeignKey("SupervisorAsignadoId")]
+        public virtual IdentityUser SupervisorAsignado { get; set; }
     }
 }

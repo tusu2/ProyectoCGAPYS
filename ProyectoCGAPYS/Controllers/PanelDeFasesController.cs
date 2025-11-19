@@ -26,7 +26,7 @@ namespace ProyectoCGAPYS.Controllers
             var user = await _userManager.GetUserAsync(User);
             var proyectosActivos = await _context.Proyectos
                 .Include(p => p.Fase)
-                .Where(p => p.Fase != null && p.Fase.Nombre != "Finalizado" && p.Fase.Nombre != "Cancelado")
+                .Where(p => p.Fase != null && p.Fase.Nombre != "Cancelado")
                 .ToListAsync();
 
             var todasLasFases = await _context.Fases.OrderBy(f => f.Orden).ToListAsync();
@@ -38,11 +38,20 @@ namespace ProyectoCGAPYS.Controllers
         [HttpPost]
         public async Task<JsonResult> CambiarFase(string proyectoId, int nuevaFaseId)
         {
-            var proyecto = await _context.Proyectos.FindAsync(proyectoId);
+            var proyecto = await _context.Proyectos.Include(p => p.Fase).FirstOrDefaultAsync(p => p.Id == proyectoId);
+
             if (proyecto == null)
             {
                 return Json(new { success = false, message = "Proyecto no encontrado." });
             }
+
+            // --- NUEVO: BLOQUEO DE FASES ---
+            string[] fasesBloqueadas = { "En Licitación", "En Ejecución", "Finalizado", "Cancelado" };
+            if (proyecto.Fase != null && fasesBloqueadas.Contains(proyecto.Fase.Nombre))
+            {
+                return Json(new { success = false, message = $"No se puede mover un proyecto que está en fase: {proyecto.Fase.Nombre}" });
+            }
+            // -------------------------------
 
             proyecto.IdFaseFk = nuevaFaseId;
             await _context.SaveChangesAsync();
@@ -97,7 +106,12 @@ namespace ProyectoCGAPYS.Controllers
             {
                 return Json(new { success = false, message = "Proyecto no encontrado." });
             }
+            string[] fasesBloqueadas = { "En Licitación", "En Ejecución", "Finalizado", "Cancelado" };
 
+            if (proyecto.Fase != null && fasesBloqueadas.Contains(proyecto.Fase.Nombre))
+            {
+                return Json(new { success = false, message = "No se pueden rechazar proyectos en esta fase." });
+            }
             if (string.IsNullOrWhiteSpace(comentario))
             {
                 return Json(new { success = false, message = "El comentario de rechazo no puede estar vacío." });

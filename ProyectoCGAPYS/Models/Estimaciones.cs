@@ -25,6 +25,7 @@ namespace ProyectoCGAPYS.Models
         [StringLength(50)]
         public string Estado { get; set; } // Posibles valores: "Pendiente", "Pagada", "Rechazada"
 
+        public bool EsFiniquito { get; set; }
 
         [Required]
         public string IdProyectoFk { get; set; } // La columna que guarda la llave foránea.

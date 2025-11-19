@@ -77,7 +77,17 @@ body {
     gap: 1rem; 
     align-content: flex-start;
 }
-
+.kanban-cards-container,
+.kanban-cards-blocked { /* Agregamos la nueva clase que creamos */
+    padding: 1rem;
+    flex-grow: 1;
+    overflow-y: auto;
+    max-height: 55vh;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-content: flex-start; /* Para que siempre se pueda soltar algo dentro */
+}
 /* --- Estilo de las Tarjetas de Proyecto (Reutilizando el look premium) --- */
 .kanban-card {
     background-color: #fff;

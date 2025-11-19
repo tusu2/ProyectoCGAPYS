@@ -1,6 +1,8 @@
 ﻿@model ProyectoCGAPYS.Models.Proyectos
 @{
     ViewData["Title"] = "Detalles del Proyecto";
+    
+
 }
 
 <link rel="stylesheet" href="~/css/Detalles.css" asp-append-version="true" />
@@ -153,10 +155,19 @@
                     <div class="next-phase-actions">
                         @{
                             bool puedeActuarEnDetalle = false;
-                            if (User.IsInRole("Jefa")) { puedeActuarEnDetalle = true; }
-                            else if (User.IsInRole("Empleado1") && Model.IdFaseFk == 1) { puedeActuarEnDetalle = true; }
-                            else if (User.IsInRole("Empleado2") && Model.IdFaseFk == 2) { puedeActuarEnDetalle = true; }
-                            else if (User.IsInRole("Empleado3") && Model.IdFaseFk == 3) { puedeActuarEnDetalle = true; }
+
+                            // Lista de fases bloqueadas
+                            string[] fasesBloqueadas = { "En Licitación", "En Ejecución", "Finalizado", "Cancelado" };
+                            bool faseEstaBloqueada = fasesBloqueadas.Contains(Model.Fase.Nombre);
+
+                            // Solo evaluamos roles si la fase NO está bloqueada
+                            if (!faseEstaBloqueada)
+                            {
+                                if (User.IsInRole("Jefa")) { puedeActuarEnDetalle = true; }
+                                else if (User.IsInRole("Empleado1") && Model.IdFaseFk == 1) { puedeActuarEnDetalle = true; }
+                                else if (User.IsInRole("Empleado2") && Model.IdFaseFk == 2) { puedeActuarEnDetalle = true; }
+                                else if (User.IsInRole("Empleado3") && Model.IdFaseFk == 3) { puedeActuarEnDetalle = true; }
+                            }
                         }
                         @if (puedeActuarEnDetalle)
                         {

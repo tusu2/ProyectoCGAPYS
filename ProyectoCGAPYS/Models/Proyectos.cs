@@ -10,6 +10,7 @@ namespace ProyectoCGAPYS.Models
         {
             // Inicializamos la lista para que nunca sea nula
             CostosDelProyecto = new HashSet<Proyectos_Costos>();
+            HistorialBloqueos = new HashSet<ProyectoHistorialBloqueo>();
         }
         [Key]
         public string Id { get; set; }
@@ -42,7 +43,7 @@ namespace ProyectoCGAPYS.Models
 
         [EmailAddress(ErrorMessage = "El celular del responsable es obligatorio")]
         [StringLength(20)]
-        public string Celular { get; set; } 
+        public string Celular { get; set; }
 
 
         [StringLength(255)]
@@ -96,7 +97,11 @@ namespace ProyectoCGAPYS.Models
         public string? Prioridad { get; set; }
 
         public virtual ICollection<DocumentosProyecto> Documentos { get; set; }
-       
+
+        public bool EstaBloqueado { get; set; } = false;
+      
+        public virtual ICollection<ProyectoHistorialBloqueo> HistorialBloqueos { get; set; }
+
 
     }
 }
