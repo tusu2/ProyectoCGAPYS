@@ -146,6 +146,12 @@
                                 <span>Estimaciones</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(currentController == "RecursosHumanos" ? "active" : "")" asp-controller="RecursosHumanos" asp-action="Index">
+                                <i class="bi bi-people-fill"></i>
+                                <span>Recursos Humanos</span>
+                            </a>
+                        </li>
                         @if (SignInManager.IsSignedIn(User))
                         {
                             <li class="nav-item">

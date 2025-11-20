@@ -1,0 +1,80 @@
+﻿
+/* Importar fuente Poppins */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+/* Fondo General */
+body {
+    background-color: #EFF2F5; /* Gris azulado pálido */
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Estilo de la Tarjeta */
+.card-luxury {
+    background-color: #FFFFFF;
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); /* Sombra difusa */
+    padding: 2rem;
+}
+
+/* Título y Decoración */
+.luxury-title {
+    color: #0B2D48; /* Azul Corporativo */
+    font-weight: 700; /* Bold */
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+.gold-line {
+    width: 50px;
+    height: 3px;
+    background-color: #D4AF37; /* Oro */
+    margin: 0 auto 2rem auto; /* Centrado */
+    border-radius: 2px;
+}
+
+/* Inputs y Floating Labels */
+.form-control, .form-select {
+    border: 1px solid #AEB6BF; /* Gris suave */
+    border-radius: 8px;
+    padding-top: 1.625rem; /* Ajuste para floating label */
+    padding-bottom: 0.625rem;
+}
+
+    .form-control:focus, .form-select:focus {
+        border-color: #D4AF37; /* Borde Oro al enfocar */
+        box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.25); /* Resplandor Oro suave */
+    }
+
+/* Botón Principal */
+.btn-tech {
+    background: linear-gradient(135deg, #00AEEF 0%, #0095CC 100%); /* Azul Tecnológico con degradado */
+    color: white;
+    font-weight: 600; /* SemiBold */
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    transition: all 0.3s ease;
+}
+
+    .btn-tech:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 174, 239, 0.4);
+        color: white;
+    }
+
+/* Botón Cancelar (Texto) */
+.btn-cancel-text {
+    color: #AEB6BF; /* Gris Elegante */
+    text-decoration: none;
+    font-weight: 500;
+    display: block;
+    text-align: center;
+    margin-top: 15px;
+    transition: color 0.3s;
+}
+
+    .btn-cancel-text:hover {
+        color: #0B2D48; /* Se oscurece un poco al pasar el mouse */
+    }
+
+
