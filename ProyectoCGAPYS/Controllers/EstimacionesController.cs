@@ -119,95 +119,47 @@ namespace ProyectoCGAPYS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CrearEstimacion(EstimacionCrearViewModel viewModel)
         {
-            string valorCheckbox = Request.Form["CheckFiniquitoManual"];
-            if (!string.IsNullOrEmpty(valorCheckbox) && valorCheckbox.Contains("true"))
-            {
-                viewModel.EsFiniquito = true;
-            }
-            // Validar que venga el ID del proyecto
+            // 1. VALIDACIÓN DE PROYECTO
             if (string.IsNullOrEmpty(viewModel.IdProyectoFk))
             {
-                ModelState.AddModelError("NuevaEstimacion.IdProyectoFk", "El ID del proyecto es requerido.");
+                ModelState.AddModelError("IdProyectoFk", "El ID del proyecto es requerido.");
             }
 
-            // Limpiamos validaciones del DropDown que ya no usamos aquí si viene nulo
-            ModelState.Remove("NuevaEstimacion.ProyectosAsignados");
+            // 2. VALIDACIÓN DE ARCHIVOS (Nueva lógica dinámica)
+            // Verificamos que la lista no sea nula y tenga al menos 1 elemento
+            if (viewModel.Archivos == null || viewModel.Archivos.Count == 0)
+            {
+                ModelState.AddModelError("Archivos", "Debe adjuntar al menos un documento de soporte (ej. Generadores).");
+            }
+
+            // Limpiamos validaciones automáticas que no aplican
             ModelState.Remove("ProyectosAsignados");
+            // Si tu ViewModel anterior tenía propiedades [Required] viejas que borraste, 
+            // el ModelState ya no se quejará de ellas porque ya no existen en la clase.
 
             if (!ModelState.IsValid)
             {
+                // Si falla, regresamos al dashboard mostrando los errores
                 var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
                 TempData["Error"] = "Datos inválidos: " + string.Join("; ", errors);
-          
-                return RedirectToAction("DashboardPorProyecto", "GestionEstimaciones", new { id = viewModel.IdProyectoFk });
-          
+                return RedirectToAction("DashboardPorProyecto", "GestionEstimaciones", new { proyectoId = viewModel.IdProyectoFk });
             }
 
             var usuarioActual = await _userManager.GetUserAsync(User);
-            var proyecto = await _context.Proyectos.FindAsync(viewModel.IdProyectoFk);
 
-            if (proyecto == null)
-            {
-                TempData["Error"] = "El proyecto no existe.";
-                return RedirectToAction("Index", "Proyectos"); // O a donde corresponda
-            }
-
-            // --- INICIO LÓGICA DE SLA (TAREA 2) ---
-
-            // 1. Revisar si el proyecto está bloqueado
-            if (proyecto.EstaBloqueado)
-            {
-                TempData["Error"] = "Este proyecto está bloqueado administrativamente y no puede recibir nuevas estimaciones. Contacte a Control de Obra.";
-                return RedirectToAction("DashboardPorProyecto", "GestionEstimaciones", new { id = viewModel.IdProyectoFk });
-            }
-
-            // 2. Revisar si es la PRIMERA estimación que se intenta crear
-            bool esPrimeraEstimacion = !await _context.Estimaciones.AnyAsync(e => e.IdProyectoFk == viewModel.IdProyectoFk);
-
-            if (esPrimeraEstimacion)
-            {
-                // 3. Buscar la fecha de inicio de ejecución de la licitación (la "Toma 1")
-                var licitacion = await _context.Licitaciones
-                    .Where(l => l.ProyectoId == viewModel.IdProyectoFk && l.Estado == "Adjudicada")
-                    .OrderByDescending(l => l.FechaFallo) // Tomar la más reciente
-                    .FirstOrDefaultAsync();
-
-                if (licitacion?.FechaInicioEjecucion != null)
-                {
-                    var fechaInicio = licitacion.FechaInicioEjecucion.Value;
-                    var diasTranscurridos = (DateTime.Now - fechaInicio).TotalDays;
-
-                    // 4. Aplicar bloqueo automático (30 días de SLA + 10 de gracia)
-                    if (diasTranscurridos > 40)
-                    {
-                        proyecto.EstaBloqueado = true;
-                        _context.Proyectos.Update(proyecto);
-
-                        // 5. Registrar el bloqueo
-                        _context.ProyectoHistorialBloqueo.Add(new ProyectoHistorialBloqueo
-                        {
-                            ProyectoId = proyecto.Id,
-                            UsuarioId = usuarioActual.Id, // O un ID de "Sistema"
-                            Accion = "Bloqueo Automático",
-                            Comentario = $"Bloqueado por exceder 40 días sin la 1ra estimación. ({Math.Floor(diasTranscurridos)} días)"
-                        });
-
-                        await _context.SaveChangesAsync();
-
-                        TempData["Error"] = "Proyecto bloqueado. Se superó el plazo de 40 días para registrar la primera estimación. Contacte a Control de Obra.";
-                        return RedirectToAction("DashboardPorProyecto", "GestionEstimaciones", new { proyectoId = viewModel.IdProyectoFk });
-                    }
-                }
-            }
-            // 1. Crear la entidad principal (la Estimación)
+            // 3. CREAR LA ENTIDAD (Conservando Finiquito)
             var estimacion = new Estimaciones
             {
                 IdProyectoFk = viewModel.IdProyectoFk,
                 Monto = viewModel.Monto,
                 FechaEstimacion = viewModel.FechaEstimacion,
                 Descripcion = viewModel.Descripcion,
-                Estado = "En Revisión Control Obra",
-                EsFiniquito = viewModel.EsFiniquito
+
+                // ¡AQUÍ ESTÁ! Conservamos tu lógica de Finiquito
+                EsFiniquito = viewModel.EsFiniquito,
+
+                // Estado inicial directo a Control de Obra
+                Estado = "En Revisión Control Obra"
             };
 
             _context.Estimaciones.Add(estimacion);
@@ -215,46 +167,50 @@ namespace ProyectoCGAPYS.Controllers
 
             try
             {
-                // 2. Guardar archivos (Usando el Helper privado abajo)
-                await GuardarArchivoEstimacion(estimacion.Id, viewModel.ArchivoNumerosGeneradores, "NumerosGeneradores", usuarioActual.Id);
-                await GuardarArchivoEstimacion(estimacion.Id, viewModel.ArchivoReporteFotografico, "ReporteFotografico", usuarioActual.Id);
-                await GuardarArchivoEstimacion(estimacion.Id, viewModel.ArchivoBitacora, "Bitacora", usuarioActual.Id);
+                // 4. GUARDADO DE ARCHIVOS (Bucle Dinámico)
+                // Recorremos la lista de archivos que envió el usuario
+                for (int i = 0; i < viewModel.Archivos.Count; i++)
+                {
+                    var archivo = viewModel.Archivos[i];
 
-                // 3. Crear el primer registro en el Historial
+                    // Intentamos obtener la etiqueta correspondiente.
+                    // Si por error no viene etiqueta, ponemos una genérica.
+                    string etiqueta = "Documento Soporte";
+                    if (viewModel.Etiquetas != null && viewModel.Etiquetas.Count > i && !string.IsNullOrEmpty(viewModel.Etiquetas[i]))
+                    {
+                        etiqueta = viewModel.Etiquetas[i];
+                    }
+
+                    // Reutilizamos tu método auxiliar existente 'GuardarArchivoEstimacion'
+                    // Nota: 'etiqueta' pasa como 'tipoDocumento'
+                    await GuardarArchivoEstimacion(estimacion.Id, archivo, etiqueta, usuarioActual.Id);
+                }
+
+                // 5. HISTORIAL
                 var historial = new EstimacionHistorial
                 {
                     EstimacionId = estimacion.Id,
-                    EstadoAnterior = "N/A", // No había estado anterior
+                    EstadoAnterior = "N/A",
                     EstadoNuevo = "En Revisión Control Obra",
                     UsuarioId = usuarioActual.Id,
-                    Comentario = "Estimación generada por Supervisor. Enviada a Control de Obra."
+                    Comentario = $"Estimación generada con {viewModel.Archivos.Count} documentos adjuntos."
                 };
                 _context.EstimacionHistorial.Add(historial);
-                if (Request.Form.ContainsKey("CheckFiniquitoManual"))
-                {
-                    string valor = Request.Form["CheckFiniquitoManual"];
-                    if (valor.Contains("true"))
-                    {
-                        viewModel.EsFiniquito = true;
-                    }
-                }
-                // 4. Guardar cambios finales
+
+                // 6. GUARDAR CAMBIOS FINALES
                 await _context.SaveChangesAsync();
 
                 TempData["SuccessMessage"] = "Estimación creada y enviada a Control de Obra exitosamente.";
             }
             catch (Exception ex)
             {
-                // Si falla algo con los archivos, borramos la estimación para no dejar basura
+                // Si falla el guardado de archivos, borramos la estimación para no dejar "basura" en la BD
                 _context.Estimaciones.Remove(estimacion);
                 await _context.SaveChangesAsync();
-                TempData["Error"] = "Error al guardar los archivos: " + ex.Message;
+                TempData["Error"] = "Error al procesar los archivos: " + ex.Message;
             }
 
-            // Redirigir a la vista donde se ven las estimaciones del proyecto
-            // Aquí asumo que usas la vista que modificamos anteriormente llamada DetallesLicitacion pero usada por admin
-            // O redirigir a donde sea que el supervisor vea el tablero.
-            
+            // Redirección final
             return RedirectToAction("DashboardPorProyecto", "GestionEstimaciones", new { proyectoId = viewModel.IdProyectoFk });
         }
 

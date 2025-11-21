@@ -44,35 +44,49 @@
 
     @if (ViewBag.SLAStatus != "N/A")
     {
-        string slaColor = "success"; // OK
+        string slaColor = "success";
         string slaIcon = "fa-check-circle";
-        string slaMsg = $"Quedan {ViewBag.SLADias} días de SLA para la 1ra estimación.";
 
+        // Resumen del Art. 54 basado en la ley
+        string resumenLegal = "Articulo 54.- Las estimaciones de los trabajos ejecutados se deberán formular con una periodicidad no mayor de un mes. El contratista deberá presentarlas a la residencia de obra dentro de los dos días naturales siguientes a la fecha de corte para el pago de las estimaciones que hubiere fijado la dependencia o entidad en el contrato, acompañadas de la documentación que acredite la procedencia de su pago; la residencia de obra para realizar la revisión y autorización de las estimaciones contará con un plazo no mayor de diez días naturales siguientes a su presentación. En el supuesto de que surjan diferencias técnicas o numéricas que no puedan ser autorizadas dentro de dicho plazo, éstas se resolverán e incorporarán en la siguiente estimación.";
+
+        string slaMsg = "";
+
+        // Lógica de estados
         if (ViewBag.SLAStatus == "Advertencia")
         {
             slaColor = "warning";
             slaIcon = "fa-exclamation-triangle";
-            slaMsg = $"¡ATENCIÓN! Quedan {ViewBag.SLADias} días de SLA.";
+            // Caso Advertencia: Negritas en la advertencia y días
+            slaMsg = $"{resumenLegal} <strong>¡ATENCIÓN! Quedan {ViewBag.SLADias} días.</strong>";
         }
         else if (ViewBag.SLAStatus == "Vencido")
         {
             slaColor = "danger";
             slaIcon = "fa-calendar-times";
-            slaMsg = $"SLA VENCIDO. Han pasado {ViewBag.SLADias * -1} días. En 10 días se bloqueará.";
+            // Caso Vencido: Negritas en el mensaje de vencimiento
+            slaMsg = $"{resumenLegal} <strong>SLA VENCIDO. Han pasado {ViewBag.SLADias * -1} días del límite mensual.</strong>";
         }
         else if (ViewBag.SLAStatus == "Bloqueado")
         {
             slaColor = "dark";
             slaIcon = "fa-lock";
-            slaMsg = "SLA Incumplido. El proyecto está en riesgo de bloqueo.";
+            // Caso Bloqueado
+            slaMsg = $"SLA Incumplido. <strong>El proyecto está bloqueado</strong> por incumplimiento de la periodicidad mensual (Art. 54).";
+        }
+        else
+        {
+            // Caso Normal (OK): Negritas solo en los días restantes
+            slaMsg = $"{resumenLegal} <strong>Quedan {ViewBag.SLADias} días</strong> para presentar la 1ra estimación.";
         }
 
-        <div class="alert alert-@slaColor d-flex align-items-center" role="alert">
-            <i class="fas @slaIcon fa-2x me-3"></i>
-            <div>
-                <strong>Gestión de Plazo (SLA):</strong> @slaMsg
+            <div class="alert alert-@slaColor d-flex align-items-center shadow-sm" role="alert">
+                <i class="fas @slaIcon fa-2x me-3"></i>
+                <div>
+                @* Usamos Html.Raw para que interprete las etiquetas <strong> *@
+                    <strong>Gestión de Plazo (SLA):</strong> @Html.Raw(slaMsg)
+                </div>
             </div>
-        </div>
     }
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
@@ -89,121 +103,130 @@
     Formulario a la izquierda + Kanban a la derecha
     ========================================================================= *@
 
-    <div class="alert alert-info">
-        <h4>🔍 Diagnóstico de Finiquito</h4>
-        <p><strong>Valor en Base de Datos (según Controlador):</strong> @ViewBag.YaExisteFiniquito</p>
-        <p><strong>¿Es Verdadero?:</strong> @(ViewBag.YaExisteFiniquito == true ? "SÍ" : "NO")</p>
-    </div>
     @if (mostrarVistaCreacion)
     {
         <div class="row">
-            <div class="col-lg-4 col-md-5 mb-4">
-                @if (ViewBag.EstaBloqueado == true)
-                {
-                    <div class="card shadow-sm border-danger h-100">
-                        <div class="card-header bg-danger text-white">
-                            <h5 class="mb-0"><i class="fas fa-lock me-2"></i>Proyecto Bloqueado</h5>
-                        </div>
-                        <div class="card-body text-center">
-                            <p class="lead">Este proyecto fue bloqueado por incumplimiento de SLA o por una acción administrativa.</p>
-                            <p>No se pueden registrar nuevas estimaciones.</p>
-
-                            @if (User.IsInRole("Jefa") || User.IsInRole("Admin"))
-                            {
-                                <div class="modal fade" id="modalDesbloquear" tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <form asp-action="DesbloquearProyecto" asp-controller="Estimaciones" method="post">
-                                                <div class="modal-header bg-warning">
-                                                    <h5 class="modal-title">Desbloquear Proyecto</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <div class="alert alert-secondary">
-                                                        <i class="fas fa-info-circle me-2"></i>
-                                                        Esta acción re-habilitará el formulario de creación de estimaciones y quedará registrada en la bitácora del proyecto.
-                                                    </div>
-                                                    <input type="hidden" name="proyectoId" value="@ViewBag.ProyectoId" />
-                                                    <div class="mb-3">
-                                                        <label for="comentario" class="form-label fw-bold">Motivo del Desbloqueo (Obligatorio):</label>
-                                                        <textarea name="comentario" class="form-control" rows="4" placeholder="Especifique la razón del desbloqueo manual..." required></textarea>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                                    <button type="submit" class="btn btn-warning">Confirmar Desbloqueo</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            }
-                        
-
-                        </div>
-                    </div>
-                }
-                else if (ViewBag.YaExisteFiniquito == true)
-                {
-                    <div class="card shadow-sm border-warning h-100">
-                        <div class="card-header bg-warning text-dark">
-                            <h5 class="mb-0"><i class="fas fa-lock me-2"></i>Cierre en Proceso</h5>
-                        </div>
-                        <div class="card-body text-center">
-                            <i class="fas fa-flag-checkered fa-3x text-warning mb-3"></i>
-                            <p class="lead fw-bold">Se ha generado el Finiquito.</p>
-                            <p>Ya no es posible crear nuevas estimaciones porque existe una estimación final (Finiquito) en curso o pagada.</p>
-                            <hr />
-                            <small class="text-muted">Espere a que Tesorería realice el pago final para que el proyecto cambie a estado "Finalizado".</small>
-                        </div>
-                    </div>
-                }
-
-                else
-                {
-                    @* Mueve tu tarjeta de creación original AQUÍ DENTRO *@
-                    <div class="card shadow-sm border-primary h-100">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Nueva Estimación</h5>
-                        </div>
-                        <div class="card-body">
-                            <form asp-action="CrearEstimacion" asp-controller="Estimaciones" method="post" enctype="multipart/form-data">
-
-                                <input type="hidden" name="IdProyectoFk" value="@ViewBag.ProyectoId" />
-
-                                <div class="form-group mb-3">
-                                    <label class="fw-bold">Monto a Estimar</label>
-                                    <input name="Monto" class="form-control" type="number" step="0.01" required />
-                                </div>
-
-                                <div class="form-group mb-3">
-                                    <label class="fw-bold">Fecha de Corte</label>
-                                    <input name="FechaEstimacion" class="form-control" type="date" required />
-                                </div>
-
-                                <div class="form-group mb-3">
-                                    <label class="fw-bold">Descripción</label>
-                                    <textarea name="Descripcion" class="form-control" rows="3" required></textarea>
-                                </div>
-
-                                <div class="form-check form-switch mb-3">
-                                    <input type="checkbox" class="form-check-input" id="chkFiniquito" name="CheckFiniquitoManual" value="true">
-                                    <label class="form-check-label fw-bold text-danger" for="chkFiniquito">
-                                        Marcar como Última Estimación (Finiquito)
-                                    </label>
-                                </div>
-
-                                <input name="ArchivoNumerosGeneradores" class="form-control" type="file" accept=".pdf" />
-                                <input name="ArchivoReporteFotografico" class="form-control" type="file" accept=".pdf,.zip" />
-                                <input name="ArchivoBitacora" class="form-control" type="file" accept=".pdf" />
-
-                                <button type="submit" class="btn btn-primary">Crear</button>
-                            </form>
-                        </div>
-                    </div>
-                }
-               
+             <div class="col-lg-4 col-md-5 mb-4">
+ 
+    @if (ViewBag.EstaBloqueado == true)
+    {
+        <div class="card shadow-sm border-danger h-100">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="fas fa-lock me-2"></i>Proyecto Bloqueado</h5>
             </div>
+            <div class="card-body text-center">
+                <p class="lead">Este proyecto está bloqueado.</p>
+                <p>No se pueden registrar nuevas estimaciones por incumplimiento de SLA o decisión administrativa.</p>
+                
+                @* Botón de Desbloqueo (Solo Jefas/Admin) *@
+                @if (User.IsInRole("Jefa") || User.IsInRole("Admin"))
+                {
+                    <button type="button" class="btn btn-outline-danger mt-3" data-bs-toggle="modal" data-bs-target="#modalDesbloquear">
+                        <i class="fas fa-key me-1"></i> Desbloquear Manualmente
+                    </button>
+                    
+                    }
+            </div>
+        </div>
+    }
+
+    @* -----------------------------------------------------------------
+       CASO 2: FINIQUITO EXISTENTE (Ya se marcó la última estimación)
+       ----------------------------------------------------------------- *@
+    else if (ViewBag.YaExisteFiniquito == true)
+    {
+        <div class="card shadow-sm border-warning h-100">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="fas fa-flag-checkered me-2"></i>Cierre en Proceso</h5>
+            </div>
+            <div class="card-body text-center">
+                <i class="fas fa-clipboard-check fa-3x text-warning mb-3"></i>
+                <p class="lead fw-bold">Se ha generado el Finiquito.</p>
+                <p>Ya no es posible crear nuevas estimaciones porque existe una estimación final en curso o pagada.</p>
+                <hr />
+                <small class="text-muted">Espere a que Tesorería realice el pago final.</small>
+            </div>
+        </div>
+    }
+
+    @* -----------------------------------------------------------------
+       CASO 3: TODO OK -> MOSTRAR FORMULARIO NUEVO (Dinámico)
+       ----------------------------------------------------------------- *@
+    else
+    {
+        <div class="card shadow-sm border-primary h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Nueva Estimación</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="CrearEstimacion" asp-controller="GestionEstimaciones" method="post" enctype="multipart/form-data">
+                    
+                    @* ID del Proyecto Oculto *@
+                    <input type="hidden" name="IdProyectoFk" value="@ViewBag.ProyectoId" />
+
+                    @* Monto *@
+                    <div class="form-group mb-3">
+                        <label class="fw-bold">Monto a Estimar</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input name="Monto" class="form-control" type="number" step="0.01" placeholder="0.00" required />
+                        </div>
+                    </div>
+
+                    @* Fecha *@
+                    <div class="form-group mb-3">
+                        <label class="fw-bold">Fecha de Corte</label>
+                        <input name="FechaEstimacion" class="form-control" type="date" required />
+                    </div>
+
+                    @* Descripción *@
+                    <div class="form-group mb-3">
+                        <label class="fw-bold">Descripción</label>
+                        <textarea name="Descripcion" class="form-control" rows="3" placeholder="Describa los trabajos ejecutados..." required></textarea>
+                    </div>
+
+                    @* Checkbox Finiquito *@
+                    <div class="form-check form-switch mb-3 p-3 bg-light rounded border">
+                        <input type="checkbox" class="form-check-input" id="chkFiniquito" name="EsFiniquito" value="true">
+                        <label class="form-check-label fw-bold text-danger" for="chkFiniquito">
+                            Marcar como Última Estimación (Finiquito)
+                        </label>
+                        <div class="form-text small">Al marcar esto, se bloqueará la creación de futuras estimaciones.</div>
+                    </div>
+
+                    @* --- AQUÍ ESTÁ LA NUEVA SECCIÓN DINÁMICA --- *@
+                    <div class="mb-3 border-top pt-3">
+                        <label class="fw-bold mb-2"><i class="fas fa-paperclip me-1"></i>Documentación de Soporte</label>
+                        <div class="alert alert-secondary py-1 px-2 mb-2" style="font-size: 0.85rem;">
+                            <i class="fas fa-info-circle"></i> Adjunta Generadores, Fotos, Bitácora, etc.
+                        </div>
+
+                        <div id="contenedor-documentos">
+                            <div class="row g-2 mb-2 fila-documento">
+                                <div class="col-5">
+                                    <input type="text" name="Etiquetas" class="form-control form-control-sm" placeholder="Etiqueta (Ej. Generadores)" required />
+                                </div>
+                                <div class="col-7">
+                                    <input type="file" name="Archivos" class="form-control form-control-sm" required />
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-sm btn-outline-primary w-100 dashed-border" onclick="agregarCampoDocumento()">
+                            <i class="fas fa-plus me-1"></i> Agregar otro documento
+                        </button>
+                    </div>
+                    @* ------------------------------------------- *@
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">Crear Estimación</button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    }
+</div>
 
             <div class="col-lg-8 col-md-7">
                 <div class="row g-2 row-cols-1 row-cols-md-2 row-cols-xl-2">
@@ -310,7 +333,30 @@
     }
 
 </div>
+<script>
+    function agregarCampoDocumento() {
+        var nuevaFila = `
+            <div class="row g-2 mb-2 fila-documento align-items-center">
+                <div class="col-5">
+                    <input type="text" name="Etiquetas" class="form-control form-control-sm" placeholder="Etiqueta (Ej. Fotos)" required />
+                </div>
+                <div class="col-6">
+                    <input type="file" name="Archivos" class="form-control form-control-sm" required />
+                </div>
+                <div class="col-1 text-end">
+                    <button type="button" class="btn btn-danger btn-sm p-1" onclick="eliminarFila(this)" title="Quitar">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        document.getElementById("contenedor-documentos").insertAdjacentHTML('beforeend', nuevaFila);
+    }
 
+    function eliminarFila(boton) {
+        boton.closest('.fila-documento').remove();
+    }
+</script>
 <style>
     .estimacion-columna {
         background-color: #f4f7f6;
@@ -338,4 +384,7 @@
             background-color: #5e1a26;
             color: white;
         }
+        .dashed-border {
+        border-style: dashed !important;
+    }
 </style>

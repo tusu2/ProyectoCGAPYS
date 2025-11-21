@@ -17,7 +17,7 @@ public class LicitacionesController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly UserManager<IdentityUser> _userManager;
-    private readonly bool _habilitarModoGestion = true;
+    private readonly bool _habilitarModoGestion = false;
 
     // Inyectamos el DbContext para poder interactuar con la base de datos.
     public LicitacionesController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
@@ -55,9 +55,10 @@ public class LicitacionesController : Controller
         }
 
         var licitaciones = await _context.Licitaciones
-                                         .Include(l => l.Proyecto)
-                                         .OrderByDescending(l => l.FechaInicio)
-                                         .ToListAsync();
+                                  .Include(l => l.Proyecto)
+                                  .Where(l => l.Estado != "Adjudicada") // <--- AGREGAMOS ESTO
+                                  .OrderByDescending(l => l.FechaInicio)
+                                  .ToListAsync();
         return View(licitaciones);
     }
 
@@ -278,6 +279,18 @@ public class LicitacionesController : Controller
                                 })
                                 .ToListAsync();
         }
+
+        ViewBag.FondosDisponibles = await _context.TiposFondo
+        .OrderBy(f => f.Nombre)
+        .Select(f => new SelectListItem { Value = f.Id, Text = f.Nombre })
+        .ToListAsync();
+
+        ViewBag.TiposProcesoLista = new List<SelectListItem>
+    {
+        new SelectListItem { Text = "Adjudicación Directa", Value = "Adjudicación Directa" },
+        new SelectListItem { Text = "Invitación a cuando menos 3 personas", Value = "Invitación a cuando menos 3 personas" },
+        new SelectListItem { Text = "Licitación Pública Nacional", Value = "Licitación Pública Nacional" }
+    };
         return View(viewModel);
     }
     // GET: Licitaciones/Invitar/5
@@ -316,7 +329,37 @@ public class LicitacionesController : Controller
 
         return View(viewModel);
     }
+    // POST: Licitaciones/ActualizarInfoGeneral
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ActualizarInfoGeneral(int licitacionId, string tipoProceso, string fondoId)
+    {
+        var licitacion = await _context.Licitaciones
+                                       .Include(l => l.Proyecto)
+                                       .FirstOrDefaultAsync(l => l.Id == licitacionId);
 
+        if (licitacion == null) return NotFound();
+
+        // 1. Actualizamos el Tipo de Proceso (Tabla Licitaciones)
+        if (!string.IsNullOrEmpty(tipoProceso))
+        {
+            licitacion.TipoProceso = tipoProceso;
+        }
+
+        // 2. Actualizamos la Fuente de Financiamiento (Tabla Proyectos)
+        if (!string.IsNullOrEmpty(fondoId))
+        {
+            licitacion.Proyecto.IdTipoFondoFk = fondoId;
+        }
+
+        _context.Update(licitacion);
+        // Entity Framework detectará que modificamos licitacion.Proyecto y actualizará ambos.
+
+        await _context.SaveChangesAsync();
+        TempData["Success"] = "Información general actualizada correctamente.";
+
+        return RedirectToAction("Detalles", new { id = licitacionId });
+    }
 
     // POST: Licitaciones/Invitar
     [HttpPost]
@@ -851,10 +894,11 @@ public class LicitacionesController : Controller
     // POST: Licitaciones/MandarAEjecutar (Modo Control)
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> MandarAEjecutar(int licitacionId,
-        DateTime? FechaInicioEjecucion,
-        DateTime? FechaFinEjecucion,
-        string SupervisorAsignadoID)
+    public async Task<IActionResult> MandarAEjecutar(
+     int licitacionId,
+     DateTime? FechaInicioEjecucion,
+     DateTime? FechaFinEjecucion,
+     string SupervisorAsignadoID)
     {
         const int faseLicitacionId = 4;
         const int faseEjecucionId = 5;
@@ -869,102 +913,89 @@ public class LicitacionesController : Controller
 
             if (licitacion == null) return NotFound();
 
-            // --- VALIDACIONES DE CONTROL (Tú ya las tenías) ---
+            // --- VALIDACIONES: Aquí cambiamos los Redirect por BadRequest ---
+
             if (licitacion.ContratistaGanadorId == null)
             {
-                TempData["Error"] = "No se puede mandar a ejecutar. Debe asignar un contratista ganador primero.";
-                return RedirectToAction("Detalles", new { id = licitacionId });
+                // AJAX lo detectará como error y mostrará el mensaje
+                return BadRequest("No se puede mandar a ejecutar. Debe asignar un contratista ganador primero.");
             }
+
+            // OJO AQUÍ: Esta suele ser la causa principal del fallo silencioso
             if (!licitacion.LicitacionDocumentos.Any(d => d.TipoDocumento == "Contrato"))
             {
-                TempData["Error"] = "No se puede mandar a ejecutar. Debe subir el documento del 'Contrato' firmado.";
-                return RedirectToAction("Detalles", new { id = licitacionId });
+                return BadRequest("Falta subir el documento 'Contrato'. Por favor súbelo en la sección de documentos.");
             }
+
             if (licitacion.Proyecto.IdFaseFk != faseLicitacionId)
             {
-                TempData["Error"] = "El proyecto no se encuentra en la fase de licitación.";
-                return RedirectToAction("Detalles", new { id = licitacionId });
+                return BadRequest("El proyecto no se encuentra en la fase correcta (Licitación).");
             }
 
-            // --- INICIO DE LA CORRECCIÓN ---
+            // --- PROCESO DE GUARDADO ---
 
-            // 1. Buscamos al contratista ganador (necesitamos su UsuarioId)
-            var contratistaGanador = await _context.Contratistas
-                .FindAsync(licitacion.ContratistaGanadorId.Value);
+            licitacion.FechaInicioEjecucion = FechaInicioEjecucion;
+            licitacion.FechaFinEjecucion = FechaFinEjecucion;
+            licitacion.SupervisorAsignadoId = SupervisorAsignadoID;
+            licitacion.Estado = "Adjudicada";
 
-            if (contratistaGanador == null)
-            {
-                TempData["Error"] = "El contratista ganador asignado no es válido.";
-                return RedirectToAction("Detalles", new { id = licitacionId });
-            }
-
-            // 2. Buscamos su "invitación" (LicitacionContratistas)
+            // Actualizar/Crear Invitación Ganadora
+            var contratistaGanador = await _context.Contratistas.FindAsync(licitacion.ContratistaGanadorId.Value);
             var invitacionGanador = await _context.LicitacionContratistas
                 .FirstOrDefaultAsync(lc => lc.LicitacionId == licitacionId && lc.ContratistaId == contratistaGanador.Id);
 
             if (invitacionGanador == null)
             {
-                // Si no existía (era Adjudicación Directa pura), la CREAMOS
                 invitacionGanador = new LicitacionContratista
                 {
                     LicitacionId = licitacionId,
                     ContratistaId = contratistaGanador.Id,
                     FechaInvitacion = DateTime.Now,
-                    EstadoParticipacion = "Ganador" // <-- ¡LA CLAVE!
+                    EstadoParticipacion = "Ganador"
                 };
                 _context.LicitacionContratistas.Add(invitacionGanador);
             }
             else
             {
-                // Si ya existía, solo la ACTUALIZAMOS
-                invitacionGanador.EstadoParticipacion = "Ganador"; // <-- ¡LA CLAVE!
+                invitacionGanador.EstadoParticipacion = "Ganador";
                 _context.LicitacionContratistas.Update(invitacionGanador);
             }
 
-            // 3. Crear la notificación para el ganador
+            // Notificaciones
             _context.Notificaciones.Add(new Notificacion
             {
                 UsuarioId = contratistaGanador.UsuarioId,
                 Url = "/Contratista/DetallesLicitacion/" + licitacionId,
                 FechaCreacion = DateTime.Now,
                 Leida = false,
-                Mensaje = $"¡Felicidades! Has sido adjudicado como ganador de la licitación '{licitacion.NumeroLicitacion}'."
+                Mensaje = $"¡Felicidades! Has sido adjudicado para el proyecto '{licitacion.Proyecto.NombreProyecto}'."
             });
 
             if (!string.IsNullOrEmpty(SupervisorAsignadoID))
             {
-                // (No necesitamos consultar al _userManager, ¡ya tenemos el ID!)
                 _context.Notificaciones.Add(new Notificacion
                 {
                     UsuarioId = SupervisorAsignadoID,
-                    Url = "/Proyectos/Detalles/" + licitacion.ProyectoId, // URL al proyecto
+                    Url = "/Proyectos/Detalles/" + licitacion.ProyectoId,
                     FechaCreacion = DateTime.Now,
                     Leida = false,
-                    Mensaje = $"Se te ha asignado como supervisor del proyecto '{licitacion.Proyecto.NombreProyecto}'."
+                    Mensaje = $"Se te ha asignado como SUPERVISOR del proyecto '{licitacion.Proyecto.NombreProyecto}'."
                 });
-
-                // NOTA: Si necesitas enviar un EMAIL, aquí iría la lógica
-                // await _emailSender.SendEmailAsync(supervisor.Email, "Nueva Asignación", ...);
             }
-            // --- FIN DE LA CORRECCIÓN ---
 
-            // 4. Actualizar estado de licitación (ya lo tenías)
-            licitacion.Estado = "Adjudicada";
             _context.Licitaciones.Update(licitacion);
 
-            // 5. Mover el proyecto (ya lo tenías)
             var proyecto = licitacion.Proyecto;
             proyecto.IdFaseFk = faseEjecucionId;
             _context.Proyectos.Update(proyecto);
 
-            // 6. Registrar historial (ya lo tenías)
             var historial = new HistorialFase
             {
                 ProyectoId = proyecto.Id,
                 FaseAnteriorId = faseLicitacionId,
                 FaseNuevaId = faseEjecucionId,
                 FechaCambio = DateTime.Now,
-                Comentario = "Adjudicación Directa registrada. El proyecto avanza a la fase de ejecución.",
+                Comentario = "Proyecto enviado a Ejecución (Adjudicación/Fallo).",
                 TipoCambio = "Aprobado"
             };
             _context.HistorialFases.Add(historial);
@@ -972,15 +1003,14 @@ public class LicitacionesController : Controller
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            TempData["Success"] = $"El proyecto '{proyecto.NombreProyecto}' ha sido adjudicado y movido a 'Ejecución'.";
-            return RedirectToAction("Index", "PanelDeFases");
+            // ÉXITO: Retornamos OK (200) para que AJAX sepa que todo salió bien
+            return Ok(new { mensaje = "Proyecto enviado a ejecución correctamente." });
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            TempData["Error"] = "Ocurrió un error al intentar adjudicar la licitación.";
-            return RedirectToAction("Detalles", new { id = licitacionId });
+            // ERROR DE SERVIDOR: Retornamos BadRequest (400) con el detalle
+            return BadRequest("Error interno del servidor: " + ex.Message);
         }
     }
-
 }

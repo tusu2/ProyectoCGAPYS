@@ -30,18 +30,12 @@ public class EstimacionCrearViewModel
     public SelectList ProyectosAsignados { get; set; }
 
     // --- Archivos Requeridos ---
-    [Required(ErrorMessage = "Debe adjuntar los Números Generadores.")]
-    [Display(Name = "Números Generadores (PDF)")]
-    public IFormFile ArchivoNumerosGeneradores { get; set; }
 
-    [Required(ErrorMessage = "Debe adjuntar el Reporte Fotográfico.")]
-    [Display(Name = "Reporte Fotográfico (PDF o ZIP)")]
-    public IFormFile ArchivoReporteFotografico { get; set; }
+    [Display(Name = "Archivos Adjuntos")]
+    public List<IFormFile> Archivos { get; set; } = new List<IFormFile>();
 
-    [Required(ErrorMessage = "Debe adjuntar el Avance de Bitácora.")]
-    [Display(Name = "Avance de Bitácora (PDF)")]
-    public IFormFile ArchivoBitacora { get; set; }
-   
+    [Display(Name = "Etiqueta del Archivo")]
+    public List<string> Etiquetas { get; set; } = new List<string>();
 
     public bool EsFiniquito { get; set; }
  

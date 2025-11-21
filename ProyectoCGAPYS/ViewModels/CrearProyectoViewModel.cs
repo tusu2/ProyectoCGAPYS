@@ -31,21 +31,27 @@ namespace ProyectoCGAPYS.ViewModels
         public DateTime? FechaFinalizacionAprox { get; set; } 
 
         // --- CAMBIO 2: Nombre de propiedad ajustado ---
-        [Required(ErrorMessage = "Debe seleccionar un tipo de fondo.")]
-        public string IdTipoFondoFk { get; set; }
+       
+        public string? IdTipoFondoFk { get; set; }
 
-        [Required(ErrorMessage = "El nombre del responsable es obligatorio.")]
-        public string NombreResponsable { get; set; }
+        //[Required(ErrorMessage = "El nombre del responsable es obligatorio.")]
+        public string? NombreResponsable { get; set; }
 
-        [Required(ErrorMessage = "El correo es obligatorio.")]
-        [EmailAddress(ErrorMessage = "El formato del correo no es válido.")]
-        public string Correo { get; set; }
+        //[Required(ErrorMessage = "El correo es obligatorio.")]
+       // [EmailAddress(ErrorMessage = "El formato del correo no es válido.")]
+        public string? Correo { get; set; }
 
 
-        [Required(ErrorMessage = "El celular es obligatorio.")]
-        [RegularExpression(@"^[0-9]{10}$", ErrorMessage = "El celular debe tener 10 dígitos.")]
-        public string Celular { get; set; }
+       // [Required(ErrorMessage = "El celular es obligatorio.")]
+       // [RegularExpression(@"^[0-9]{10}$", ErrorMessage = "El celular debe tener 10 dígitos.")]
+        public string? Celular { get; set; }
 
+
+        [Required(ErrorMessage = "Debe asignar un usuario responsable.")]
+        public string UsuarioResponsableId { get; set; }
+
+        // 3. Lista para llenar el Select (Dropdown)
+        public List<SelectListItem> UsuariosOptions { get; set; } = new List<SelectListItem>();
         [Required(ErrorMessage = "La latitud es obligatoria.")]
         public string Latitud { get; set; }
 

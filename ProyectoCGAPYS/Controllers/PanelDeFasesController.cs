@@ -73,6 +73,7 @@ namespace ProyectoCGAPYS.Controllers
                 .Include(p => p.TipoFondo)
                 .Include(p => p.TipoProyecto)
                 .Include(p => p.Documentos)
+                .Include(p => p.UsuarioResponsable)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (proyecto == null)
@@ -188,7 +189,7 @@ namespace ProyectoCGAPYS.Controllers
                     FechaInicio = DateTime.Now, // La fecha y hora actual.
                     FechaFinPropuestas = null, // Como se solicitó, se deja en null.
                     Estado = "Abierta",
-                     TipoProceso = "Adjudicación Directa"// Estado por defecto.
+                     TipoProceso = null// Estado por defecto.
                 };
                 _context.Licitaciones.Add(nuevaLicitacion);
             }
@@ -250,7 +251,7 @@ namespace ProyectoCGAPYS.Controllers
                             FechaInicio = DateTime.Now,
                             FechaFinPropuestas = null,
                             Estado = "Abierta",
-                            TipoProceso = "Adjudicación Directa"
+                            TipoProceso = null
                         };
                         _context.Licitaciones.Add(nuevaLicitacion);
                     }

@@ -70,10 +70,10 @@ body {
 
 /* CAMBIO: Colores más intensos y legibles */
 .status-abierta {
-    background-color: #dcfce7; /* Verde pastel un poco más vivo */
-    color: #166534; /* Texto verde oscuro y fuerte */
+    background-color: #28a745; /* Verde intenso (tipo Bootstrap Success) */
+    color: #ffffff; /* Texto blanco para buen contraste */
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3); /* Sombrita verde suave */
 }
-
 .status-cerrada {
     background-color: #cb3234;
     color: #ffffff; /* Texto gris oscuro */

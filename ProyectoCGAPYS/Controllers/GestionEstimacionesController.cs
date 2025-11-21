@@ -485,42 +485,39 @@ namespace ProyectoCGAPYS.Controllers
              .ToDictionary(g => g.Key, g => g.ToList());
             return View(viewModel);
         }
-      
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CrearEstimacion(EstimacionCrearViewModel viewModel)
         {
-            // Validar que venga el ID del proyecto
+            // 1. VALIDACIÓN DE PROYECTO
             if (string.IsNullOrEmpty(viewModel.IdProyectoFk))
             {
-              ModelState.AddModelError("IdProyectoFk", "El ID del proyecto es requerido.");
-    
+                ModelState.AddModelError("IdProyectoFk", "El ID del proyecto es requerido.");
             }
 
-            // Limpiamos validaciones del DropDown que ya no usamos aquí si viene nulo
+            // 2. VALIDACIÓN DE ARCHIVOS (Nueva lógica dinámica)
+            // Verificamos que la lista no sea nula y tenga al menos 1 elemento
+            if (viewModel.Archivos == null || viewModel.Archivos.Count == 0)
+            {
+                ModelState.AddModelError("Archivos", "Debe adjuntar al menos un documento de soporte (ej. Generadores).");
+            }
 
+            // Limpiamos validaciones automáticas que no aplican
             ModelState.Remove("ProyectosAsignados");
-            ModelState.Remove("NuevaEstimacion");
+            // Si tu ViewModel anterior tenía propiedades [Required] viejas que borraste, 
+            // el ModelState ya no se quejará de ellas porque ya no existen en la clase.
+
             if (!ModelState.IsValid)
             {
-                // TRUCO DE DEBUG: Esto imprimirá en tu consola de Visual Studio exactamente qué campo está fallando
-                foreach (var state in ModelState)
-                {
-                    foreach (var error in state.Value.Errors)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"ERROR EN CAMPO: {state.Key} - MENSAJE: {error.ErrorMessage}");
-                    }
-                }
-
+                // Si falla, regresamos al dashboard mostrando los errores
                 var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
                 TempData["Error"] = "Datos inválidos: " + string.Join("; ", errors);
-
                 return RedirectToAction("DashboardPorProyecto", "GestionEstimaciones", new { proyectoId = viewModel.IdProyectoFk });
             }
 
             var usuarioActual = await _userManager.GetUserAsync(User);
 
-            // 1. Crear la entidad principal (la Estimación)
+            // 3. CREAR LA ENTIDAD (Conservando Finiquito)
             var estimacion = new Estimaciones
             {
                 IdProyectoFk = viewModel.IdProyectoFk,
@@ -528,7 +525,10 @@ namespace ProyectoCGAPYS.Controllers
                 FechaEstimacion = viewModel.FechaEstimacion,
                 Descripcion = viewModel.Descripcion,
 
-                // CAMBIO IMPORTANTE: El estado inicial es directo a Control de Obra
+                // ¡AQUÍ ESTÁ! Conservamos tu lógica de Finiquito
+                EsFiniquito = viewModel.EsFiniquito,
+
+                // Estado inicial directo a Control de Obra
                 Estado = "En Revisión Control Obra"
             };
 
@@ -537,40 +537,53 @@ namespace ProyectoCGAPYS.Controllers
 
             try
             {
-                // 2. Guardar archivos (Usando el Helper privado abajo)
-                await GuardarArchivoEstimacion(estimacion.Id, viewModel.ArchivoNumerosGeneradores, "NumerosGeneradores", usuarioActual.Id);
-                await GuardarArchivoEstimacion(estimacion.Id, viewModel.ArchivoReporteFotografico, "ReporteFotografico", usuarioActual.Id);
-                await GuardarArchivoEstimacion(estimacion.Id, viewModel.ArchivoBitacora, "Bitacora", usuarioActual.Id);
+                // 4. GUARDADO DE ARCHIVOS (Bucle Dinámico)
+                // Recorremos la lista de archivos que envió el usuario
+                for (int i = 0; i < viewModel.Archivos.Count; i++)
+                {
+                    var archivo = viewModel.Archivos[i];
 
-                // 3. Crear el primer registro en el Historial
+                    // Intentamos obtener la etiqueta correspondiente.
+                    // Si por error no viene etiqueta, ponemos una genérica.
+                    string etiqueta = "Documento Soporte";
+                    if (viewModel.Etiquetas != null && viewModel.Etiquetas.Count > i && !string.IsNullOrEmpty(viewModel.Etiquetas[i]))
+                    {
+                        etiqueta = viewModel.Etiquetas[i];
+                    }
+
+                    // Reutilizamos tu método auxiliar existente 'GuardarArchivoEstimacion'
+                    // Nota: 'etiqueta' pasa como 'tipoDocumento'
+                    await GuardarArchivoEstimacion(estimacion.Id, archivo, etiqueta, usuarioActual.Id);
+                }
+
+                // 5. HISTORIAL
                 var historial = new EstimacionHistorial
                 {
                     EstimacionId = estimacion.Id,
-                    EstadoAnterior = "N/A", // No había estado anterior
+                    EstadoAnterior = "N/A",
                     EstadoNuevo = "En Revisión Control Obra",
                     UsuarioId = usuarioActual.Id,
-                    Comentario = "Estimación generada por Supervisor. Enviada a Control de Obra."
+                    Comentario = $"Estimación generada con {viewModel.Archivos.Count} documentos adjuntos."
                 };
                 _context.EstimacionHistorial.Add(historial);
 
-                // 4. Guardar cambios finales
+                // 6. GUARDAR CAMBIOS FINALES
                 await _context.SaveChangesAsync();
 
                 TempData["SuccessMessage"] = "Estimación creada y enviada a Control de Obra exitosamente.";
             }
             catch (Exception ex)
             {
-                // Si falla algo con los archivos, borramos la estimación para no dejar basura
+                // Si falla el guardado de archivos, borramos la estimación para no dejar "basura" en la BD
                 _context.Estimaciones.Remove(estimacion);
                 await _context.SaveChangesAsync();
-                TempData["Error"] = "Error al guardar los archivos: " + ex.Message;
+                TempData["Error"] = "Error al procesar los archivos: " + ex.Message;
             }
 
-            // Redirigir a la vista donde se ven las estimaciones del proyecto
-            // Aquí asumo que usas la vista que modificamos anteriormente llamada DetallesLicitacion pero usada por admin
-            // O redirigir a donde sea que el supervisor vea el tablero.
+            // Redirección final
             return RedirectToAction("DashboardPorProyecto", "GestionEstimaciones", new { proyectoId = viewModel.IdProyectoFk });
         }
+
 
         private async Task GuardarArchivoEstimacion(int estimacionId, IFormFile archivo, string tipoDocumento, string usuarioId)
         {

@@ -29,7 +29,16 @@
                         <dt>Descripción</dt>
                         <dd>@Model.Descripcion</dd>
                         <dt>Responsable</dt>
-                        <dd>@Model.NombreResponsable</dd>
+                       <dd>
+                         @if (Model.UsuarioResponsable != null)
+                         {
+                          @Model.UsuarioResponsable.UserName
+                         }
+                          else
+                         {
+                          @(Model.NombreResponsable ?? "Sin Asignar")
+                         }
+                       </dd>
                         <dt>Campus</dt>
                         <dd>@Model.Campus.Nombre</dd>
                         <dt>Dependencia</dt>

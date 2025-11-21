@@ -33,19 +33,24 @@ namespace ProyectoCGAPYS.Models
         [StringLength(100)]
         public string Estatus { get; set; }
 
-        [Required(ErrorMessage = "El nombre del responsable es obligatorio.")]
+       // [Required(ErrorMessage = "El nombre del responsable es obligatorio.")]
         [StringLength(255)]
-        public string NombreResponsable { get; set; }
+        public string? NombreResponsable { get; set; }
 
-        [EmailAddress(ErrorMessage = "El formato del correo no es válido.")]
+        //[EmailAddress(ErrorMessage = "El formato del correo no es válido.")]
         [StringLength(255)]
-        public string Correo { get; set; }
+        public string? Correo { get; set; }
 
-        [EmailAddress(ErrorMessage = "El celular del responsable es obligatorio")]
+        //[EmailAddress(ErrorMessage = "El celular del responsable es obligatorio")]
         [StringLength(20)]
-        public string Celular { get; set; }
+        public string? Celular { get; set; }
 
+        [Display(Name = "Asignar Responsable")]
+        public string? UsuarioResponsableId { get; set; }
 
+        [ForeignKey("UsuarioResponsableId")]
+        // Usamos "Microsoft.AspNetCore.Identity.IdentityUser" o tu clase de usuario personalizada si tienes una
+        public virtual Microsoft.AspNetCore.Identity.IdentityUser? UsuarioResponsable { get; set; }
         [StringLength(255)]
         public string? NombreAnteproyecto { get; set; }
 
@@ -80,8 +85,8 @@ namespace ProyectoCGAPYS.Models
         [ForeignKey("IdDependenciaFk")]
         public virtual Dependencias Dependencia { get; set; }
 
-        [Required(ErrorMessage = "Debe seleccionar un tipo de fondo.")]
-        public string IdTipoFondoFk { get; set; }
+        
+        public string? IdTipoFondoFk { get; set; }
         [ForeignKey("IdTipoFondoFk")]
         public virtual TiposFondo TipoFondo { get; set; }
 
