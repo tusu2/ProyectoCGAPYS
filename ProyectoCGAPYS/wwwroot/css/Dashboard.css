@@ -1,22 +1,25 @@
-﻿
+﻿@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
 /* --- Paleta de Colores con Glassmorphism Blanco --- */
 :root {
     --color-text-primary: #0A2240;
     --color-text-secondary: #555555;
     --color-gold-accent: #efb810;
     --color-blue-accent: #3A7CA5;
- 
+    --color-grey-accent: #6c757d;
+    --azul-profundo: #0b2d48;
+    --oro: #D4AF37;
+    --oro-oscuro: #b38f29;
 }
 
 /* --- Estilos Generales del Contenido --- */
 .dashboard-title {
-   
     text-align: center;
     margin-bottom: 2.5rem;
     font-size: 1.8rem;
     border-bottom: 1px solid var(--color-borde);
-    font-weight: bold; 
-    font-family: 'Poppins', sans-serif; 
+    font-weight: bold;
+    font-family: 'Poppins', sans-serif;
     color: #1a2c4e;
 }
 
@@ -67,6 +70,7 @@
     .kpi-number.currency {
         font-size: 2.2rem;
     }
+
 .kpi-Ejercido {
     font-size: 2.5rem;
     font-weight: 700;
@@ -75,6 +79,17 @@
 }
 
     .kpi-Ejercido.currency {
+        font-size: 2.2rem;
+    }
+
+.kpi-comprometido {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--color-grey-accent);
+}
+
+    .kpi-comprometido.currency {
         font-size: 2.2rem;
     }
 
@@ -125,4 +140,431 @@
     color: var(--color-gold-accent);
 }
 
+/* Estilos para la lista de proyectos en el modal */
+/* Hacemos que el fondo del modal sea consistente con el dashboard */
+/* --- Rediseño del Modal de Proyectos a Cuadrícula (Grid) --- */
 
+/* Hacemos el modal aún más ancho para la cuadrícula */
+#projectListModal .modal-dialog {
+    max-width: 900px; /* Aumentamos el espacio para 3 columnas */
+}
+
+#projectListModal .modal-content {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.8) 100%);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 16px;
+}
+
+#projectListModal .modal-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+#projectListModal .modal-title {
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+/* --- Contenedor en modo Cuadrícula (Grid) --- */
+.project-cards-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Crea 3 columnas de igual tamaño */
+    gap: 20px; /* Espacio entre las tarjetas */
+}
+
+/* --- Tarjeta de Proyecto con Diseño Vertical --- */
+.project-card {
+    display: flex;
+    flex-direction: column; /* Alinea los elementos verticalmente */
+    text-align: center;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.6);
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+    .project-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    }
+
+.project-card-image {
+    width: 80px; /* Imagen más grande */
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 15px auto; /* Centrada y con espacio abajo */
+    border: 3px solid white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.project-card-info {
+    flex-grow: 1; /* Empuja las acciones hacia abajo */
+}
+
+.project-card-title {
+    font-weight: 600;
+    color: var(--color-primary);
+    font-size: 1rem;
+    margin-bottom: 10px;
+}
+
+/* --- Acciones (Botones y Correo) --- */
+.project-card-actions {
+    margin-top: 15px; /* Espacio separador arriba */
+    width: 100%;
+}
+
+    .project-card-actions .email-form {
+        display: flex;
+        gap: 5px;
+        margin-top: 10px;
+    }
+
+    .project-card-actions .form-control {
+        min-width: 0; /* Permite que el input se encoja y crezca */
+        flex-grow: 1; /* El input ocupa todo el espacio sobrante */
+    }
+
+/* --- Estilos del Asistente IA --- */
+.ia-chat-widget {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 480px; /* (Mantengo tu tamaño) */
+    max-width: 90vw;
+    z-index: 1050;
+    /* ... (Todos tus estilos premium de fondo, borde, sombra, etc.) ... */
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.75) 100%);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    /* --- ¡NUEVO! --- */
+    /* Estado por defecto: Oculto */
+    opacity: 0;
+    visibility: hidden;
+    /* Efecto de "aparecer" desde abajo y creciendo */
+    transform: translateY(20px) scale(0.95);
+    transition: all 0.4s ease-in-out; /* Misma duración */
+}
+
+    .ia-chat-widget.visible {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0) scale(1); /* Posición final */
+    }
+
+.ia-chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1.25rem;
+    /* Borde dorado sutil como separador */
+    border-bottom: 1px solid rgba(212, 175, 55, 0.4);
+    cursor: default;
+}
+
+    .ia-chat-header h5 {
+        margin: 0;
+        color: var(--azul-profundo); /* TU AZUL */
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+        .ia-chat-header h5 i {
+            color: var(--oro); /* TU DORADO */
+            margin-right: 8px;
+        }
+
+    .ia-chat-header #ia-chat-close {
+        background: transparent;
+        border: none;
+        color: var(--azul-profundo); /* TU AZUL */
+        transition: color 0.3s ease;
+    }
+
+        .ia-chat-header #ia-chat-close:hover {
+            color: var(--oro); /* Hover dorado */
+        }
+
+
+.ia-chat-body {
+    display: flex;
+    flex-direction: column;
+    max-height: 750px;
+    transition: all 0.3s ease;
+}
+
+.ia-chat-messages {
+    flex-grow: 1;
+    padding: 1.25rem; /* Más "aire" (padding) */
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Más espacio entre burbujas */
+}
+
+.ia-message {
+    padding: 0.6rem 1rem;
+    border-radius: 12px;
+    max-width: 85%;
+    word-wrap: break-word;
+    font-size: 0.95rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Sombra muy sutil */
+}
+
+    .ia-message.user {
+        background-color: var(--azul-profundo); /* TU AZUL */
+        color: white;
+        align-self: flex-end;
+        border-bottom-right-radius: 2px;
+    }
+
+    .ia-message.assistant {
+        background-color: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        color: var(--azul-profundo); /* Texto en TU AZUL */
+        align-self: flex-start;
+        border-bottom-left-radius: 2px;
+    }
+
+
+.ia-chat-input-container {
+    display: flex;
+    align-items: center; /* Para centrar verticalmente */
+    padding: 1rem;
+    border-top: 1px solid rgba(212, 175, 55, 0.4); /* Borde dorado */
+    /* Fondo blanco-glass sutil para legibilidad */
+    background-color: rgba(255, 255, 255, 0.8);
+}
+
+    .ia-chat-input-container input {
+        flex-grow: 1;
+        border: 1px solid #ccc;
+        border-radius: 8px; /* Bordes redondeados */
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+        color: var(--azul-profundo);
+        transition: all 0.3s ease;
+        margin-right: 10px; /* Espacio para el botón */
+        /* Sobreescribimos Bootstrap para que no se pegue al botón */
+        border-right: 1px solid #ccc !important;
+        border-top-right-radius: 8px !important;
+        border-bottom-right-radius: 8px !important;
+    }
+
+        .ia-chat-input-container input:focus {
+            border-color: var(--oro);
+            box-shadow: 0 0 5px rgba(212, 175, 55, 0.5);
+            outline: none; /* Quitamos el feo borde azul de Chrome */
+        }
+
+    .ia-chat-input-container button {
+        background-color: var(--oro); /* TU DORADO */
+        border: none;
+        color: #FFFFFF; /* Texto blanco */
+        border-radius: 8px !important; /* Bordes redondeados */
+        min-width: 45px;
+        height: 38px; /* Misma altura que el input */
+        transition: background-color 0.3s ease;
+        font-size: 1rem;
+    }
+
+        .ia-chat-input-container button:hover {
+            background-color: var(--oro-oscuro); /* El dorado oscuro que definimos */
+        }
+
+.ia-robot-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1049;
+    cursor: pointer;
+    display: flex;
+    align-items: flex-end;
+    transform: translateZ(0); /* (Esto lo mantengo para el z-index) */
+    /* --- ¡NUEVO! --- */
+    /* Estas son las propiedades de la animación */
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+    transition: all 0.4s ease-in-out; /* Duración de 400ms */
+}
+
+.ia-robot-image {
+    width: 110px;
+    height: auto;
+    transition: transform 0.3s ease;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
+
+.ia-robot-container.hidden {
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.8); /* Efecto de "encogerse" */
+}
+
+.ia-robot-container:hover .ia-robot-image {
+    transform: scale(1.1);
+}
+
+.ia-robot-bubble {
+    background-color: #ffffff;
+    color: var(--color-text-primary);
+    padding: 15px;
+    border-radius: 15px;
+    border-bottom-right-radius: 0;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+    margin-right: 10px;
+    margin-bottom: 30px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    font-family: 'Poppins', sans-serif;
+    max-width: 200px;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: fadeInBubble 0.5s 0.5s forwards;
+}
+
+    .ia-robot-bubble::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        right: 0;
+        width: 0;
+        height: 0;
+        border: 10px solid transparent;
+        border-top-color: #ffffff;
+        border-right-color: #ffffff;
+    }
+
+@keyframes fadeInBubble {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.ia-chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    cursor: default;
+}
+    /* --- FIX: Forzar visibilidad del botón de cerrar --- */
+
+    /* Seleccionamos el botón específico dentro del header */
+    .ia-chat-header button#ia-chat-close {
+        display: inline-block !important; /* Forzar a que se muestre */
+        color: #555555 !important; /* Forzar un color oscuro */
+        opacity: 1 !important;
+        visibility: visible !important;
+        background: transparent !important; /* Sin fondo */
+        border: none !important; /* Sin borde */
+    }
+
+        /* Cambiamos el color al pasar el mouse */
+        .ia-chat-header button#ia-chat-close:hover {
+            color: #0A2240 !important; /* Color más oscuro */
+        }
+
+}
+
+/* ======================================= */
+/* =         ESTILOS RESPONSIVOS         = */
+/* =         (AÑADIDOS AHORA)            = */
+/* ======================================= */
+
+/* --- ESTILOS PARA TABLET (Ancho menor a 991.98px) --- */
+/* (Este es el punto donde aparece tu barra de navegación móvil) */
+@media (max-width: 991.98px) {
+
+    /* 1. Modal: Pasamos la cuadrícula de 3 a 2 columnas */
+    .project-cards-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* 2. Asistente IA: Lo subimos para que no tape la barra de navegación */
+    /* La barra móvil mide 65px de alto, lo subimos a 80px */
+    .ia-robot-container {
+        bottom: 80px;
+    }
+
+    .ia-chat-widget {
+        bottom: 80px;
+    }
+}
+
+
+/* --- ESTILOS PARA MÓVIL (Ancho menor a 768px) --- */
+/* (Aquí ajustamos tamaños de texto y espaciado) */
+@media (max-width: 768px) {
+
+    /* 1. Tipografía: Reducimos el tamaño de los textos principales */
+    .dashboard-title {
+        font-size: 1.4rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .kpi-number {
+        font-size: 2.0rem;
+    }
+
+        .kpi-number.currency,
+        .kpi-Ejercido.currency,
+        .kpi-comprometido.currency {
+            font-size: 1.8rem;
+        }
+
+    /* 2. Tarjetas: Reducimos el padding para dar más espacio */
+    .glass-card {
+        padding: 1.25rem;
+    }
+
+    /* 3. Modal: Pasamos la cuadrícula de 2 a 1 columna */
+    .project-cards-container {
+        grid-template-columns: 1fr;
+    }
+
+    /* 4. Asistente IA: Hacemos la ventana de chat más "móvil" */
+    .ia-chat-widget {
+        /* Hacemos que ocupe casi todo el ancho, centrado */
+        left: 10px;
+        right: 10px;
+        width: auto; /* Sobrescribimos el width fijo de 480px */
+        max-width: none;
+    }
+
+    .ia-robot-container {
+        right: 10px; /* Le damos un pequeño margen */
+    }
+
+    .ia-robot-image {
+        width: 90px; /* Hacemos el robot un poco más pequeño */
+    }
+
+    .ia-robot-bubble {
+        max-width: 150px;
+        font-size: 0.8rem;
+        padding: 10px;
+        margin-bottom: 20px;
+    }
+
+
+    .alert-list .list-group-item {
+        flex-direction: column; /* Apila el enlace y el badge */
+        align-items: flex-start;
+        gap: 8px; /* Espacio entre el enlace y el badge */
+    }
+
+        .alert-list .list-group-item a {
+            font-size: 0.9rem; /* Texto del enlace un poco más pequeño */
+        }
+}

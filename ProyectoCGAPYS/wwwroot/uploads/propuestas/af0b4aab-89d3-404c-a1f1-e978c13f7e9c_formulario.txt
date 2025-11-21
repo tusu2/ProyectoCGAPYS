@@ -1,0 +1,216 @@
+**Configuración de STP, PortFast, BPDU Guard y Rapid PVST+**
+
+Switch(config)# spanning-tree vlan 1 priority 4096 // sirve para establecer la rais de los switchs
+
+Switch# show spanning-tree vlan 1 // sirve para verificar que todo ersta bien 
+
+Switch(config-if-range) spanning-tree portfast // conifugrar que el puerto o puertos tengan el portfast
+
+Switch(config)#spanning-tree bpduguard enable // activamos el protocolo de BPDU
+
+Switch(config)#spanning-tree mode rapid-pvst // Configuramos el Rapid PVST+
+
+Switch#show spanning-tree summary 	 // verificar el pvst+
+
+
+
+**Configuración de Protocolo de PagP**
+
+
+
+Switch(config)# interface range GigabitEthernet 0/1-2 // seleccionamos los puertos 
+
+Switch(config-if-range)# channel-group 1 mode desirable // lo ponemos en un grupo  llamado port-channel 1 en modo diserable o modo auto 
+
+Switch(config-if-range)# exit // salir
+
+Switch(config)# interface Port-channel 1 //configuramos el grupo que isismos anteriormente 
+
+Switch(config-if)# switchport mode trunk // asignamos troncal NOTA: siguen siendo los puertos 1-2 de giga
+
+Switch(config-if)# switchport trunk allowed vlan 10,20,30 // solo permitir  x numero de vlans
+
+Switch(config-if)# switchport trunk native vlan 99 // asignamos la vlan nativa
+
+
+
+**Configuración de Protocolo de LACP**
+
+Switch(config)# interface range GigabitEthernet 0/1-2 // seleccionamos los puertos
+
+Switch(config-if-range)# channel-group 2 mode active // configurtamos el protocolo LACP  puede ser modo active o modo passive
+
+Switch(config-if-range)# exit // salir
+
+Switch(config)# interface Port-channel 2//configuramos el grupo que isismos anteriormente
+
+Switch(config-if)# switchport mode trunk // asignamos troncal NOTA: siguen siendo los puertos 1-2 de giga
+
+Switch(config-if)# switchport trunk allowed vlan 10,20,30 // solo permitir  x numero de vlans
+
+Switch(config-if)# switchport trunk native vlan 99 // asignamos la vlan nativa
+
+
+
+**Configuración básica de DHCP**
+
+
+
+Router(config)#ip dhcp pool red-1 // creamos el pool
+
+Router(dhcp-config)# network 192.168.1.0 255.255.255.0 // configuramos para que reparte direcciones a esa red
+
+Router(dhcp-config)#default-router 192.168.1.254 // para que el dhcp le de a los clientes la puerta de enlace por defecto
+
+Router(dhcp-config)#dns-server 192.168.1.1 // que servidor de dns usara los clientes
+
+Router(config)#ip dhcp excluded-address 192.168.1.1 //excluimos este ip 
+
+
+
+**Retransmisión de DHCP**
+
+
+
+Router(config)#interface G0/0 //configuramos el puerto de red a los pc
+
+Router(config-if)#ip helper-address 172.16.1.10 //Si escuchas una solicitud de DHCP aquí reenvíala a esta dirección
+
+
+
+
+
+ **Router como Cliente DHCP**
+
+Router(config)#ip dhcp pool red10
+
+Router(dhcp-config)#network 10.10.10.0 255.255.255.252
+
+Router(config)#ip dhcp excluded-address 10.10.10.1 
+
+Router(config)#ip dhcp excluded-address 172.16.1.1 
+
+Router(config)#ip dhcp pool red1
+
+Router(dhcp-config)#network 172.16.1.0 255.255.255.252
+
+Router(config)#interface G0/0
+
+Router(config-if)#no shutdown
+
+router 2 y 3
+
+Router(config)#interface G0/0
+
+Router(config-if)#ip address dhcp
+
+Router(config-if)#no shutdown
+
+
+
+**Configuración HSRP**
+
+
+
+R1(config)#interface g0/0
+
+R1(config-if)#standby version 2
+
+R1(config-if)#standby 1 ip 192.168.1.254
+
+R1(config-if)#standby 1 priority 150
+
+R1(config-if)#standby 1 preempt
+
+
+
+R3(config)#interface g0/0
+
+R3(config-if)#standby version 2
+
+R3(config-if)#standby 1 ip 192.168.1.254
+
+R3(config-if)#end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Router> enable
+Router# configure terminal
+Router(config)# interface GigabitEthernet0/0
+Router(config-if)# ip address 192.168.1.254 255.255.255.0
+Router(config-if)# no shutdown
+Router(config-if)# exit
+
+Router(config)# interface GigabitEthernet0/1
+Router(config-if)# ip address 192.168.11.1 255.255.255.0
+Router(config-if)# no shutdown
+Router(config-if)# exit
+
+
+Router(config)# ip dhcp excluded-address 192.168.1.1 192.168.1.50
+Router(config)# ip dhcp excluded-address 192.168.11.1 192.168.11.19
+
+Router(config)# ip dhcp pool Alumnos
+Router(dhcp-config)# network 192.168.1.0 255.255.255.0
+Router(dhcp-config)# default-router 192.168.1.254
+Router(dhcp-config)# domain-name Alumnos.esistemas.lan
+Router(dhcp-config)# exit
+
+Router(config)# ip dhcp pool Maestros
+Router(dhcp-config)# network 192.168.11.0 255.255.255.0
+Router(dhcp-config)# default-router 192.168.11.1
+Router(dhcp-config)# domain-name Maestros.esistemas.lan
+Router(dhcp-config)# end
+
+
+
+
+
+
+
+
+Router> enable
+Router# configure terminal
+Router(config)# interface GigabitEthernet0/1
+Router(config-if)# ip helper-address 172.16.1.10
+Router(config-if)# end
+
+
+router 2
+Router> enable
+Router# configure terminal
+Router(config)# interface GigabitEthernet0/0
+Router(config-if)# ip address dhcp
+Router(config-if)# no shutdown
+Router(config-if)# end
+
+router 3
+Router> enable
+Router# configure terminal
+Router(config)# interface GigabitEthernet0/0
+Router(config-if)# ip address dhcp
+Router(config-if)# no shutdown
+Router(config-if)# end
+
+
+show ip interface brief

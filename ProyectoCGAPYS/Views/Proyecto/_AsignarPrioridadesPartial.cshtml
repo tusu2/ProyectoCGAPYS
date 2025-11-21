@@ -1,0 +1,189 @@
+﻿ 
+ @model IEnumerable<ProyectoCGAPYS.Models.Proyectos>
+<link rel="stylesheet" href="~/css/AsignarPrioridades.css" asp-append-version="true" />
+
+<div class="container mt-4">
+<div class="espaciador-escritorio">
+    <br>
+    <br>
+
+</div>
+
+<div class="container mt-4">
+       
+    <h1 class="text-center mb-2">Asignar Prioridad a Proyectos</h1>
+    <p class="text-center text-muted mb-5">
+        Seleccione un nivel de prioridad para los siguientes proyectos.
+    </p>
+
+        <div class="card shadow-sm mb-4 filter-card">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-lg-3 col-md-6">
+                        <label for="filtro-nombre-p" class="form-label">Nombre del proyecto</label>
+                        <div class="form-group">
+                            <i class="bi bi-search form-icon"></i>
+                            <input type="text" id="filtro-nombre-p" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="col-lg-2 col-md-6">
+                        <label for="filtro-campus-p" class="form-label">Campus</label>
+                        <div class="form-group">
+                            <i class="bi bi-building form-icon"></i>
+                            <select id="filtro-campus-p" class="form-select" asp-items="ViewBag.CampusList">
+                                <option value="">-- Todos --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label">Fecha de Solicitud</label>
+                        <div class="form-group">
+                            <i class="bi bi-calendar-range form-icon"></i>
+                            <input type="date" id="filtro-fecha-inicio-p" class="form-control" style="padding-left: 2.5rem !important;">
+                        </div>
+                    </div>
+
+                    <div class="col-lg-2 col-md-6">
+                        <label for="filtro-presupuesto-min-p" class="form-label">Presupuesto Mínimo</label>
+                        <div class="form-group">
+                            <i class="bi bi-currency-dollar form-icon"></i>
+                            <input type="number" id="filtro-presupuesto-min-p" class="form-control" placeholder="50000">
+                        </div>
+                    </div>
+
+                    <div class="col-lg-2 col-md-12">
+                        <div class="filter-actions">
+                            <button type="button" id="aplicar-filtros-prioridad" class="btn btn-primary w-100"><i class="bi bi-funnel-fill"></i> Filtrar</button>
+                            <button type="button" id="limpiar-filtros-prioridad" class="btn btn-secondary w-100"><i class="bi bi-eraser-fill"></i></button>
+                            <a href="#" id="btn-regresar-index" class="btn btn-volver w-100" title="Volver a Proyectos"><i class="bi bi-arrow-left"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <div class="projects-container">
+            @foreach (var proyecto in Model)
+            {
+                <div class="project-card-wrapper">
+                    <div class="project-card" id="card-@proyecto.Id" data-id="@proyecto.Id">
+                        <div class="project-info clickable-area">
+                            <p class="folio">@proyecto.Folio</p>
+                            <h5>@proyecto.NombreProyecto</h5>
+                            <p>@proyecto.Dependencia.Nombre</p>
+                        </div>
+                        <div class="priority-buttons">
+                            <a href="#" class="btn-prioridad btn-verde" data-id="@proyecto.Id" data-prioridad="verde">Normal</a>
+                            <a href="#" class="btn-prioridad btn-amarillo" data-id="@proyecto.Id" data-prioridad="amarillo">Media</a>
+                            <a href="#" class="btn-prioridad btn-rojo" data-id="@proyecto.Id" data-prioridad="rojo">Urgente</a>
+                        </div>
+                    </div>
+                    <div class="project-details-panel" id="details-container-@proyecto.Id">
+                    </div>
+                </div>
+            }
+    </div>
+</div>
+<script>
+    // Esta función se asegura de que los nuevos selects que acabamos de cargar funcionen
+    function inicializarSelectsDePrioridad() {
+        document.querySelectorAll('.prioridad-select').forEach(select => {
+            select.addEventListener('change', function () {
+                const proyectoId = this.dataset.id;
+                const nuevaPrioridad = this.value;
+
+                if (!nuevaPrioridad) return;
+
+                fetch(`/Proyecto/ActualizarPrioridad?id=${proyectoId}&prioridad=${nuevaPrioridad}`, {
+                    method: 'POST'
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            this.closest('tr').style.backgroundColor = '#d1e7dd'; // Pintamos de verde la fila para feedback
+                            this.disabled = true; // Deshabilitamos el select
+                        } else {
+                            alert('Error al actualizar la prioridad.');
+                        }
+                    });
+            });
+
+                document.querySelectorAll('.btn-prioridad').forEach(button => {
+                    button.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        e.stopPropagation(); // IMPORTANTE: Evita que el clic se propague a la tarjeta
+
+                        const proyectoId = this.dataset.id;
+                        const nuevaPrioridad = this.dataset.prioridad;
+                        const card = document.getElementById(`card-${proyectoId}`);
+
+                        card.classList.add('card-disabled');
+                        fetch(`/Proyecto/ActualizarPrioridad?id=${proyectoId}&prioridad=${nuevaPrioridad}`, { method: 'POST' })
+                            .then(response => {
+                                if (response.ok) {
+                                    card.classList.add(`priority-selected-${nuevaPrioridad}`);
+                                } else {
+                                    alert('Error al actualizar la prioridad.');
+                                    card.classList.remove('card-disabled');
+                                }
+                            });
+                    });
+                });
+
+                // Lógica para desplegar los detalles
+                document.querySelectorAll('.clickable-area').forEach(area => {
+                    area.addEventListener('click', function () {
+                       
+                        const card = this.closest('.project-card');
+                        const proyectoId = card.dataset.id;
+                        const detailsPanel = document.getElementById(`details-container-${proyectoId}`);
+
+                        // Cerrar cualquier otro panel que esté abierto
+                        document.querySelectorAll('.project-details-panel.active').forEach(openPanel => {
+                            if (openPanel !== detailsPanel) {
+                                openPanel.classList.remove('active');
+                                const otherCardId = openPanel.id.split('-').pop();
+                                document.getElementById(`card-${otherCardId}`).classList.remove('active');
+                            }
+                        });
+
+                        // Abrir o cerrar el panel actual (toggle)
+                        const isActive = detailsPanel.classList.toggle('active');
+                        card.classList.toggle('active', isActive);
+
+                        // Si lo estamos abriendo y está vacío, cargamos los datos
+                        if (isActive && detailsPanel.innerHTML.trim() === '') {
+                            detailsPanel.innerHTML = '<p>Cargando detalles...</p>';
+
+                            fetch(`/Proyecto/GetProyectoDetalles?id=${proyectoId}`)
+                                .then(response => response.json())
+                                .then(result => {
+                                    if (result.success) {
+                                        const data = result;
+                                        detailsPanel.innerHTML = `
+                                        <div class="details-grid">
+                                            <div><span>Responsable</span><p>${data.nombreResponsable}</p></div>
+                                            <div><span>Presupuesto</span><p>${data.presupuesto}</p></div>
+                                            <div><span>Correo</span><p>${data.correo}</p></div>
+                                            <div><span>Celular</span><p>${data.celular}</p></div>
+                                            <div><span>Fecha de Solicitud</span><p>${data.fechaSolicitud}</p></div>
+                                            <div><span>Fecha de Finalización Aprox.</span><p>${data.fechaFinalizacion}</p></div>
+                                            <div><span>Campus</span><p>${data.campus}</p></div>
+                                            <div><span>Fase Actual</span><p>${data.fase}</p></div>
+                                        </div>
+                                        <hr>
+                                        <div><span>Descripción del Proyecto</span><p>${data.descripcion}</p></div>
+                                    `;
+                                    } else {
+                                        detailsPanel.innerHTML = '<p class="text-danger">No se pudieron cargar los detalles.</p>';
+                                    }
+                                });
+                        }
+                    });
+                });
+        });
+    }
+
+    // Ejecutamos la función inmediatamente después de que este HTML es cargado
+    inicializarSelectsDePrioridad();
+</script>

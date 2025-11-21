@@ -1,0 +1,84 @@
+﻿
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+body {
+    background-color: #EFF2F5;
+    font-family: 'Poppins', sans-serif;
+}
+
+.card-luxury {
+    background-color: #FFFFFF;
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    padding: 2rem;
+}
+
+.luxury-title {
+    color: #0B2D48; /* Azul Corporativo */
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.gold-line-left {
+    width: 60px;
+    height: 3px;
+    background-color: #D4AF37; /* Oro */
+    margin-bottom: 2rem;
+    border-radius: 2px;
+}
+
+/* Botón Tecnológico */
+.btn-tech {
+    background: linear-gradient(135deg, #00AEEF 0%, #0095CC 100%);
+    color: white;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    transition: all 0.3s ease;
+    text-decoration: none; /* Importante para enlaces <a> */
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+    .btn-tech:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 174, 239, 0.4);
+        color: white;
+    }
+
+/* Estilos de Tabla de Lujo */
+.table-luxury thead {
+    background-color: #0B2D48; /* Azul Corporativo en cabecera */
+    color: white;
+}
+
+    .table-luxury thead th {
+        font-weight: 500;
+        border: none;
+        padding: 15px;
+    }
+
+.table-luxury tbody td {
+    vertical-align: middle;
+    padding: 15px;
+    border-bottom: 1px solid #EFF2F5;
+    color: #555;
+}
+
+.table-luxury tbody tr:hover {
+    background-color: #F8FAFC; /* Hover muy suave */
+}
+
+/* Badges personalizados */
+.badge-role {
+    background-color: #EFF2F5;
+    color: #0B2D48;
+    border: 1px solid #AEB6BF;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+}
+

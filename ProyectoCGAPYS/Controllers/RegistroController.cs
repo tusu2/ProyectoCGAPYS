@@ -1,5 +1,6 @@
 ﻿// En: Controllers/RegistroController.cs
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,7 @@ using ProyectoCGAPYS.ViewModels; // <-- ¡Muy importante!
 
 namespace ProyectoCGAPYS.Controllers
 {
+    [Authorize(Roles = "Jefa")]
     public class RegistroController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -21,24 +23,30 @@ namespace ProyectoCGAPYS.Controllers
         }
 
         // Método GET: Prepara y muestra el formulario vacío
-        [HttpGet]
-        public async Task<IActionResult> Crear()
-        {
-            var viewModel = new CrearProyectoViewModel
-            {
-                // Carga las opciones para los dropdowns desde la base de datos
-                DependenciaOptions = await _context.Dependencias
-                    .Select(d => new SelectListItem { Value = d.Id, Text = d.Nombre }).ToListAsync(),
-                TipoFondoOptions = await _context.TiposFondo
-                    .Select(tf => new SelectListItem { Value = tf.Id, Text = tf.Nombre }).ToListAsync(),
-                TipoProyectoOptions = await _context.TiposProyecto
-                    .Select(tp => new SelectListItem { Value = tp.Id, Text = tp.Nombre }).ToListAsync(),
-                CampusOptions = await _context.Campus 
+   [HttpGet]
+public async Task<IActionResult> Crear()
+{
+    var viewModel = new CrearProyectoViewModel
+    {
+        DependenciaOptions = await _context.Dependencias
+            .Select(d => new SelectListItem { Value = d.Id, Text = d.Nombre }).ToListAsync(),
+        TipoFondoOptions = await _context.TiposFondo
+            .Select(tf => new SelectListItem { Value = tf.Id, Text = tf.Nombre }).ToListAsync(),
+        TipoProyectoOptions = await _context.TiposProyecto
+            .Select(tp => new SelectListItem { Value = tp.Id, Text = tp.Nombre }).ToListAsync(),
+        CampusOptions = await _context.Campus 
             .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Nombre }).ToListAsync(),
-           
-            };
-            return View(viewModel);
-        }
+        
+        // --- NUEVO: Cargar lista de usuarios ---
+        // Aquí cargamos Email o UserName para mostrar en la lista
+        UsuariosOptions = await _context.Users
+            .Select(u => new SelectListItem { 
+                Value = u.Id, 
+                Text = u.Email // O u.UserName, lo que prefieras ver
+            }).ToListAsync()
+    };
+    return View(viewModel);
+}
 
         // Método POST: Recibe los datos enviados desde el formulario
 
@@ -49,17 +57,43 @@ namespace ProyectoCGAPYS.Controllers
             {
                 try
                 {
+
+                    var ultimoProyecto = await _context.Proyectos
+                .Where(p => p.Id.StartsWith("PROY-"))
+                .OrderByDescending(p => p.Id)
+                .Select(p => p.Id)
+                .FirstOrDefaultAsync();
+
+                    int siguienteNumero = 1; // Valor por defecto si es el primero
+
+                    if (ultimoProyecto != null)
+                    {
+                        // 2. Extraemos la parte numérica. "PROY-" tiene 5 caracteres.
+                        // Ejemplo: De "PROY-027" tomamos "027"
+                        string numeroStr = ultimoProyecto.Substring(5);
+
+                        if (int.TryParse(numeroStr, out int ultimoNumero))
+                        {
+                            siguienteNumero = ultimoNumero + 1;
+                        }
+                    }
+
+                    // 3. Formateamos el nuevo ID con ceros a la izquierda (PadLeft)
+                    // "D3" significa decimal con 3 dígitos: 1 -> "001", 28 -> "028"
+                    string nuevoIdGenerado = $"PROY-{siguienteNumero:D3}";
                     var nuevoProyecto = new Proyectos
                     {
                         // ... (todas tus asignaciones de propiedades se quedan igual)
-                        Id = Guid.NewGuid().ToString(),
+                        Id = nuevoIdGenerado,
+                        IdFaseFk = 1,
                         NombreProyecto = viewModel.NombreProyecto,
                         Descripcion = viewModel.Descripcion,
                         FechaSolicitud = viewModel.FechaSolicitud,
                         FechaFinalizacionAprox = viewModel.FechaFinalizacionAprox,
-                        NombreResponsable = viewModel.NombreResponsable,
-                        Correo = viewModel.Correo,
-                        Celular = viewModel.Celular,
+                        UsuarioResponsableId = viewModel.UsuarioResponsableId,
+                        NombreResponsable = null,
+                        Correo = null,
+                        Celular = null,
                         Latitud = viewModel.Latitud,
                         Longitud = viewModel.Longitud,
                         Folio = "Auto",

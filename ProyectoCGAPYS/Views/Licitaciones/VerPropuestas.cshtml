@@ -1,0 +1,102 @@
+﻿@model ProyectoCGAPYS.ViewModels.VerPropuestasViewModel
+@{
+    ViewData["Title"] = "Propuestas de Contratistas";
+}
+
+<link rel="stylesheet" href="~/css/VerPropuestas.css" asp-append-version="true" />
+</br>
+</br>
+<div class="page-header">
+    <h5>Licitación: <strong>@Model.NumeroLicitacion</strong></h5>
+    <h5>Proyecto: @Model.ProyectoNombre</h5>
+</div>
+
+
+@if (!Model.Contratistas.Any())
+{
+    <div class="info-panel">
+        <p>Aún no hay contratistas invitados o no han subido propuestas.</p>
+    </div>
+}
+else
+{
+    @foreach (var contratista in Model.Contratistas)
+    {
+        <div class="contractor-card">
+            <div class="contractor-header">
+                <h4>
+                    @contratista.RazonSocial
+                    <span class="rfc-tag">(@contratista.RFC)</span>
+                </h4>
+
+                @* --- LÓGICA MODIFICADA PARA OCULTAR EL BOTÓN --- *@
+                @if (Model.EstadoLicitacion == "Cerrado")
+                {
+                    @if (contratista.Propuestas.Any())
+                    {
+                        <form asp-action="AdjudicarGanador" method="post" class="ml-auto" onsubmit="return confirm('¿Estás seguro de que deseas adjudicar esta licitación a @contratista.RazonSocial? Esta acción no se puede deshacer.');">
+                            <input type="hidden" name="licitacionId" value="@Model.LicitacionId" />
+                            <input type="hidden" name="contratistaGanadorId" value="@contratista.ContratistaId" />
+                            <button type="submit" class="btn btn-success btn-sm">
+                                <i class="fas fa-trophy"></i> Adjudicar Ganador
+                            </button>
+                        </form>
+                    }
+                }
+                @* --- FIN DEL NUEVO CÓDIGO --- *@
+
+                <i class="fas fa-chevron-down toggle-icon"></i>
+            </div>
+
+            <div class="proposals-list">
+                @if (!contratista.Propuestas.Any())
+                {
+                    <div class="empty-state">
+                        Este contratista aún no ha subido ninguna propuesta.
+                    </div>
+                }
+                else
+                {
+                    <ul>
+                        @foreach (var propuesta in contratista.Propuestas)
+                        {
+                            <li class="proposal-item">
+                                <div class="d-flex w-100 justify-content-between align-items-center">
+                                    <h5 class="mb-0">
+                                        <a href="@propuesta.RutaArchivo" target="_blank" class="proposal-link">
+                                            <i class="fas fa-file-pdf"></i>@propuesta.NombreArchivo
+                                        </a>
+                                    </h5>
+                                    <small class="proposal-meta">Subido el: @propuesta.FechaSubida.ToString("dd/MM/yyyy H:mm")</small>
+                                </div>
+                                <p class="proposal-description">@propuesta.Descripcion</p>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    }
+}
+
+<div class="mt-4">
+    <a asp-action="Detalles" asp-route-id="@Model.LicitacionId" class="btn-back">
+        <i class="fas fa-arrow-left"></i>Volver a Detalles
+    </a>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const headers = document.querySelectorAll('.contractor-header');
+
+            headers.forEach(header => {
+                header.addEventListener('click', () => {
+                    const content = header.nextElementSibling;
+                    header.classList.toggle('active');
+                    content.classList.toggle('open');
+                });
+            });
+        });
+    </script>
+}

@@ -1,0 +1,469 @@
+﻿/* ---- ESTILO "TECH LUXURY" UNIFICADO PARA DETALLES ---- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* --- 0. VARIABLES DE COLOR (Las que proporcionaste) --- */
+:root {
+    --color-fondo-pagina: #EFF2F5;
+    --color-texto-principal: #222B36;
+    --color-primario-corporativo: #0B2D48;
+    --color-primario-corporativo-hover: #071E30;
+    --color-acento-tecnologico: #00AEEF;
+    --color-acento-tecnologico-hover: #008BC7;
+    --color-acento-neutral-elegante: #AEB6BF;
+    --color-blanco: #FFFFFF;
+    --fuente-principal: 'Poppins', sans-serif;
+    --radio-borde-general: 0.3rem;
+    --sombra-suave: 0 6px 18px rgba(11, 45, 72, 0.08);
+    --sidebar-bg: #1A2C42;
+    /* Paleta Heráldica */
+    --oro: #D4AF37;
+    --plata: #C0C0C0;
+    --gules-rojo: #DC143C;
+    --sinople-verde: #009B4D;
+    /* Colores base del tema */
+    --main-bg: #F0F2F5;
+    --card-bg: #FFFFFF;
+    --text-primary: #333748;
+    --text-secondary: #8A92A6;
+    --sidebar-text: #E0E0E0;
+    --accent-color: var(--oro);
+    --border-color: #E2E8F0;
+    --icons--nav: #FDB913;
+}
+
+
+/* --- 1. CUERPO Y FONDO DE PÁGINA --- */
+body {
+    font-family: var(--fuente-principal, 'Poppins', sans-serif);
+    color: var(--color-texto-principal);
+    background-color: #3251ac;
+    /* Fondo con gradiente sutil para dar profundidad */
+    background-image: url('/svg/blob-scene-haikei (2).svg');
+    line-height: 1.6;
+}
+
+/* --- 2. TARJETA DE DETALLE (GLASSMORPHISM) --- */
+.detail-card {
+    /* El efecto vidrio */
+    background-color: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(14px) saturate(180%);
+    -webkit-backdrop-filter: blur(14px) saturate(180%);
+    /* Borde sutil que simula el vidrio */
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 12px; /* Más suave */
+
+    padding: 2.5rem; /* Más espacio = más lujo */
+    box-shadow: var(--sombra-suave);
+    margin-bottom: 30px;
+    /* Animación de entrada */
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInSlideUp 0.6s ease-out forwards;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Animación de entrada para las tarjetas */
+@keyframes fadeInSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Efecto hover de lujo */
+.detail-card:hover {
+    transform: translateY(-8px) scale(1.01);
+    box-shadow: 0 16px 32px rgba(11, 45, 72, 0.12); /* Sombra más pronunciada */
+    border-color: rgba(255, 255, 255, 0.9);
+}
+
+
+/* --- 3. ENCABEZADO DE TARJETA CON ACENTO DORADO --- */
+.detail-card-header {
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+    .detail-card-header h4 {
+        color: var(--color-primario-corporativo);
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin: 0;
+        position: relative;
+        display: inline-block; /* Para que el ::after funcione */
+    }
+
+        /* El detalle "imposible de ignorar": un subrayado dorado animado */
+        .detail-card-header h4::after {
+            content: '';
+            position: absolute;
+            bottom: -1.05rem; /* Justo sobre el borde */
+            left: 0;
+            width: 35%;
+            height: 3px;
+            background: var(--oro);
+            /* Animación de entrada */
+            transform: scaleX(0);
+            transform-origin: left;
+            animation: expandWidth 0.8s 0.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+        }
+
+@keyframes expandWidth {
+    to {
+        transform: scaleX(1);
+    }
+}
+
+
+/* --- 4. LISTA DE DETALLES ELEGANTE --- */
+.details-list dt {
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px; /* Más elegante */
+    margin-bottom: 0.35rem;
+}
+
+.details-list dd {
+    color: var(--color-texto-principal);
+    font-weight: 500;
+    font-size: 1.05rem;
+    margin-bottom: 1.5rem;
+}
+
+    /* Destacar el presupuesto con el color dorado */
+    .details-list dd strong {
+        color: var(--oro);
+        font-weight: 600;
+        font-size: 1.15rem;
+    }
+
+
+/* --- 5. ESTILOS DE FORMULARIO "PREMIUM" --- */
+.form-label {
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    background-color: var(--color-blanco);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radio-borde-general);
+    padding: 12px 16px;
+    transition: all 0.3s ease;
+    color: var(--color-texto-principal);
+    font-size: 0.95rem;
+}
+
+    /* Efecto de enfoque dorado */
+    .form-control:focus {
+        background-color: #ffffff;
+        border-color: var(--oro);
+        box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.2); /* Resplandor dorado */
+        outline: none;
+    }
+
+/* --- 6. PALETA DE BOTONES DE LUJO (UNIFICADA) --- */
+
+/* Estilos base compartidos por todos los botones */
+.btn-primary-custom,
+.btn-success-custom,
+.btn-danger-custom,
+.btn-warning-custom,
+.btn-dorado {
+    font-weight: 600;
+    border-radius: var(--radio-borde-general);
+    padding: 13px 26px; /* Ligeramente más grandes */
+    border: none;
+    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Transición "bouncy" */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    line-height: 1.5; /* Asegura consistencia vertical */
+}
+
+    /* Efecto hover base */
+    .btn-primary-custom:hover,
+    .btn-success-custom:hover,
+    .btn-danger-custom:hover,
+    .btn-warning-custom:hover,
+    .btn-dorado:hover {
+        transform: translateY(-3px) scale(1.03); /* Efecto "pop" */
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+    }
+
+/* Botón Primario (Invitar) -> Usamos el acento tecnológico */
+.btn-primary-custom {
+    background-color: var(--color-acento-tecnologico);
+    color: var(--color-blanco);
+}
+
+    .btn-primary-custom:hover {
+        background-color: var(--color-acento-tecnologico-hover);
+        box-shadow: 0 8px 18px rgba(0, 174, 239, 0.25); /* Resplandor azul */
+    }
+
+/* Botón de Éxito (Activar) -> Verde Heráldico */
+/* Botón de Éxito (Outline Invertido) */
+.btn-success-custom {
+    background-color: transparent; /* Fondo transparente */
+    color: var(--sinople-verde); /* Texto verde */
+    border: 2px solid var(--sinople-verde); /* Borde verde */
+    box-shadow: none; /* Sin sombra en estado normal */
+}
+
+    .btn-success-custom:hover {
+        background-color: var(--sinople-verde); /* Relleno verde */
+        color: var(--color-blanco); /* Texto blanco */
+        border-color: var(--sinople-verde); /* Asegura el color del borde */
+        box-shadow: 0 8px 18px rgba(0, 155, 77, 0.25); /* Resplandor verde */
+    }
+
+/* Botón de Peligro (Devolver) -> Rojo Heráldico */
+.btn-danger-custom {
+    background-color: var(--gules-rojo);
+    color: var(--color-blanco);
+}
+
+    .btn-danger-custom:hover {
+        background-color: #b01030; /* Más oscuro */
+        box-shadow: 0 8px 18px rgba(220, 20, 60, 0.25); /* Resplandor rojo */
+    }
+
+
+.btn-dorado {
+    background: var(--color-blanco); /* Fondo blanco */
+    color: var(--oro); /* Texto dorado */
+    border: 2px solid var(--oro); /* Borde dorado */
+    box-shadow: none; /* Sin sombra en estado normal */
+}
+
+    .btn-dorado:hover {
+        /* Mantenemos el gradiente de lujo para el hover */
+        background: var(--oro);
+        color: var(--color-blanco); /* Texto blanco (tu solicitud) */
+        border-color: var(--oro); /* Asegura que el borde sea dorado */
+        box-shadow: 0 8px 20px rgba(212, 175, 55, 0.3); /* Resplandor dorado */
+    }
+/* Botón Warning (Cerrar) */
+.btn-warning-custom {
+    background-color: #ff9800; /* Naranja */
+    color: white;
+}
+
+    .btn-warning-custom:hover {
+        background-color: #e68900;
+        box-shadow: 0 8px 18px rgba(255, 152, 0, 0.25); /* Resplandor naranja */
+    }
+
+
+/* --- 7. TABLA DE CONTRATISTAS (LIMPIA Y ELEGANTE) --- */
+.table-custom {
+    width: 100%;
+    border-collapse: separate; /* Permite bordes redondeados */
+    border-spacing: 0;
+    margin-top: 1.5rem;
+    /* Contenedor de tabla con borde */
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden; /* Clave para que el afilado de las 'tr' respete el radio */
+}
+
+    .table-custom th {
+        font-weight: 600;
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px; /* Espaciado de lujo */
+        text-align: left;
+        padding: 16px 20px;
+        background-color: rgba(240, 242, 245, 0.5); /* Fondo de cabecera sutil */
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .table-custom td {
+        color: var(--text-primary);
+        padding: 18px 20px;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 0.95rem;
+    }
+
+    .table-custom tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .table-custom tbody tr {
+        transition: background-color 0.2s ease-in-out;
+    }
+
+        /* Efecto hover dorado sutil para la tabla */
+        .table-custom tbody tr:hover {
+            background-color: rgba(212, 175, 55, 0.07); /* Tinte dorado */
+        }
+
+
+/* --- 8. CONTENEDOR DE MAPA --- */
+.map-container {
+    height: 300px;
+    border-radius: 12px;
+    z-index: 0;
+    margin-top: 1rem;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+
+/* --- 9. APLICAR ESTILO A LA VISTA "MODO CONTROL" (Bootstrap) --- */
+/* Esto asegura que la otra vista (la que usa .card.shadow) 
+   también reciba el tratamiento de lujo.
+*/
+.card.shadow {
+    /* Replicamos el estilo Glassmorphism */
+    background-color: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(14px) saturate(180%);
+    -webkit-backdrop-filter: blur(14px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 12px;
+    box-shadow: var(--sombra-suave);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    /* Animación de entrada */
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInSlideUp 0.6s ease-out forwards;
+}
+
+    .card.shadow:hover {
+        transform: translateY(-8px) scale(1.01);
+        box-shadow: 0 16px 32px rgba(11, 45, 72, 0.12);
+    }
+
+/* Cabecera de tarjeta Bootstrap */
+.card-header {
+    background-color: rgba(255, 255, 255, 0.3); /* Fondo de vidrio */
+    border-bottom: 1px solid var(--border-color);
+}
+
+    .card-header .m-0.font-weight-bold.text-primary {
+        color: var(--color-primario-corporativo) !important; /* Sobrescribir color de BS */
+        font-weight: 600 !important;
+        font-size: 1.2rem;
+    }
+
+/* Cuerpo de la tarjeta Bootstrap */
+.card-body {
+    background-color: transparent !important;
+}
+
+    /* Unificar inputs también en Modo Control */
+    .card-body .form-control,
+    .card-body .form-select {
+        background-color: var(--color-blanco);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radio-borde-general);
+        transition: all 0.3s ease;
+    }
+
+        .card-body .form-control:focus,
+        .card-body .form-select:focus {
+            border-color: var(--oro);
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.2);
+            outline: none;
+        }
+/* --- 10. ESTILOS OUTLINE PARA JERARQUÍA --- */
+/* (Basados en los estilos de botones existentes) */
+
+.btn-outline-primary-custom,
+.btn-outline-danger-custom {
+    font-weight: 600;
+    border-radius: var(--radio-borde-general);
+    padding: 13px 26px;
+    border: 2px solid; /* Borde de 2px */
+    background-color: transparent;
+    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    box-shadow: none; /* Sin sombra inicial */
+}
+
+/* Outline Primario (Azul Corporativo) */
+.btn-outline-primary-custom {
+    color: var(--color-primario-corporativo);
+    border-color: var(--color-primario-corporativo);
+}
+
+    .btn-outline-primary-custom:hover {
+        color: var(--color-blanco);
+        background-color: var(--color-primario-corporativo);
+        transform: translateY(-3px) scale(1.03);
+        box-shadow: 0 8px 18px rgba(11, 45, 72, 0.25);
+    }
+
+/* Outline Peligro (Rojo) */
+.btn-outline-danger-custom {
+    color: var(--gules-rojo);
+    border-color: var(--gules-rojo);
+}
+
+    .btn-outline-danger-custom:hover {
+        color: var(--color-blanco);
+        background-color: var(--gules-rojo);
+        transform: translateY(-3px) scale(1.03);
+        box-shadow: 0 8px 18px rgba(220, 20, 60, 0.25);
+    }
+
+
+/* --- 11. MOVIMIENTO SUTIL (ANIMACIONES) --- */
+
+/* Animación de "respiración" para botones importantes */
+@keyframes pulse-glow {
+    0% {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    50% {
+        /* La sombra se hace más grande y notoria */
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+    }
+
+    100% {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+}
+
+/* Clase de utilidad para 'respirar' */
+.btn-pulse {
+    /* Aplicamos la animación */
+    animation: pulse-glow 2.5s infinite ease-in-out;
+}
+
+/* Animación "Pop" para los badges (ej. "Adjudicación Directa") */
+.detail-card .status-badge,
+.card-body .badge {
+    transform: scale(0.8);
+    opacity: 0;
+    /* Inicia 0.8s después de que la tarjeta cargue */
+    animation: popIn 0.5s 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes popIn {
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+

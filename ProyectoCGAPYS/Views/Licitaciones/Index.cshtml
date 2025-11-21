@@ -1,0 +1,145 @@
+﻿@model IEnumerable<ProyectoCGAPYS.Models.Licitacion>
+
+@{
+    ViewData["Title"] = "Listado de Licitaciones";
+    string GetStatusClass(string estado)
+    {
+        switch (estado?.ToLower())
+        {
+            case "preparacion":
+                return "status-preparacion";
+            case "activo":    // <--- Caso existente en BD
+            case "abierta":   // <--- Caso visual por si acaso
+                return "status-abierta";
+            case "cerrado":
+                return "status-cerrada";
+            case "adjudicada":
+                return "status-adjudicada";
+            default:
+                return "status-cerrada";
+        }
+    }
+}
+
+<link rel="stylesheet" href="~/css/Licitaciones.css" asp-append-version="true" />
+</br>
+</br>
+</br>
+<div class="card-licitaciones">
+    <h1 class="mb-4">@ViewData["Title"]</h1>
+    @if (ViewBag.NuevasNotificaciones != null)
+    {
+        <div class="alert alert-info" role="alert">
+            <h4 class="alert-heading">¡Novedades!</h4>
+            <ul class="mb-0">
+                @foreach (var notificacion in ViewBag.NuevasNotificaciones)
+                {
+
+                    <li>@notificacion.Mensaje</li>
+                }
+            </ul>
+        </div>
+    }
+    <table class="table-custom">
+        <thead>
+            <tr>
+                <th>
+
+                    Número de Licitación
+                </th>
+                <th>
+                    Proyecto Asociado
+                </th>
+
+                @* --- COLUMNA MODIFICADA --- *@
+                <th>
+                    Fecha Clave
+                </th>
+                <th>
+                    Estado
+                </th>
+
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+
+                    <td>
+                        <strong>@Html.DisplayFor(modelItem => item.NumeroLicitacion)</strong>
+
+                        @* --- TIPO DE PROCESO AÑADIDO --- *@
+                        <br>
+                        @if (item.TipoProceso == "Adjudicación Directa")
+                        {
+                            <span class="badge bg-info">@item.TipoProceso</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning">@item.TipoProceso</span>
+                        }
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Proyecto.NombreProyecto)
+
+                    </td>
+
+                    @* --- LÓGICA CONDICIONAL AÑADIDA --- *@
+                    <td>
+                        @if (item.TipoProceso == "Adjudicación Directa")
+                        {
+                            @if (item.FechaFallo.HasValue)
+                            {
+                                <small class="text-muted">(Fallo)</small>
+                                <strong>@item.FechaFallo.Value.ToString("dd MMM, yyyy")</strong>
+                            }
+                            else
+                            {
+                                <span class="text-muted">N/A (Directa)</span>
+                            }
+                        }
+                        else
+                        {
+                            @if (item.FechaFinPropuestas.HasValue)
+                            {
+                                <small class="text-muted">(Límite)</small>
+                                <strong>@item.FechaFinPropuestas.Value.ToString("dd MMM, yyyy")</strong>
+                            }
+                            else
+                            {
+                                <span class="text-muted">No definida</span>
+                            }
+                        }
+                    </td>
+
+                    <td>
+
+                        <span class="status-badge @GetStatusClass(item.Estado)">
+                            @Html.DisplayFor(modelItem => item.Estado)
+                        </span>
+                    </td>
+
+                    <td class="text-right">
+
+                        @* --- LÓGICA MODIFICADA PARA EL BOTÓN --- *@
+                        @if (item.Estado == "Adjudicada")
+                        {
+
+                            <span class="btn-disabled-custom">Adjudicada</span>
+                        }
+                        else
+                        {
+
+                            <a asp-action="Detalles" asp-route-id="@item.Id" class="btn-details-custom">Detalles</a>
+                        }
+                        @* --- FIN DE LA MODIFICACIÓN --- *@
+
+                    </td>
+
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>>

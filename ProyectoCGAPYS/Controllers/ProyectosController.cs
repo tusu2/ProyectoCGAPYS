@@ -7,8 +7,11 @@ using ProyectoCGAPYS.ViewModels;
 using System.Linq;
 using System.Threading.Tasks;
 using ProyectoCGAPYS.ViewModels;
+using Microsoft.AspNetCore.Authorization;
+[Authorize(Roles = "Jefa")]
 public class ProyectosController : Controller
 {
+    
     private readonly ApplicationDbContext _context;
 
     public ProyectosController(ApplicationDbContext context)
@@ -147,21 +150,55 @@ public class ProyectosController : Controller
     }
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ActualizarDetalles(string Id, string Descripcion)
+    public async Task<IActionResult> ActualizarDetalles(string Id, string Descripcion, string Prioridad)
     {
         var proyecto = await _context.Proyectos.FindAsync(Id);
+
         if (proyecto != null)
         {
+            // 1. Actualizamos los datos básicos
             proyecto.Descripcion = Descripcion;
-            // Aquí actualizarías los otros campos que hayas añadido al form
+            proyecto.Prioridad = Prioridad;
+
+            // 2. Lógica de Cambio de Fase Automático
+            // Si estamos en Fase 1 (Recepción) y se ha asignado una prioridad, avanzamos a Fase 2
+            if (proyecto.IdFaseFk == 1 && !string.IsNullOrEmpty(Prioridad))
+            {
+                int faseAnterior = 1;
+                int faseNueva = 2; // "En Elaboración de Anteproyecto" según tu SQL
+
+                proyecto.IdFaseFk = faseNueva;
+
+                // 3. IMPORTANTE: Registrar en el Historial de Fases
+                // Esto es necesario para que el Dashboard y el historial funcionen correctamente
+                var historial = new HistorialFase
+                {
+                    ProyectoId = proyecto.Id,
+                    FaseAnteriorId = faseAnterior,
+                    FaseNuevaId = faseNueva,
+                    Comentario = $"Cambio automático al asignar Prioridad: {Prioridad}",
+                    FechaCambio = DateTime.Now,
+                    TipoCambio = "Automático",
+                    UsuarioId = null // O User.Identity.Name si tienes el ID del usuario logueado a la mano
+                };
+
+                _context.HistorialFases.Add(historial);
+
+                TempData["SuccessMessage"] = "¡Detalles actualizados y Fase avanzada a 'Anteproyecto'!";
+            }
+            else
+            {
+                TempData["SuccessMessage"] = "¡Los detalles del proyecto se han actualizado!";
+            }
+
             _context.Update(proyecto);
             await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] = "¡Los detalles del proyecto se han actualizado!";
         }
         else
         {
             TempData["ErrorMessage"] = "No se encontró el proyecto para actualizar.";
         }
+
         return RedirectToAction("Detalle", new { id = Id, tab = "resumen" });
     }
 
@@ -179,5 +216,7 @@ public class ProyectosController : Controller
         }
         return RedirectToAction("Index"); // Lo redirigimos a la lista principal de proyectos
     }
+
+    
 }
 

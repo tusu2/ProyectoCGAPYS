@@ -1,0 +1,60 @@
+﻿@model List<ProyectoConteoViewModel>
+@{
+    ViewData["Title"] = "Gestión de Estimaciones";
+}
+<link rel="stylesheet" href="~/css/Estimaciones.css" asp-append-version="true" />
+<br>
+<br>
+<br>
+<div class="container-fluid">
+    <h2 class="display-4">@ViewData["Title"]</h2>
+    <p class="lead">Seleccione un proyecto en ejecución para ver sus estimaciones pendientes.</p>
+
+    <div class="row g-3">
+        @if (!Model.Any())
+        {
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    <h4 class="alert-heading">No hay proyectos activos</h4>
+                    <p>No se encontraron proyectos en la fase de "Ejecución" que requieran supervisión de pagos.</p>
+                </div>
+            </div>
+        }
+
+        @foreach (var item in Model)
+        {
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">@item.Proyecto.NombreProyecto</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">@item.Proyecto.Folio</h6>
+
+                        @if (item.ConteoPendientes > 0)
+                        {
+                            <p class="text-danger fw-bold">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                Tiene @item.ConteoPendientes estimación(es) pendientes.
+                            </p>
+                        }
+                        else
+                        {
+                            <p class="text-success">
+                                <i class="fas fa-check-circle me-1"></i>
+                                Sin estimaciones pendientes.
+                            </p>
+                        }
+
+                        <div class="mt-auto">
+                            <a asp-action="DashboardPorProyecto"
+                               asp-route-proyectoId="@item.Proyecto.Id"
+                               class="btn btn-vip w-100">
+                                Gestionar Pagos del Proyecto
+                            </a>
+                         
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

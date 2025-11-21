@@ -10,6 +10,7 @@ namespace ProyectoCGAPYS.Models
         {
             // Inicializamos la lista para que nunca sea nula
             CostosDelProyecto = new HashSet<Proyectos_Costos>();
+            HistorialBloqueos = new HashSet<ProyectoHistorialBloqueo>();
         }
         [Key]
         public string Id { get; set; }
@@ -32,28 +33,33 @@ namespace ProyectoCGAPYS.Models
         [StringLength(100)]
         public string Estatus { get; set; }
 
-        [Required(ErrorMessage = "El nombre del responsable es obligatorio.")]
+       // [Required(ErrorMessage = "El nombre del responsable es obligatorio.")]
         [StringLength(255)]
-        public string NombreResponsable { get; set; }
+        public string? NombreResponsable { get; set; }
 
-        [EmailAddress(ErrorMessage = "El formato del correo no es válido.")]
+        //[EmailAddress(ErrorMessage = "El formato del correo no es válido.")]
         [StringLength(255)]
-        public string Correo { get; set; }
+        public string? Correo { get; set; }
 
-        [EmailAddress(ErrorMessage = "El celular del responsable es obligatorio")]
+        //[EmailAddress(ErrorMessage = "El celular del responsable es obligatorio")]
         [StringLength(20)]
-        public string Celular { get; set; } 
+        public string? Celular { get; set; }
 
+        [Display(Name = "Asignar Responsable")]
+        public string? UsuarioResponsableId { get; set; }
 
+        [ForeignKey("UsuarioResponsableId")]
+        // Usamos "Microsoft.AspNetCore.Identity.IdentityUser" o tu clase de usuario personalizada si tienes una
+        public virtual Microsoft.AspNetCore.Identity.IdentityUser? UsuarioResponsable { get; set; }
         [StringLength(255)]
         public string? NombreAnteproyecto { get; set; }
 
-        [EmailAddress(ErrorMessage = "La latitud es necesaria")]
+
+        [Required(ErrorMessage = "La latitud es necesaria")]
         [StringLength(50)]
         public string Latitud { get; set; }
 
-        [EmailAddress(ErrorMessage = "La longitud es necesaria")]
-
+        [Required(ErrorMessage = "La longitud es necesaria")]
         [StringLength(50)]
         public string Longitud { get; set; }
 
@@ -79,8 +85,8 @@ namespace ProyectoCGAPYS.Models
         [ForeignKey("IdDependenciaFk")]
         public virtual Dependencias Dependencia { get; set; }
 
-        [Required(ErrorMessage = "Debe seleccionar un tipo de fondo.")]
-        public string IdTipoFondoFk { get; set; }
+        
+        public string? IdTipoFondoFk { get; set; }
         [ForeignKey("IdTipoFondoFk")]
         public virtual TiposFondo TipoFondo { get; set; }
 
@@ -90,5 +96,17 @@ namespace ProyectoCGAPYS.Models
         public virtual TiposProyecto TipoProyecto { get; set; }
 
         public virtual ICollection<Proyectos_Costos> CostosDelProyecto { get; set; }
+        public virtual ICollection<ProyectoImagen> Imagenes { get; set; }
+
+        [StringLength(10)]
+        public string? Prioridad { get; set; }
+
+        public virtual ICollection<DocumentosProyecto> Documentos { get; set; }
+
+        public bool EstaBloqueado { get; set; } = false;
+      
+        public virtual ICollection<ProyectoHistorialBloqueo> HistorialBloqueos { get; set; }
+
+
     }
 }

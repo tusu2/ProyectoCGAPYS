@@ -1,0 +1,46 @@
+﻿@model ProyectoCGAPYS.ViewModels.InvitarContratistaViewModel
+@{
+    ViewData["Title"] = "Invitar Contratistas";
+}
+
+<h4>@ViewData["Title"] a la Licitación: @Model.NumeroLicitacion</h4>
+<h5>Proyecto: @Model.ProyectoNombre</h5>
+<hr />
+
+<form asp-action="Invitar" method="post">
+    @* Campo oculto para enviar el ID de la licitación de vuelta al controlador *@
+    <input type="hidden" name="licitacionId" value="@Model.LicitacionId" />
+
+    <table class="table table-bordered">
+        <thead class="thead-light">
+            <tr>
+                <th>Invitar</th>
+                <th>Razón Social</th>
+                <th>RFC</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var contratista in Model.ContratistasDisponibles)
+            {
+                <tr>
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   name="contratistasSeleccionados"
+                                   value="@contratista.Id"
+                            @(contratista.YaEstaInvitado ? "checked disabled" : "") />
+                        </div>
+                    </td>
+                    <td>@contratista.RazonSocial</td>
+                    <td>@contratista.RFC</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="form-group mt-3">
+        <button type="submit" class="btn btn-primary">Guardar Invitaciones</button>
+        <a asp-action="Detalles" asp-route-id="@Model.LicitacionId" class="btn btn-secondary">Cancelar</a>
+    </div>
+</form>

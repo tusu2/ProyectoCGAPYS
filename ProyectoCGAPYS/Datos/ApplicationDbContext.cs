@@ -1,10 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ProyectoCGAPYS.Models;
-using ProyectoCGAPYS.ViewModels; // <-- ¡ESTA ES LA LÍNEA QUE SOLUCIONA EL ERROR!
+using ProyectoCGAPYS.ViewModels; 
 
 namespace ProyectoCGAPYS.Datos
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
         {
@@ -22,12 +23,27 @@ namespace ProyectoCGAPYS.Datos
         public DbSet<Proyectos_Costos> Proyectos_Costos { get; set; }
         public DbSet<Fases> Fases { get; set; }
         public DbSet<Estimaciones> Estimaciones { get; set; }
-
+        public DbSet<ProyectoSimpleViewModel> ProyectosSimples { get; set; }
+        public DbSet<ProyectoImagen> ProyectoImagenes { get; set; }
         // Los ViewModels que vienen de los Stored Procedures
         public DbSet<KPIsViewModel> KPIsViewModels { get; set; }
         public DbSet<FondoViewModel> FondoViewModels { get; set; }
         public DbSet<FaseViewModel> FaseViewModels { get; set; }
         public DbSet<ProyectoAlertaViewModel> ProyectoAlertaViewModels { get; set; }
+        public DbSet<HistorialFase> HistorialFases { get; set; }
+        public DbSet<DocumentosProyecto> DocumentosProyectos { get; set; }
+
+        public DbSet<Contratista> Contratistas { get; set; }
+        public DbSet<Licitacion> Licitaciones { get; set; }
+        public DbSet<LicitacionContratista> LicitacionContratistas { get; set; }
+        public DbSet<PropuestaContratista> PropuestasContratistas { get; set; }
+        public DbSet<Notificacion> Notificaciones { get; set; }
+        public DbSet<LicitacionDocumento> LicitacionDocumentos { get; set; }
+        public DbSet<EstimacionDocumentos> EstimacionDocumentos { get; set; }
+        public DbSet<EstimacionHistorial> EstimacionHistorial { get; set; }
+
+        public DbSet<ProyectoHistorialBloqueo> ProyectoHistorialBloqueo { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -40,6 +56,8 @@ namespace ProyectoCGAPYS.Datos
             modelBuilder.Entity<FondoViewModel>().HasNoKey();
             modelBuilder.Entity<FaseViewModel>().HasNoKey();
             modelBuilder.Entity<ProyectoAlertaViewModel>().HasNoKey();
+            modelBuilder.Entity<ProyectoSimpleViewModel>().HasNoKey();
+
         }
     }
 }

@@ -1,0 +1,276 @@
+﻿<style >
+/* * TEMA V.I.P. CORPORATIVO
+     * Basado en la paleta de colores proporcionada.
+     */
+:root {
+    --color-fondo-pagina: #EFF2F5;
+    --color-texto-principal: #222B36;
+    --color-primario-corporativo: #0B2D48;
+    --color-primario-corporativo-hover: #071E30;
+    --color-acento-tecnologico: #00AEEF;
+    --color-acento-tecnologico-hover: #008BC7;
+    --color-acento-neutral-elegante: #AEB6BF;
+    --color-blanco: #FFFFFF;
+    --fuente-principal: 'Poppins', sans-serif;
+    --radio-borde-general: 0.3rem;
+    --sombra-suave: 0 6px 18px rgba(11, 45, 72, 0.08);
+    /* Paleta Heráldica */
+    --oro: #D4AF37;
+    --oro-hover: #B89B31;
+    --gules-rojo: #DC143C;
+    --sinople-verde: #009B4D;
+    /* Colores base del tema */
+    --card-bg: #FFFFFF;
+    --text-primary: #333748;
+    --text-secondary: #8A92A6;
+    --border-color: #E2E8F0;
+    --color-blanco: #FFFFFF;
+}
+
+/* --- 1. ESTILOS GLOBALES Y TIPOGRAFÍA --- */
+body {
+    background-color: var(--color-fondo-pagina);
+    color: var(--color-texto-principal);
+    font-family: var(--fuente-principal), sans-serif;
+}
+
+h1, h2, h5, .display-4 {
+    color: var(--color-primario-corporativo); /* <-- CAMBIO A BLANCO */
+    font-weight: 600;
+}
+.lead {
+    color: rgba(255, 255, 255, 0.85); /* Un blanco semi-transparente */
+    font-weight: 300;
+}
+h3, h4, h6 {
+    color: var(--color-blanco);
+    font-weight: 600;
+}
+
+
+.card h1,
+.card h2,
+.card .display-4 {
+    color: var(--color-primario-corporativo);
+}
+
+.card .lead {
+    color: var(--text-secondary);
+}
+hr {
+    border-color: var(--border-color);
+    opacity: 0.5;
+}
+
+.card {
+    /* Quitamos el fondo blanco sólido */
+    background-color: transparent !important;
+    /* Definimos el borde de cristal */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    /* Sombra de profundidad */
+    box-shadow: 0 8px 24px 0 rgba(11, 45, 72, 0.2);
+    /* Mantenemos el redondeo y el overflow */
+    border-radius: var(--radio-borde-general) !important;
+    overflow: hidden !important;
+    transition: all 0.4s ease-in-out;
+}
+
+    /* Efecto "lift" al pasar el cursor, muy V.I.P. */
+    .card:hover {
+        box-shadow: 0 10px 30px rgba(11, 45, 72, 0.12);
+        transform: translateY(-4px);
+    }
+.card-header {
+    /* Color corporativo sólido */
+    background-color: var(--color-primario-corporativo) !important;
+    /* ¡SIN efecto de cristal aquí! */
+    backdrop-filter: none !important;
+    /* Texto blanco para contrastar */
+    color: var(--color-blanco) !important;
+    /* Borde inferior sutil de "luz" */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+.card-body, .list-group-item {
+    background-color: rgba(255, 255, 255, 0.50) !important;
+
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    color: var(--text-primary) !important;
+}
+/* --- 3. BOTONES --- */
+.btn {
+    border-radius: var(--radio-borde-general);
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    /* * ¡CAMBIO AQUÍ! 
+         * Aumentamos de 0.2s a 0.3s y usamos 'ease-in-out'
+         */
+    transition: all 0.3s ease-in-out;
+}
+
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+}
+
+.btn-primary {
+    background-color: var(--color-primario-corporativo);
+    border-color: var(--color-primario-corporativo);
+    color: var(--color-blanco);
+}
+
+    .btn-primary:hover {
+        background-color: var(--color-primario-corporativo-hover);
+        border-color: var(--color-primario-corporativo-hover);
+        color: var(--color-blanco);
+    }
+
+.btn-success {
+    background-color: var(--sinople-verde);
+    border-color: var(--sinople-verde);
+}
+
+    .btn-success:hover {
+        background-color: #007A3D; /* Un verde más oscuro */
+    }
+
+.btn-danger {
+    background-color: var(--gules-rojo);
+    border-color: var(--gules-rojo);
+}
+
+    .btn-danger:hover {
+        background-color: #B01030; /* Un rojo más oscuro */
+    }
+
+/* ¡El botón V.I.P. Dorado! */
+.btn-vip {
+        background-color: var(--color-blanco);
+        border: 2px solid var(--oro); 
+        color: var(--oro);
+        font-weight: 600;
+        /* * ¡CAMBIO AQUÍ! 
+         * Aumentamos de 0.2s a 0.3s para ser consistentes
+         */
+        transition: all 0.3s ease-in-out;
+    }
+
+    /* Estado Hover/Focus: Fondo dorado, texto blanco */
+    .btn-vip:hover,
+    .btn-vip:focus,
+    .btn-vip:active {
+        background-color: var(--oro);
+        border-color: var(--oro); /* El borde se mantiene dorado */
+        color: var(--color-blanco); /* Texto blanco, como pediste */
+        /* Mantenemos la sombra de foco V.I.P. */
+        box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.4);
+    }
+
+        /* Corrección para evitar doble sombra */
+        .btn-vip:active:focus {
+            box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.4);
+        }
+/* --- 4. INSIGNIAS DE ESTADO (Badges) --- */
+/* Hacemos los badges más suaves y modernos */
+.badge {
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0.45em 0.8em;
+    border-radius: var(--radio-borde-general);
+}
+
+/* Redefinimos los colores de estado */
+.bg-warning {
+    background-color: #FFF3CD !important;
+    color: #664D03 !important; /* Texto oscuro para fondo claro */
+}
+
+.bg-primary {
+    background-color: #E6F7FF !important;
+    color: #0056B3 !important;
+}
+
+.bg-info {
+    background-color: #E7E9EB !important;
+    color: #495057 !important;
+}
+
+.bg-success {
+    background-color: #E6F5EB !important;
+    color: var(--sinople-verde) !important;
+}
+
+.bg-secondary {
+    background-color: var(--color-fondo-pagina) !important;
+    color: var(--text-secondary) !important;
+}
+
+/* --- 5. CLASES ESPECÍFICAS DE VISTAS --- */
+
+/* [Detalles.cshtml] Encabezados de acción */
+
+.card-header h4, .card-header h5 {
+    color: var(--color-blanco) !important;
+}
+/* [Detalles.cshtml] Lista de definición (Proyecto, Monto...) */
+.dl-row dt {
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.dl-row dd {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.dl-row h5 { /* Estilo especial para el monto */
+    color: var(--sinople-verde);
+    font-weight: 700;
+}
+.list-group {
+    background-color: transparent !important;
+}
+/* [Detalles.cshtml] Lista de Expediente Digital */
+.list-group-item {
+    /* Borde entre items más sutil */
+    border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+    .list-group-item:last-child {
+        border-bottom-left-radius: var(--radio-borde-general);
+        border-bottom-right-radius: var(--radio-borde-general);
+    }
+
+    .list-group-item:first-child {
+        border-top-left-radius: var(--radio-borde-general);
+        border-top-right-radius: var(--radio-borde-general);
+    }
+
+/* [DashboardPorProyecto.cshtml] Columna Kanban */
+.estimacion-columna {
+    background-color: var(--color-fondo-pagina);
+    [cite_start]min-height: 400px;
+    [cite: 90] overflow-y: auto;
+    border-radius: var(--radio-borde-general);
+    padding: 0.5rem;
+}
+/* El header de la columna Kanban */
+.card-header.bg-dark.text-white {
+    background-color: var(--color-primario-corporativo) !important;
+}
+
+/* [Index.cshtml] Mensajes de estado */
+.text-danger {
+    color: var(--gules-rojo) !important;
+}
+
+.text-success {
+    color: var(--sinople-verde) !important;
+}
+
+.alert-info {
+    background-color: #E6F7FF;
+    border-color: #B3E0FF;
+    color: #0056B3;
+}
+
+</style >

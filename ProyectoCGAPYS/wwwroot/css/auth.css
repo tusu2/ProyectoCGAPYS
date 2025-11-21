@@ -1,0 +1,173 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+/* --- Estilos para la Página de Autenticación Split-Screen --- */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* ¡Clave! Esto deshabilita el scroll en el body */
+    font-family: 'Poppins', sans-serif;
+}
+body {
+    display: flex;
+    justify-content: center; /* Centra horizontalmente */
+    align-items: center; /* Centra verticalmente */
+    min-height: 100vh; /* Asegura que ocupe toda la altura de la pantalla */
+    /* Este fondo se verá si tu imagen de ondas no cubre todo */
+    background-color: #f0f2f5;
+    font-family: 'Poppins', sans-serif;
+}
+/* Contenedor principal que divide la pantalla */
+.auth-wrapper {
+    display: flex;
+    width: 90%; /* Ocupará el 90% del ancho de la pantalla */
+    max-width: 1200px; /* Pero nunca más de 1200px en pantallas grandes */
+    min-height: 700px; /* Una altura mínima para que se vea bien */
+    border-radius: 12px; /* Esquinas redondeadas para un look suave */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* Sombra para darle profundidad */
+    overflow: hidden; /* ¡Súper importante! Evita que los hijos se desborden */
+}
+/* Columna Izquierda (Formulario) */
+.auth-form-container {
+    /* 1. Hacemos esta columna un poco más ancha (55% del espacio) */
+    flex: 1 1 55%;
+    /* Estilos existentes */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    /* 2. ¡Aquí la magia del efecto Glass! */
+    background: rgba(255, 255, 255, 0.1); /* Fondo blanco con 90% de transparencia */
+    backdrop-filter: blur(12px); /* El desenfoque del fondo */
+    -webkit-backdrop-filter: blur(12px); /* Para compatibilidad con Safari */
+    border-right: 1px solid rgba(255, 255, 255, 0.2); /* Un borde sutil que divide las secciones */
+}
+.auth-form-content {
+    max-width: 450px;
+    width: 100%;
+}
+
+/* Columna Derecha (Branding) */
+.auth-branding-container {
+    flex: 1 1 55%;
+    /* Estilos existentes */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    /* 2. ¡Aquí la magia del efecto Glass! */
+    background: rgba(255, 255, 255, 0.1); /* Fondo blanco con 90% de transparencia */
+    backdrop-filter: blur(12px); /* El desenfoque del fondo */
+    -webkit-backdrop-filter: blur(12px); /* Para compatibilidad con Safari */
+    border-right: 1px solid rgba(255, 255, 255, 0.2); /* Sin efecto de cristal aquí */
+}
+.branding-content h2 {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.branding-content p {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+
+/* --- Estilos para los Formularios (texto negro) --- */
+.auth-form-container h1 {
+    color: #0B2D48; /* Texto principal oscuro */
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.form-floating > .form-control {
+    background-color: #f4f7fa; /* Fondo de input sutil */
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem; /* Bordes redondeados */
+}
+
+    .form-floating > .form-control:focus {
+        background-color: #fff;
+        border-color: #0B2D48;
+        box-shadow: 0 0 0 3px rgba(11, 45, 72, 0.1);
+    }
+
+.auth-form-container .btn-primary {
+    background-color: #0B2D48; /* Botón con el azul corporativo */
+    border: none;
+    font-weight: 600;
+    padding: 0.85rem;
+    border-radius: 0.5rem; /* Bordes redondeados */
+    transition: background-color 0.2s ease-in-out;
+}
+
+    .auth-form-container .btn-primary:hover {
+        background-color: #071E30; /* Un tono más oscuro al pasar el mouse */
+    }
+
+.auth-form-container a {
+    color: #0B2D48;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+    .auth-form-container a:hover {
+        text-decoration: underline;
+    }
+
+.auth-form-container .form-check-label {
+    color: #333; /* Texto del checkbox en color oscuro */
+}
+#logo-animado {
+    max-width: 250px;
+    height: auto;
+
+}
+/* --- Responsividad para Móviles --- */
+@media (max-width: 992px) {
+    .auth-branding-container {
+        display: none; /* Ocultamos la columna de branding en pantallas pequeñas */
+    }
+
+    .auth-form-container {
+        flex-basis: 100%; /* El formulario ocupa todo el ancho */
+    }
+}
+@keyframes spin-and-tilt {
+    /* Estado inicial: sin rotación */
+    0% {
+        transform: rotateY(0deg);
+        opacity: 0; /* Empieza invisible para una entrada más suave */
+    }
+    /* Estado final: el logo ha girado y queda inclinado */
+    100% {
+        /* Dará 2 vueltas completas (720deg) y terminará con una inclinación de 20 grados */
+        transform: rotateY(740deg);
+        opacity: 1; /* Se vuelve completamente visible */
+    }
+}
+
+@keyframes heartbeat {
+    0% {
+        transform: scale(1);
+    }
+
+    10% {
+        transform: scale(1.1);
+    }
+
+    20% {
+        transform: scale(1);
+    }
+
+    30% {
+        transform: scale(1.1);
+    }
+
+    40% {
+        transform: scale(1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+    /* La pausa larga hasta el siguiente ciclo */
+}

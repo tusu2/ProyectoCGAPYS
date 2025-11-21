@@ -1,0 +1,290 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+/* --- Paleta de Colores Premium --- */
+:root {
+    --color-azul-fondo: #f0f2f5; /* Un gris azulado muy claro para el fondo */
+    --color-azul-oscuro: #0B2D48; /* El azul principal de tu layout */
+    --color-oro: #D4AF35; /* Un dorado elegante para acentos */
+    --color-plata: #adb5bd; /* Un gris plateado para texto secundario */
+    --color-blanco: #FFFFFF;
+    --sombra-tarjeta: 0 4px 15px rgba(0, 0, 0, 0.07);
+    --sombra-tarjeta-hover: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+body {
+ 
+    font-family: 'Poppins', sans-serif;
+}
+/* --- Contenedor Principal --- */
+.projects-container {
+    display: grid;
+    grid-template-columns: 1fr; /* Una columna para la lista */
+    gap: 1.25rem; /* Espacio entre tarjetas */
+    padding: 1rem;
+}
+
+/* --- Estructura de la Tarjeta de Proyecto --- */
+.project-card {
+    background-color: var(--color-blanco);
+    border-radius: 12px;
+    box-shadow: var(--sombra-tarjeta);
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 5px solid transparent; /* Borde inicial invisible para la transición */
+    transition: all 0.3s ease-in-out;
+  
+}
+
+    .project-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--sombra-tarjeta-hover);
+        border-left-color: var(--color-oro);
+    }
+
+/* --- Información del Proyecto dentro de la Tarjeta --- */
+.project-info h5 {
+    color: var(--color-azul-oscuro);
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.project-info p {
+    color: var(--color-plata);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.project-info .folio {
+    font-weight: 700;
+    color: var(--color-azul-oscuro);
+    font-size: 0.8rem;
+    opacity: 0.6;
+}
+
+/* --- Botones de Prioridad (El Reemplazo del Select) --- */
+.priority-buttons {
+    display: flex;
+    gap: 0.75rem;
+}
+
+    .priority-buttons a {
+        text-decoration: none;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 500;
+        border: 1px solid var(--color-plata);
+        color: var(--color-plata);
+        transition: all 0.2s ease;
+    }
+
+        .priority-buttons a:hover {
+            transform: scale(1.05);
+            color: var(--color-blanco);
+        }
+
+/* Estilos específicos para cada botón */
+.btn-verde:hover {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+.btn-amarillo:hover {
+    background-color: #ffc107;
+    border-color: #ffc107;
+}
+
+.btn-rojo:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+/* --- Feedback Visual al Asignar Prioridad --- */
+.card-disabled {
+    opacity: 0.6;
+    pointer-events: none; /* Evita más clics */
+    background-color: #f8f9fa;
+}
+
+.priority-selected-verde {
+    border-left-color: #198754 !important;
+}
+
+.priority-selected-amarillo {
+    border-left-color: #ffc107 !important;
+}
+
+.priority-selected-rojo {
+    border-left-color: #dc3545 !important;
+}
+
+/* --- Wrapper para la tarjeta y el panel de detalles --- */
+.project-card-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- Área clicable en la tarjeta --- */
+.clickable-area {
+    cursor: pointer;
+    flex-grow: 1; /* Ocupa el espacio disponible */
+}
+
+/* --- Panel de Detalles Oculto --- */
+.project-details-panel {
+    background-color: #fafbfd;
+    overflow: hidden; /* Clave para la animación */
+    max-height: 0; /* Inicialmente oculto */
+    transition: max-height 0.5s ease-out, padding 0.5s ease-out; /* Animación suave */
+    border-radius: 0 0 12px 12px;
+    border: 1px solid #e9ecef;
+    border-top: none;
+    padding: 0 1.5rem; /* El padding se animará junto con la altura */
+}
+
+    .project-details-panel.active {
+        max-height: 500px; /* Una altura máxima suficientemente grande */
+        padding: 1.5rem;
+    }
+
+/* Estilos para el contenido de los detalles */
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+    .details-grid div {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .details-grid span {
+        font-size: 0.8rem;
+        color: var(--color-plata);
+        margin-bottom: 0.25rem;
+    }
+
+    .details-grid p {
+        font-weight: 500;
+        color: var(--color-azul-oscuro);
+        margin: 0;
+    }
+
+/* Indicador visual para la tarjeta activa */
+.project-card.active {
+    border-radius: 12px 12px 0 0;
+    border-color: var(--color-oro);
+}
+/* --- Feedback Mejorado para Botones de Prioridad --- */
+
+
+
+/* 2. Ahora, creamos la excepción: el botón SELECCIONADO se "enciende" */
+/* Anula la opacidad y le da un estilo sólido y llamativo */
+.priority-selected-verde .btn-verde,
+.priority-selected-amarillo .btn-amarillo,
+.priority-selected-rojo .btn-rojo {
+    opacity: 1 !important;
+    color: var(--color-blanco) !important;
+    border-color: transparent !important;
+    font-weight: 600;
+}
+
+/* 3. Definimos el color de fondo para cada estado seleccionado */
+.priority-selected-verde .btn-verde {
+    background-color: #198754;
+}
+
+.priority-selected-amarillo .btn-amarillo {
+    background-color: #ffc107;
+    color: var(--color-azul-oscuro) !important;
+}
+
+.priority-selected-rojo .btn-rojo {
+    background-color: #dc3545;
+}
+
+
+
+/* Definimos la animación: empieza invisible y abajo, termina visible y en su posición */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Por defecto, las tarjetas están invisibles para poder animarlas */
+
+    /* Cuando una tarjeta tenga esta clase, se ejecutará la animación */
+    .project-card.is-visible {
+        animation: fadeInUp 0.5s ease-out forwards;
+    }
+
+.filter-card {
+    background-color: var(--color-blanco);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem; /* Más espacio antes de la lista de proyectos */
+    box-shadow: var(--sombra-tarjeta);
+    border: 1px solid #e9ecef;
+}
+.form-group {
+    position: relative;
+}
+
+    .form-group .form-control,
+    .form-group .form-select {
+        padding-left: 2.5rem; /* Hacemos espacio para el icono */
+        font-size: 0.9rem;
+        height: calc(1.5em + .75rem + 5px); /* Un poco más altos */
+        background-color: #f8f9fa; /* Fondo sutil */
+        border: 1px solid #dee2e6;
+    }
+
+    .form-group .form-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--color-plata);
+        pointer-events: none; /* Para que se pueda hacer clic en el input */
+    }
+
+.form-control:focus,
+.form-select:focus {
+    background-color: var(--color-blanco);
+    border-color: var(--color-azul-oscuro);
+    box-shadow: 0 0 0 3px rgba(11, 45, 72, 0.1);
+}
+
+/* Grupo de botones al final */
+.filter-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-end; /* Alinea los botones con los inputs */
+    height: 100%;
+}
+
+    .filter-actions .btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+/* Botón de Volver con estilo más sutil */
+.btn-volver {
+    background-color: #e9ecef;
+    color: #495057;
+    border: none;
+}
+
+    .btn-volver:hover {
+        background-color: #dee2e6;
+    }

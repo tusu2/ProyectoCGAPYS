@@ -1,38 +1,55 @@
 ﻿// =================================================================
-// Archivo: Crear.js (Versión Final con Pestañas Bloqueadas y Zoom de Mapa)
+// Archivo: Crear.js (Versión Limpia - Solo Mapa Manual)
 // =================================================================
 
 document.addEventListener('DOMContentLoaded', function () {
 
-    // --- CAMBIO: Coordenadas y zoom actualizados según tu petición ---
-    const LATITUD_INICIAL = 25.528995205680427;
-    const LONGITUD_INICIAL = -103.33246842026712;
-    const ZOOM_INICIAL = 17; // Un zoom más cercano para ver detalles
+    // --- CONFIGURACIÓN DEL MAPA (Centrado en Torreón) ---
+    const LATITUD_INICIAL = 25.5404;
+    const LONGITUD_INICIAL = -103.4463;
+    const ZOOM_INICIAL = 14;
     let mapa;
     let marker;
 
     const mapaContainer = document.getElementById('mapa');
+
     if (mapaContainer) {
-        // Usamos las nuevas constantes para inicializar el mapa
+        // 1. Inicializar el mapa
         mapa = L.map(mapaContainer).setView([LATITUD_INICIAL, LONGITUD_INICIAL], ZOOM_INICIAL);
+
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '© OpenStreetMap contributors'
         }).addTo(mapa);
 
-        mapa.on('click', e => {
-            const { lat, lng } = e.latlng;
+        // --- FUNCIÓN PARA ACTUALIZAR MARCADOR E INPUTS ---
+        function actualizarUbicacion(lat, lng) {
+            // Mover o crear marcador
             if (marker) {
-                marker.setLatLng(e.latlng);
+                marker.setLatLng([lat, lng]);
             } else {
-                marker = L.marker(e.latlng).addTo(mapa);
+                marker = L.marker([lat, lng], { draggable: true }).addTo(mapa);
+
+                // Si el usuario arrastra el marcador manualmente
+                marker.on('dragend', function (e) {
+                    var position = marker.getLatLng();
+                    document.getElementById('Latitud').value = position.lat;
+                    document.getElementById('Longitud').value = position.lng;
+                });
             }
+
+            // Actualizar inputs ocultos
             document.getElementById('Latitud').value = lat;
             document.getElementById('Longitud').value = lng;
+        }
+
+        // 2. Evento: Clic en el mapa para poner el marcador
+        mapa.on('click', e => {
+            actualizarUbicacion(e.latlng.lat, e.latlng.lng);
         });
     }
 
-    // --- CAMBIO: Bloqueamos las pestañas 2 y 3 al cargar la página ---
+    // --- BLOQUEO DE PESTAÑAS INICIAL ---
     document.getElementById('responsable-tab').classList.add('disabled');
     document.getElementById('estatus-tab').classList.add('disabled');
 
@@ -52,6 +69,7 @@ document.addEventListener('DOMContentLoaded', function () {
             let errorMessage = '';
 
             const isRequired = input.hasAttribute('data-val-required');
+
             if (isRequired && !input.value) {
                 isFieldValid = false;
                 errorMessage = input.getAttribute('data-val-required');
@@ -117,7 +135,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.getElementById('btnSiguiente')?.addEventListener('click', () => {
         if (validarTabActual('#proyecto')) {
-            // --- CAMBIO: Desbloqueamos la siguiente pestaña antes de movernos ---
             document.getElementById('responsable-tab').classList.remove('disabled');
             goToTab('#responsable');
         }
@@ -129,7 +146,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.getElementById('btnSiguienteEstatus')?.addEventListener('click', () => {
         if (validarTabActual('#responsable')) {
-            // --- CAMBIO: Desbloqueamos la siguiente pestaña antes de movernos ---
             document.getElementById('estatus-tab').classList.remove('disabled');
             goToTab('#estatus');
         }
@@ -183,9 +199,12 @@ document.addEventListener('DOMContentLoaded', function () {
                         form.reset();
                         form.querySelectorAll('.is-valid, .is-invalid').forEach(el => el.classList.remove('is-valid', 'is-invalid'));
                         form.querySelectorAll('span[data-valmsg-for]').forEach(span => span.textContent = '');
-                        if (marker) mapa.removeLayer(marker);
 
-                        // --- CAMBIO: Volvemos a bloquear las pestañas después de guardar ---
+                        if (marker && mapa) {
+                            mapa.removeLayer(marker);
+                            marker = null;
+                        }
+
                         document.getElementById('responsable-tab').classList.add('disabled');
                         document.getElementById('estatus-tab').classList.add('disabled');
 

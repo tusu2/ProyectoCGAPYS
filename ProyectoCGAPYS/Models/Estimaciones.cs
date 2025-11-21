@@ -25,6 +25,7 @@ namespace ProyectoCGAPYS.Models
         [StringLength(50)]
         public string Estado { get; set; } // Posibles valores: "Pendiente", "Pagada", "Rechazada"
 
+        public bool EsFiniquito { get; set; }
 
         [Required]
         public string IdProyectoFk { get; set; } // La columna que guarda la llave foránea.
@@ -32,5 +33,20 @@ namespace ProyectoCGAPYS.Models
         // La 'propiedad de navegación' que le permite a EF Core entender la relación.
         [ForeignKey("IdProyectoFk")]
         public virtual Proyectos Proyecto { get; set; }
+
+        public virtual ICollection<EstimacionDocumentos> Documentos { get; set; }
+
+        // Una estimación puede tener MUCHOS cambios de estado
+        public virtual ICollection<EstimacionHistorial> Historial { get; set; }
+
+      
+        // --- CONSTRUCTOR ---
+        // (Agrega o modifica tu constructor para inicializar las listas)
+        public Estimaciones()
+        {
+            Documentos = new HashSet<EstimacionDocumentos>();
+            Historial = new HashSet<EstimacionHistorial>();
+            // No borres otras inicializaciones que ya tengas
+        }
     }
 }

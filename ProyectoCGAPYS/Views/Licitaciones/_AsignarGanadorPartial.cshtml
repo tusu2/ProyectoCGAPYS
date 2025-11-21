@@ -1,0 +1,49 @@
+﻿@model IEnumerable<ProyectoCGAPYS.Models.Contratista>
+
+<div class="row mb-3">
+    <div class="col-md-8">
+        <input type="text" id="busquedaContratistaAsignar" class="form-control" placeholder="Buscar por Razón Social o RFC...">
+    </div>
+    <div class="col-md-4">
+        <button type="button" id="btnBuscarContratistaAsignar" class="btn btn-primary w-100">Buscar</button>
+    </div>
+</div>
+
+@if (Model.Any())
+{
+    <div style="max-height: 400px; overflow-y: auto;">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Razón Social</th>
+                    <th>RFC</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var contratista in Model)
+                {
+                    <tr>
+                        <td>@contratista.RazonSocial</td>
+                        <td>@contratista.RFC</td>
+                        <td>
+
+                            <form action="@Url.Action("AsignarGanador", "Licitaciones")" method="post" class="form-asignar-ganador">
+                                @Html.AntiForgeryToken()
+
+                                <input type="hidden" name="licitacionId" value="@ViewBag.LicitacionId" />
+
+                                <input type="hidden" name="contratistaGanadorId" value="@contratista.Id" />
+                                <button type="submit" class="btn btn-primary btn-sm">Asignar</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="alert alert-warning">No se encontraron contratistas (o ninguno registrado).</div>
+}

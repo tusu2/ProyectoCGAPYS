@@ -58,7 +58,7 @@
                     <div class="col">
                         <label asp-for="IdCampusFk" class="form-label">Campus <span class="text-danger">*</span></label>
                         <select asp-for="IdCampusFk" asp-items="@Model.CampusOptions" class="form-select">
-                            <option value="">Seleccione un campus</option>
+                            <option value="">Seleccione la unidad</option>
                         </select>
                         <span asp-validation-for="IdCampusFk" class="text-danger"></span>
                     </div>
@@ -91,7 +91,7 @@
                     </div>
                 </div>
                 <div class="mb-3">
-                    <label asp-for="IdTipoFondoFk" class="form-label">Tipo de fondo<span class="text-danger">*</span></label>
+                <label asp-for="IdTipoFondoFk" class="form-label">Tipo de fondo</label>
                     <select asp-for="IdTipoFondoFk" asp-items="@Model.TipoFondoOptions" class="form-select">
                         <option value="">Seleccione un tipo de fondo</option>
                     </select>
@@ -100,28 +100,24 @@
                 <button type="button" class="btn btn-primary" id="btnSiguiente">Siguiente</button>
             </div>
 
-            <div class="tab-pane fade" id="responsable" role="tabpanel" aria-labelledby="responsable-tab">
-                <div class="mb-3">
-                    <label asp-for="NombreResponsable" class="form-label">Nombre del responsable <span class="text-danger">*</span></label>
-                    <input asp-for="NombreResponsable" class="form-control" />
-                    <span asp-validation-for="NombreResponsable" class="text-danger"></span>
-                </div>
-                <div class="mb-3">
-                    <label asp-for="Correo" class="form-label">Correo electrónico <span class="text-danger">*</span></label>
-                    <input asp-for="Correo" class="form-control" />
-                    <span asp-validation-for="Correo" class="text-danger"></span>
-                </div>
-                <div class="row mb-3">
-                   
-                    <div class="col">
-                        <label asp-for="Celular" class="form-label">Celular <span class="text-danger">*</span></label>
-                        <input asp-for="Celular" class="form-control" />
-                        <span asp-validation-for="Celular" class="text-danger"></span>
-                    </div>
-                </div>
-                <button type="button" class="btn btn-secondary" id="btnAnterior">Anterior</button>
-                <button type="button" class="btn btn-primary" id="btnSiguienteEstatus">Siguiente</button>
-            </div>
+    <div class="tab-pane fade" id="responsable" role="tabpanel" aria-labelledby="responsable-tab">
+
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> Seleccione un usuario del sistema para asignarlo como responsable del proyecto.
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="UsuarioResponsableId" class="form-label">Asignar Personal (Usuario) <span class="text-danger">*</span></label>
+        <select asp-for="UsuarioResponsableId" asp-items="@Model.UsuariosOptions" class="form-select">
+            <option value="">-- Seleccione un usuario --</option>
+        </select>
+        <span asp-validation-for="UsuarioResponsableId" class="text-danger"></span>
+    </div>
+
+    <br />
+    <button type="button" class="btn btn-secondary" id="btnAnterior">Anterior</button>
+    <button type="button" class="btn btn-primary" id="btnSiguienteEstatus">Siguiente</button>
+</div>
 
             <div class="tab-pane fade" id="estatus" role="tabpanel" aria-labelledby="estatus-tab">
                 <div class="mb-3">

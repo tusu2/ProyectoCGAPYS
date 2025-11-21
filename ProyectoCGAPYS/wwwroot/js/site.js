@@ -1,190 +1,280 @@
-﻿document.addEventListener('DOMContentLoaded', function () {
+﻿// /js/site.js
 
-    // Seleccionamos todos los enlaces dentro del sidebar
-    const menuLinks = document.querySelectorAll('.sidebar .menu-link');
+// --- INICIO DE CÓDIGO PARA DEPURACIÓN ---
 
-    // Función que maneja el clic
-    function handleLinkClick(event) {
-        // Primero, quitamos la clase 'active' de todos los demás enlaces
-        menuLinks.forEach(link => {
-            link.classList.remove('active');
+// Seleccionamos todos los enlaces dentro del sidebar
+const menuLinks = document.querySelectorAll('.sidebar .menu-link');
+function handleLinkClick(event) {
+    menuLinks.forEach(link => {
+        link.classList.remove('active');
+    });
+    this.classList.add('active');
+}
+menuLinks.forEach(link => {
+    link.addEventListener('click', handleLinkClick);
+});
+
+let mapa;
+let todosLosProyectos = [];
+let marcadoresEnMapa = [];
+
+if (document.getElementById('mapa-principal')) {
+    // Esta parte se ejecuta solo en la página de búsqueda.
+    // inicializarLogicaIndex() se llama desde Index.cshtml
+}
+
+function inicializarMapa() {
+    if (mapa) {
+        mapa.remove();
+    }
+    const latitudInicial = 25.5428;
+    const longitudInicial = -103.4068;
+    mapa = L.map('mapa-principal').setView([latitudInicial, longitudInicial], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(mapa);
+}
+
+async function cargarYMostrarProyectos(listaProyectosUl) {
+    try {
+        const response = await fetch('/Proyecto/GetProyectos');
+        if (!response.ok) throw new Error(`Error al obtener los proyectos: ${response.statusText}`);
+        todosLosProyectos = await response.json();
+        renderizarProyectos(todosLosProyectos, listaProyectosUl);
+    } catch (error) {
+        console.error("No se pudieron cargar los proyectos:", error);
+        if (listaProyectosUl) {
+            listaProyectosUl.innerHTML = '<li class="no-projects">Error al cargar los proyectos.</li>';
+        }
+    }
+}
+
+function renderizarProyectos(proyectos, listaProyectosUl) {
+    if (!listaProyectosUl) return;
+    const modal = document.getElementById('modal-proyecto');
+    const modalDetalles = document.getElementById('modal-detalles');
+    const modalNombreProyecto = document.getElementById('modal-nombre-proyecto');
+
+    marcadoresEnMapa.forEach(marker => mapa.removeLayer(marker));
+    marcadoresEnMapa = [];
+    listaProyectosUl.innerHTML = '';
+
+    if (proyectos.length === 0) {
+        listaProyectosUl.innerHTML = '<li class="no-projects">No se encontraron proyectos que coincidan.</li>';
+    } else {
+        proyectos.forEach(proyecto => {
+            crearMarcadorEnMapa(proyecto, modal, modalNombreProyecto, modalDetalles);
+            crearElementoEnLista(proyecto, listaProyectosUl, modal, modalNombreProyecto, modalDetalles);
         });
+    }
+}
 
-        // Luego, añadimos la clase 'active' al enlace que fue clickeado
-        // 'this' se refiere al elemento que disparó el evento (el enlace)
-        this.classList.add('active');
+
+
+function crearMarcadorEnMapa(proyecto, modal, modalNombreProyecto, modalDetalles) {
+    const lat = parseFloat(proyecto.latitud);
+    const lon = parseFloat(proyecto.longitud);
+    if (!isNaN(lat) && !isNaN(lon)) {
+        const defaultIcon = new L.Icon.Default();
+        const marker = L.marker([lat, lon], { icon: defaultIcon }).addTo(mapa);
+        marker.on('click', () => mostrarModalConDetalles(proyecto, modal, modalNombreProyecto, modalDetalles));
+        marcadoresEnMapa.push(marker);
+    }
+}
+
+function aplicarFiltros(listaProyectosUl) {
+    console.log("PASO 3: ✅ Función aplicarFiltros() EJECUTADA. Verificando elementos...");
+
+    // Modo detective: Verificamos cada elemento uno por uno.
+    const filtroNombreEl = document.getElementById('filtro-nombre');
+    const filtroCampusEl = document.getElementById('filtro-campus');
+    const filtroFechaInicioEl = document.getElementById('filtro-fecha-inicio');
+    const filtroFechaFinEl = document.getElementById('filtro-fecha-fin');
+
+    // Reporte del detective en la consola
+    console.log(`- Elemento 'filtro-nombre':`, filtroNombreEl ? '✔️ Encontrado' : '❌ NO ENCONTRADO');
+    console.log(`- Elemento 'filtro-dependencia':`, filtroCampusEl ? '✔️ Encontrado' : '❌ NO ENCONTRADO');
+    console.log(`- Elemento 'filtro-fecha-inicio':`, filtroFechaInicioEl ? '✔️ Encontrado' : '❌ NO ENCONTRADO');
+    console.log(`- Elemento 'filtro-fecha-fin':`, filtroFechaFinEl ? '✔️ Encontrado' : '❌ NO ENCONTRADO');
+
+    if (!filtroNombreEl || !filtroCampusEl || !filtroFechaInicioEl || !filtroFechaFinEl) {
+        console.log("🛑 Saliendo de la función porque falta un elemento.");
+        return;
     }
 
-    // Agregamos un 'escuchador' de eventos de clic a cada enlace
-    menuLinks.forEach(link => {
-        link.addEventListener('click', handleLinkClick);
+    const nombreValor = filtroNombreEl.value;
+    const campusIdValor = filtroCampusEl.value;
+    const fechaInicioValor = filtroFechaInicioEl.value;
+    const fechaFinValor = filtroFechaFinEl.value;
+    const nombreNormalizado = normalizarTexto(nombreValor);
+
+    console.log(`PASO 4: 🕵️‍♀️ Filtrando con el texto: "${nombreNormalizado}". Proyectos totales: ${todosLosProyectos.length}`);
+
+    const proyectosFiltrados = todosLosProyectos.filter(proyecto => {
+        const matchNombre = normalizarTexto(proyecto.nombreProyecto).includes(nombreNormalizado);
+        const matchCampus = !campusIdValor || proyecto.idCampusFk == campusIdValor; 
+        const fechaProyecto = new Date(proyecto.fechaSolicitud);
+        const matchFechaInicio = !fechaInicioValor || fechaProyecto >= new Date(fechaInicioValor);
+        const matchFechaFin = !fechaFinValor || fechaProyecto <= new Date(fechaFinValor);
+
+        return matchNombre && matchCampus && matchFechaInicio && matchFechaFin;
     });
-    // --- REFERENCIAS AL DOM ---
-    // ... (las referencias a modal, lista, etc. no cambian)
+
+    console.log(`PASO 5: 🏁 Filtro terminado. Proyectos encontrados: ${proyectosFiltrados.length}`);
+    renderizarProyectos(proyectosFiltrados, listaProyectosUl);
+}
+
+function limpiarFiltros(listaProyectosUl) {
+    const filtroNombreEl = document.getElementById('filtro-nombre');
+    const filtroDependenciaEl = document.getElementById('filtro-dependencia');
+    const filtroFechaInicioEl = document.getElementById('filtro-fecha-inicio');
+    const filtroFechaFinEl = document.getElementById('filtro-fecha-fin');
+
+    if (filtroNombreEl) filtroNombreEl.value = '';
+    if (filtroDependenciaEl) filtroDependenciaEl.value = '';
+    if (filtroFechaInicioEl) filtroFechaInicioEl.value = '';
+    if (filtroFechaFinEl) filtroFechaFinEl.value = '';
+
+    renderizarProyectos(todosLosProyectos, listaProyectosUl);
+}
+
+function crearElementoEnLista(proyecto, listaProyectosUl, modal, modalNombreProyecto, modalDetalles) {
+    const listItem = document.createElement('li');
+    listItem.innerHTML = `
+        <div class="project-info">
+            <div class="project-name">${proyecto.nombreProyecto}</div>
+            <div class="project-id">Folio: ${proyecto.folio || 'N/D'}</div>
+        </div>
+        <span class="view-details-icon">➔</span>
+    `;
+    listItem.addEventListener('click', () => {
+        const lat = parseFloat(proyecto.latitud);
+        const lon = parseFloat(proyecto.longitud);
+        if (!isNaN(lat) && !isNaN(lon)) {
+            mapa.setView([lat, lon], 17);
+        }
+        mostrarModalConDetalles(proyecto, modal, modalNombreProyecto, modalDetalles);
+    });
+    listaProyectosUl.appendChild(listItem);
+}
+
+// En js/site.js
+
+function mostrarModalConDetalles(proyecto) {
+    // --- INICIA SECCIÓN DE DEPURACIÓN ---
+    console.log("1. Intentando abrir modal para:", proyecto.nombreProyecto);
+
+    const modal = document.getElementById('modal-proyecto');
+    console.log("2. Buscando #modal-proyecto:", modal);
+
+    const modalNombreProyecto = document.getElementById('modal-nombre-proyecto');
+    console.log("3. Buscando #modal-nombre-proyecto:", modalNombreProyecto);
+
+    const modalDetalles = document.getElementById('modal-detalles');
+    console.log("4. Buscando #modal-detalles:", modalDetalles);
+
+    if (!modal || !modalNombreProyecto || !modalDetalles) {
+        console.error("¡ERROR! Uno o más elementos del modal no se encontraron en el HTML. La función se detuvo.");
+        return; // Detenemos la ejecución aquí
+    }
+    console.log("5. ¡Éxito! Todos los elementos del modal fueron encontrados. Mostrando...");
+    // --- TERMINA SECCIÓN DE DEPURACIÓN ---
+
+
+    // --- Lógica para determinar el estado de la prioridad (sin cambios) ---
+    let prioridadClass = 'priority-ninguna';
+    let prioridadTexto = 'Sin Asignar';
+
+    if (proyecto.prioridad === 'verde') {
+        prioridadClass = 'priority-verde';
+        prioridadTexto = 'Normal';
+    } else if (proyecto.prioridad === 'amarillo') {
+        prioridadClass = 'priority-amarillo';
+        prioridadTexto = 'Media';
+    } else if (proyecto.prioridad === 'rojo') {
+        prioridadClass = 'priority-rojo';
+        prioridadTexto = 'Urgente';
+    }
+
+    // Llenamos el contenido del modal (sin cambios)
+    modalNombreProyecto.textContent = proyecto.nombreProyecto;
+    modalDetalles.innerHTML = `
+        <div class="priority-display">
+            <div class="priority-indicator ${prioridadClass}"></div>
+            <p>${prioridadTexto}</p>
+        </div>
+        <p><strong>Folio:</strong> ${proyecto.folio || 'No disponible'}</p>
+        <p><strong>Campus:</strong> ${proyecto.campus}</p>
+        <p><strong>Estatus:</strong> ${proyecto.estatus}</p>
+        <p><strong>Responsable:</strong> ${proyecto.nombreResponsable}</p>
+        <hr>
+        <p><strong>Descripción:</strong> ${proyecto.descripcion}</p>
+    `;
+
+    // Mostramos el modal
+    modal.classList.add('show');
+}
+
+function cerrarModal(modal) {
+    if (modal) modal.classList.remove('show');
+}
+
+function inicializarLogicaIndex() {
     const listaProyectosUl = document.getElementById('lista-proyectos');
     const modal = document.getElementById('modal-proyecto');
     const modalNombreProyecto = document.getElementById('modal-nombre-proyecto');
     const modalDetalles = document.getElementById('modal-detalles');
     const cerrarModalBtn = document.querySelector('.cerrar-modal');
-
-    // Referencias a los elementos del formulario de filtros
-    const filtroNombre = document.getElementById('filtro-nombre');
-    const filtroDependencia = document.getElementById('filtro-dependencia');
-    const filtroFechaInicio = document.getElementById('filtro-fecha-inicio');
-    const filtroFechaFin = document.getElementById('filtro-fecha-fin');
     const aplicarFiltrosBtn = document.getElementById('aplicar-filtros-btn');
     const limpiarFiltrosBtn = document.getElementById('limpiar-filtros-btn');
+    const filtroNombreInput = document.getElementById('filtro-nombre');
 
-    // --- VARIABLES GLOBALES ---
-    let mapa;
-    let todosLosProyectos = [];
-    let marcadoresEnMapa = [];
+    if (!listaProyectosUl) return; // Si no hay lista, no hacemos nada de esto.
 
-    // ... (El resto del código: inicializarMapa, cargarYMostrarProyectos, renderizarProyectos, etc. es exactamente el mismo)
-    // ... (Lo omito aquí para ser breve, pero no ha cambiado)
+    inicializarMapa();
+    cargarYMostrarProyectos(listaProyectosUl);
+    const filtrosDebounced = debounce(() => aplicarFiltros(listaProyectosUl), 400);
 
-
-    // --- ASIGNACIÓN DE EVENTOS ---
-    // El código para el modal no cambia
     if (cerrarModalBtn) {
-        cerrarModalBtn.addEventListener('click', cerrarModal);
+        cerrarModalBtn.addEventListener('click', () => cerrarModal(modal));
     }
     if (modal) {
         modal.addEventListener('click', (event) => {
             if (event.target === modal) {
-                cerrarModal();
+                cerrarModal(modal);
             }
         });
     }
-
-    // *** AQUÍ ESTÁ LA MEJORA ***
-    // Comprobamos que los botones de filtro existen en la página actual antes de asignarles eventos.
-    if (aplicarFiltrosBtn && limpiarFiltrosBtn) {
-        aplicarFiltrosBtn.addEventListener('click', aplicarFiltros);
-        limpiarFiltrosBtn.addEventListener('click', limpiarFiltros);
+    if (aplicarFiltrosBtn) {
+        aplicarFiltrosBtn.addEventListener('click', () => aplicarFiltros(listaProyectosUl));
     }
-
-    // --- EJECUCIÓN INICIAL ---
-    // Comprobamos si el contenedor del mapa existe para decidir si ejecutar el script.
-    // Esto asegura que todo este código SÓLO se ejecute en la página de búsqueda.
-    if (document.getElementById('mapa-principal')) {
-        inicializarMapa();
-        cargarYMostrarProyectos();
+    if (limpiarFiltrosBtn) {
+        limpiarFiltrosBtn.addEventListener('click', () => limpiarFiltros(listaProyectosUl));
     }
-
-    // --- DEFINICIONES DE FUNCIONES (sin cambios) ---
-    function inicializarMapa() {
-        const latitudInicial = 25.5428;
-        const longitudInicial = -103.4068;
-
-        mapa = L.map('mapa-principal').setView([latitudInicial, longitudInicial], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(mapa);
-    }
-
-    async function cargarYMostrarProyectos() {
-        try {
-            const response = await fetch('/Proyecto/GetProyectos');
-            if (!response.ok) throw new Error(`Error al obtener los proyectos: ${response.statusText}`);
-            todosLosProyectos = await response.json();
-            renderizarProyectos(todosLosProyectos);
-        } catch (error) {
-            console.error("No se pudieron cargar los proyectos:", error);
-            listaProyectosUl.innerHTML = '<li class="no-projects">Error al cargar los proyectos.</li>';
-        }
-    }
-
-    function renderizarProyectos(proyectos) {
-        marcadoresEnMapa.forEach(marker => mapa.removeLayer(marker));
-        marcadoresEnMapa = [];
-        listaProyectosUl.innerHTML = '';
-        if (proyectos.length === 0) {
-            mostrarMensajeSinProyectos();
-        } else {
-            proyectos.forEach(proyecto => {
-                crearMarcadorEnMapa(proyecto);
-                crearElementoEnLista(proyecto);
-            });
-        }
-    }
-
-    function crearMarcadorEnMapa(proyecto) {
-        const lat = parseFloat(proyecto.latitud);
-        const lon = parseFloat(proyecto.longitud);
-        if (!isNaN(lat) && !isNaN(lon)) {
-            const defaultIcon = new L.Icon.Default();
-            const marker = L.marker([lat, lon], { icon: defaultIcon }).addTo(mapa);
-            marker.on('click', () => mostrarModalConDetalles(proyecto));
-            marcadoresEnMapa.push(marker);
-        }
-    }
-
-    function aplicarFiltros() {
-        const nombre = filtroNombre.value.toLowerCase();
-        const dependencia = filtroDependencia.value;
-        const fechaInicio = filtroFechaInicio.value;
-        const fechaFin = filtroFechaFin.value;
-        const proyectosFiltrados = todosLosProyectos.filter(proyecto => {
-            const matchNombre = proyecto.nombreProyecto.toLowerCase().includes(nombre);
-            const matchDependencia = !dependencia || proyecto.dependencia === dependencia;
-            const fechaProyecto = new Date(proyecto.fechaSolicitud);
-            const matchFechaInicio = !fechaInicio || fechaProyecto >= new Date(fechaInicio);
-            const matchFechaFin = !fechaFin || fechaProyecto <= new Date(fechaFin);
-            return matchNombre && matchDependencia && matchFechaInicio && matchFechaFin;
-        });
-        renderizarProyectos(proyectosFiltrados);
-    }
-
-    function limpiarFiltros() {
-        filtroNombre.value = '';
-        filtroDependencia.value = '';
-        filtroFechaInicio.value = '';
-        filtroFechaFin.value = '';
-        renderizarProyectos(todosLosProyectos);
-    }
-
-    function mostrarMensajeSinProyectos() {
-        listaProyectosUl.innerHTML = '<li class="no-projects">No se encontraron proyectos que coincidan con los filtros.</li>';
-    }
-
-    function crearElementoEnLista(proyecto) {
-        const listItem = document.createElement('li');
-        listItem.innerHTML = `
-            <div class="project-info">
-                <div class="project-name">${proyecto.nombreProyecto}</div>
-                <div class="project-id">Folio: ${proyecto.folio || 'N/D'}</div>
-            </div>
-            <span class="view-details-icon">➔</span>
-        `;
-        listItem.addEventListener('click', () => {
-            const lat = parseFloat(proyecto.latitud);
-            const lon = parseFloat(proyecto.longitud);
-            if (!isNaN(lat) && !isNaN(lon)) {
-                mapa.setView([lat, lon], 17);
+    if (filtroNombreInput) {
+        filtroNombreInput.addEventListener('input', () => {
+            console.log("PASO 1: ⌨️ Evento 'input' detectado.");
+            const texto = filtroNombreInput.value;
+            if (texto.length >= 3 || texto.length === 0) {
+                console.log("PASO 2: 👍 Condición cumplida. Llamando al filtro debounced...");
+                filtrosDebounced();
             }
-            mostrarModalConDetalles(proyecto);
         });
-        listaProyectosUl.appendChild(listItem);
     }
+}
 
-    function mostrarModalConDetalles(proyecto) {
-        modalNombreProyecto.textContent = proyecto.nombreProyecto;
-        modalDetalles.innerHTML = `
-            <p><strong>Folio:</strong> ${proyecto.folio || 'No disponible'}</p>
-            <p><strong>Dependencia:</strong> ${proyecto.dependencia}</p>
-            <p><strong>Estatus:</strong> ${proyecto.estatus}</p>
-            <p><strong>Responsable:</strong> ${proyecto.nombreResponsable}</p>
-            <p><strong>Tipo de Proyecto:</strong> ${proyecto.tipoProyecto}</p>
-            <p><strong>Tipo de Fondo:</strong> ${proyecto.tipoFondo}</p>
-            <p><strong>Presupuesto:</strong> $${Number(proyecto.presupuesto).toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
-            <p><strong>Fecha Solicitud:</strong> ${proyecto.fechaSolicitud ? new Date(proyecto.fechaSolicitud).toLocaleDateString() : 'N/D'}</p>
-            <p><strong>Descripción:</strong> ${proyecto.descripcion}</p>
-        `;
-        modal.classList.add('show');
-    }
+function normalizarTexto(texto) {
+    if (!texto) return '';
+    return texto
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+}
 
-    function cerrarModal() {
-        if (modal) modal.classList.remove('show');
-    }
-});
+function debounce(func, delay) {
+    let timeout;
+    return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+    };
+}

@@ -1,0 +1,234 @@
+﻿/* --- Variables de Color Institucionales --- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+:root {
+    --azul-institucional: #003366; /* Un azul marino profundo */
+    --oro-institucional: #D4AF37; /* Un tono dorado elegante */
+    --azul-claro-fondo: #f0f4f8; /* Un azul muy claro para el fondo general */
+    /* Colores funcionales */
+    --color-exito: #198754;
+    --color-peligro: #dc3545;
+    --color-fondo-tarjeta: #ffffff;
+    --color-sombra: rgba(0, 0, 0, 0.075);
+    --color-borde-suave: #e9ecef;
+    --texto-principal: #212529;
+    --texto-secundario: #6c757d;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--azul-claro-fondo);
+}
+
+
+/* --- Encabezado del Proyecto --- */
+.project-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--oro-institucional);
+}
+
+.project-title {
+    color: var(--azul-institucional);
+    font-weight: 700;
+    margin-bottom: 0;
+}
+
+.project-folio {
+    color: var(--texto-secundario);
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+/* --- Estilo General de las Tarjetas --- */
+.card {
+    border: 1px solid var(--color-borde-suave);
+    border-radius: 0.75rem;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1.5rem var(--color-sombra) !important;
+    }
+
+.card-title-section {
+    font-weight: 600;
+    color: var(--azul-institucional);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-borde-suave);
+    margin-bottom: 1.5rem;
+}
+
+    .card-title-section i {
+        color: var(--oro-institucional); /* Iconos en dorado */
+    }
+
+
+/* --- Tarjeta de Información (Izquierda) --- */
+.details-grid {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 1rem;
+}
+
+    .details-grid dt {
+        font-weight: 600;
+        color: var(--texto-secundario);
+    }
+
+    .details-grid dd {
+        margin-bottom: 0;
+        color: var(--texto-principal);
+    }
+
+/* --- Contenedor del Mapa --- */
+#mapa-proyecto {
+    height: 350px;
+    border-radius: 0.5rem;
+    border: 1px solid var(--color-borde-suave);
+    z-index: 0; /* Asegura que el mapa se muestre correctamente */
+}
+
+
+/* --- Tarjeta de Control de Fases (Derecha) --- */
+.status-card .card-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.current-phase {
+    background-color: var(--azul-institucional);
+    color: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    border-left: 5px solid var(--oro-institucional);
+}
+
+    .current-phase span {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .current-phase h5 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+.next-phase-actions h6 {
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 1rem;
+    color: var(--texto-secundario);
+}
+
+/* --- Historial como Línea de Tiempo --- */
+/* --- ESTILOS COMPLETOS Y LIMPIOS PARA EL HISTORIAL --- */
+/* --- ESTILOS COMPLETOS Y FINALES PARA EL HISTORIAL (con Flexbox) --- */
+
+.timeline {
+    list-style: none;
+    padding: 0;
+    position: relative;
+}
+
+    /* La línea vertical */
+    .timeline::before {
+        content: '';
+        position: absolute;
+        top: 5px;
+        left: 13px;
+        height: calc(100% - 10px);
+        width: 3px;
+        background: #e9ecef;
+        border-radius: 2px;
+    }
+
+/* Contenedor de cada item (Usa Flexbox) */
+.timeline-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem; /* Espacio entre ícono y contenido */
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+/* El ícono */
+.timeline-icon {
+    flex-shrink: 0;
+    width: 27px;
+    height: 27px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--azul-claro-fondo);
+    border: 2px solid var(--color-borde-suave);
+    border-radius: 50%;
+    z-index: 1;
+    font-size: 1rem;
+    margin-top: 3px;
+}
+
+.timeline-item--success .timeline-icon {
+    border-color: var(--color-exito);
+    color: var(--color-exito);
+}
+
+.timeline-item--danger .timeline-icon {
+    border-color: var(--color-peligro);
+    color: var(--color-peligro);
+}
+
+/* La tarjeta de contenido */
+.timeline-content {
+    background-color: #fff;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--texto-secundario);
+}
+
+.timeline-user {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.timeline-content strong {
+    font-weight: 600;
+    color: var(--texto-principal);
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.timeline-comment {
+    margin: 0;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--color-borde-suave);
+    font-size: 0.9rem;
+    color: #555;
+    font-style: italic;
+}
+.timeline-item--warning .timeline-icon {
+    border-color: var(--color-peligro);
+    color: var(--color-peligro);
+}

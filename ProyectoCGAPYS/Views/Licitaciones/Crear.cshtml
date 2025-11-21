@@ -1,0 +1,68 @@
+﻿@model ProyectoCGAPYS.ViewModels.CrearLicitacionViewModel
+@{
+    ViewData["Title"] = "Crear Nueva Licitación";
+}
+
+<h1>@ViewData["Title"]</h1>
+<h4>Proyecto: @Model.ProyectoNombre</h4>
+<hr />
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Crear">
+            @if (ViewBag.ModoGestionHabilitado == true)
+            {
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-3">
+                            <label asp-for="TipoProceso" class="control-label"></label>
+                            <select asp-for="TipoProceso" class="form-control">
+                                <option value="Adjudicación Directa">Adjudicación Directa</option>
+                                <option value="Licitación Pública">Licitación Pública / Invitación</option>
+                            </select>
+                            <span asp-validation-for="TipoProceso" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @* Este div es para mostrar los errores de validación generales *@
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            @* Campo oculto para mantener el ID del proyecto. ¡Es muy importante! *@
+            <input type="hidden" asp-for="ProyectoId" />
+
+            <div class="form-group">
+                <label asp-for="NumeroLicitacion" class="control-label"></label>
+                <input asp-for="NumeroLicitacion" class="form-control" />
+                <span asp-validation-for="NumeroLicitacion" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Descripcion" class="control-label"></label>
+                <textarea asp-for="Descripcion" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Descripcion" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="FechaInicio" class="control-label"></label>
+                <input asp-for="FechaInicio" class="form-control" type="date" />
+                <span asp-validation-for="FechaInicio" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="FechaFinPropuestas" class="control-label"></label>
+                <input asp-for="FechaFinPropuestas" class="form-control" type="date" />
+                <span asp-validation-for="FechaFinPropuestas" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mt-3">
+                <input type="submit" value="Crear Licitación" class="btn btn-primary" />
+                <a asp-controller="Proyectos" asp-action="Detalles" asp-route-id="@Model.ProyectoId" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

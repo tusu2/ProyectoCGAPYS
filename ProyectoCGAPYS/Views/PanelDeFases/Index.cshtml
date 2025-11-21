@@ -1,0 +1,196 @@
+﻿@model IEnumerable<ProyectoCGAPYS.Models.Proyectos>
+
+@{
+    ViewData["Title"] = "Panel de Fases de Proyectos";
+    // Obtenemos la lista completa de fases que enviamos desde el controlador
+    var fases = ViewBag.Fases as List<Fases>;
+
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css " asp-append-version="true" />
+
+<link rel="stylesheet" href="~/css/PanelDeFases.css" asp-append-version="true" />
+</br>
+</br>
+
+<div class="container-fluid mt-4">
+    <h1 class="text-center mb-4" style="font-family: 'Poppins', sans-serif; ">@ViewData["Title"]</h1>
+
+    <div id="confirm-bar" class="confirm-bar">
+        <span>Tienes cambios sin guardar.</span>
+        <button id="btn-confirmar-cambios" class="btn btn-sm btn-success">
+            <i class="bi bi-check-lg"></i> Confirmar Cambios
+        </button>
+    </div>
+    <div class="kanban-board"
+         data-puede-arrastrar="@User.IsInRole("Jefa").ToString().ToLower()"
+         data-user-roles="@Html.Raw(Json.Serialize(User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.Role).Select(c => c.Value).ToList()))">
+        @if (fases != null)
+        {
+            @foreach (var fase in fases)
+            {
+                <div class="kanban-column" id="fase-col-@fase.Id">
+
+                    <h5 class="kanban-column-title drag-handle fase-header-@fase.Id">
+                        <span>
+                            @switch (fase.Nombre)
+                            {
+                                case "Recepción / Análisis":
+                                    <i class="bi bi-inbox-fill"></i>
+                                    ; break;
+                                case "En Elaboración de Anteproyecto":
+                                    <i class="bi bi-pencil-square"></i>
+                                    ; break;
+                                case "En Elaboración de Presupuesto":
+                                    <i class="bi bi-calculator-fill"></i>
+                                    ; break;
+                                case "En Licitación":
+                                    <i class="bi bi-briefcase-fill"></i>
+                                    ; break;
+                                case "En Ejecución":
+                                    <i class="bi bi-tools"></i>
+                                    ; break;
+                                case "Finalizado":
+                                    <i class="bi bi-check2-circle"></i>
+                                    ; break;
+                                case "Cancelado":
+                                    <i class="bi bi-x-circle-fill"></i>
+                                    ; break;
+                                default:
+                                    <i class="bi bi-card-text"></i>
+                                    ; break;
+                            }
+                            @fase.Nombre
+                        </span>
+                        <span class="card-count">@Model.Count(p => p.IdFaseFk == fase.Id)</span>
+                    </h5>
+
+                    <div class="resize-handle"></div>
+
+                    @{
+                        string[] fasesContenedorCerrado = { "En Ejecución", "Finalizado", "Cancelado" };
+                        bool esContenedorCerrado = fasesContenedorCerrado.Contains(fase.Nombre);
+                        string[] fasesSinBotones = { "En Licitación", "En Ejecución", "Finalizado", "Cancelado" };
+                        bool esFaseSinBotones = fasesSinBotones.Contains(fase.Nombre);
+                        // 1. Definimos las fases bloqueadas
+                        string[] fasesEstaticas = { "En Licitación", "En Ejecución", "Finalizado", "Cancelado" };
+                        bool esFaseBloqueada = fasesEstaticas.Contains(fase.Nombre);
+
+                        // 2. Definimos la clase CSS correcta
+                        string claseContenedor = esContenedorCerrado ? "kanban-cards-blocked" : "kanban-cards-container";
+                    }
+
+                    @* CORRECCIÓN 1 (DOBLE SCROLL):
+            Eliminé el <div class="kanban-cards-container"> que envolvía todo.
+            Ahora usamos directamente el div dinámico como contenedor principal.
+            *@
+                    <div class="@claseContenedor" style="@(esContenedorCerrado ? "min-height: 100px; padding: 10px;" : "")">
+
+                        @foreach (var proyecto in Model.Where(p => p.IdFaseFk == fase.Id))
+                        {
+                            <div class="kanban-card" id="proyecto-@proyecto.Id" data-proyecto-id="@proyecto.Id" data-fase-origen-id="@fase.Id">
+
+                                @{
+                                    bool puedeVerDetalles =
+                                    User.IsInRole("Jefa") ||
+                                    (User.IsInRole("Empleado1") && fase.Id == 1) ||
+                                    (User.IsInRole("Empleado2") && fase.Id == 2) ||
+                                    (User.IsInRole("Empleado3") && fase.Id == 3);
+                                }
+
+                                @if (puedeVerDetalles)
+                                {
+                                    <a asp-action="Detalles" asp-controller="PanelDeFases" asp-route-id="@proyecto.Id" class="card-link">
+                                        <h6>@proyecto.NombreProyecto</h6>
+                                        <div class="card-details">
+                                            <span>Folio: @proyecto.Folio</span>
+                                            @if (!string.IsNullOrEmpty(proyecto.Prioridad))
+                                            {
+                                                var prioridadClass = "";
+                                                switch (proyecto.Prioridad)
+                                                {
+                                                    case "rojo": prioridadClass = "prioridad-alta"; break;
+                                                    case "amarillo": prioridadClass = "prioridad-media"; break;
+                                                    case "verde": prioridadClass = "prioridad-baja"; break;
+                                                }
+                                                <span class="prioridad-badge @prioridadClass" title="Prioridad: @proyecto.Prioridad"></span>
+                                            }
+                                        </div>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <div class="card-link">
+                                        <h6>@proyecto.NombreProyecto</h6>
+                                        <p>Folio: @proyecto.Folio</p>
+                                    </div>
+                                }
+
+                                @{
+                                    bool puedeActuar = false;
+                                    if (User.IsInRole("Jefa")) { puedeActuar = true; }
+                                    else if (User.IsInRole("Empleado1") && fase.Id == 1) { puedeActuar = true; }
+                                    else if (User.IsInRole("Empleado2") && fase.Id == 2) { puedeActuar = true; }
+                                    else if (User.IsInRole("Empleado3") && fase.Id == 3) { puedeActuar = true; }
+                                }
+
+                                @* CORRECCIÓN 2 (BOTONES):
+                    Cambiamos la condición vieja. Ahora usamos '!esFaseBloqueada'.
+                    Esto asegura que si la fase es Licitación/Ejecución/Finalizado, los botones NO se pintan.
+                    Pero si es Recepción/Elaboración, SÍ se pintan (si tienes rol).
+                    *@
+                                @if (puedeActuar && !esFaseSinBotones)
+                                {
+                                    <div class="card-actions mt-2">
+                                        <button class="btn btn-sm btn-success btn-avanzar-fase" title="Aprobar y Avanzar">
+                                            <i class="bi bi-check-circle-fill"></i> Avanzar
+                                        </button>
+
+                                        @if (fase.Id > 1)
+                                        {
+                                            <button class="btn btn-sm btn-danger btn-rechazar-fase" title="Rechazar / Devolver">
+                                                <i class="bi bi-x-circle-fill"></i> Rechazar
+                                            </button>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }       // --- BUCLE EXTERIOR: Construye las COLUMNAS (las "repisas") ---
+            // Recorremos cada una de las fases posibles ("Recepción", "Anteproyecto", etc.)
+
+
+        }
+    </div>
+</div>
+<script>
+    let permisoFaseUsuario = 0; // Valor por defecto para un rol sin fase específica
+    @if (User.IsInRole("Jefa"))
+    {
+        @:permisoFaseUsuario = -1; // Un código especial para "acceso total"
+    }
+    else if (User.IsInRole("Empleado1"))
+    {
+        @:permisoFaseUsuario = 1;
+    }
+    else if (User.IsInRole("Empleado2"))
+    {
+        @:permisoFaseUsuario = 2;
+    }
+    else if (User.IsInRole("Empleado3"))
+    {
+        @:permisoFaseUsuario = 3;
+    }
+
+         const userRoles = @Html.Raw(Json.Serialize(User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.Role).Select(c => c.Value).ToList()));
+</script>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+    <script src="~/js/panelDeFases.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,106 @@
+﻿@model List<ProyectoCGAPYS.ViewModels.UsuarioListaViewModel>
+
+@{
+    ViewData["Title"] = "Directorio de Personal";
+}
+
+<div class="container mt-5 mb-5">
+    
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success border-0 shadow-sm mb-4" role="alert" style="border-left: 5px solid #28a745 !important;">
+            <i class="bi bi-check-circle-fill me-2"></i> @TempData["Mensaje"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-warning border-0 shadow-sm mb-4" role="alert" style="border-left: 5px solid #ffc107 !important;">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["Error"]
+        </div>
+    }
+
+    <div class="card-luxury">
+        
+        <div class="d-flex justify-content-between align-items-end mb-2">
+            <div>
+                <h2 class="luxury-title">Directorio de Personal</h2>
+                <div class="gold-line-left"></div>
+            </div>
+            <div class="mb-4"> <a asp-action="Crear" class="btn-tech">
+                    <i class="bi bi-person-plus-fill"></i> Nuevo Empleado
+                </a>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-luxury mb-0">
+                <thead>
+                    <tr>
+                        <th style="border-top-left-radius: 10px;">Empleado</th>
+                        <th>Rol</th>
+                        <th>Teléfono</th>
+                        <th>Estado</th>
+                        <th class="text-end" style="border-top-right-radius: 10px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; color: #0B2D48;">
+                                        <i class="bi bi-person-fill h5 mb-0"></i>
+                                    </div>
+                                    <div>
+                                        <strong style="color: #0B2D48;">@item.Email</strong>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge-role">@item.Rol</span>
+                            </td>
+                            <td>@item.Telefono</td>
+                            <td>
+                                @if (item.EstaBloqueado)
+                                {
+                                    <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">BLOQUEADO</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">ACTIVO</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <form asp-action="CambiarEstado" asp-route-id="@item.Id" method="post" style="display:inline;">
+                                    @if (item.EstaBloqueado)
+                                    {
+                                        <button type="submit" class="btn btn-sm btn-success" title="Reactivar Acceso" style="border-radius: 50%; width: 32px; height: 32px; padding: 0;">
+                                            <i class="bi bi-unlock-fill"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Bloquear Acceso" 
+                                                onclick="return confirm('¿Estás seguro de bloquear a este usuario? No podrá entrar al sistema.');"
+                                                style="border-radius: 50%; width: 32px; height: 32px; padding: 0; border: 1px solid #dc3545;">
+                                            <i class="bi bi-lock-fill"></i>
+                                        </button>
+                                    }
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-people display-4 mb-3 d-block opacity-25"></i>
+                <p>No hay empleados registrados en el sistema.</p>
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,39 @@
+﻿@* La ruta de este archivo sería: /Views/Licitaciones/_InvitarContratistasPartial.cshtml *@
+@model ProyectoCGAPYS.ViewModels.InvitarContratistaViewModel // Asegúrate de que el ViewModel coincida
+<link rel="stylesheet" href="~/css/Modal.css" asp-append-version="true" />
+<form id="formInvitarContratistas" asp-action="Invitar" asp-controller="Licitaciones" method="post">
+    <input type="hidden" name="licitacionId" value="@Model.LicitacionId" />
+
+    <div class="invitation-search-box">
+        <input type="search" id="busquedaContratista" class="form-control form-control-lg" placeholder="Buscar por nombre o RFC..."  />
+        <button type="button" id="btnBuscarContratista" class="btn btn-secondary">Buscar</button>
+    </div>
+
+    <div class="contractor-list">
+        @if (!Model.ContratistasDisponibles.Any())
+        {
+            <div class="text-center p-5 text-muted">
+                <p>No se encontraron contratistas.</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var contratista in Model.ContratistasDisponibles)
+            {
+                <label class="contractor-item w-100">
+                    <input type="checkbox" name="contratistasSeleccionados" value="@contratista.Id" class="form-check-input">
+                    <div class="contractor-info">
+                        <strong>@contratista.RazonSocial</strong>
+                        <span>@contratista.RFC</span>
+                    </div>
+                </label>
+            }
+        }
+    </div>
+
+    <div class="invitation-footer">
+        <button type="submit" class="btn btn-primary-custom">
+            <i class="fas fa-paper-plane me-2"></i>Invitar Seleccionados
+        </button>
+    </div>
+</form>
