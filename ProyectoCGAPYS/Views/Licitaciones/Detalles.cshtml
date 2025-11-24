@@ -300,19 +300,34 @@ else
                         <div class="card-body">
                         @if (!estaAdjudicada)
                         {
-                                    <form asp-action="SubirDocumentoLicitacion" method="post" enctype="multipart/form-data">
-                                        <input type="hidden" name="LicitacionId" value="@Model.LicitacionId" />
-                                        <div class="row g-3">
-                                            <div class="col-md-5">
-                                                <label class="form-label">Archivo</label>
-                                                <input type="file" name="archivo" class="form-control" required />
-                                            </div>
-                                            <div class="col-md-5">
-                                                <label class="form-label">Tipo de Documento</label>
+                            @* ENVOLVEMOS TODO EN UN FORMULARIO CON ID ESPECÍFICO *@
+                            <form id="formSubidaMasiva">
+                                @Html.AntiForgeryToken()
 
-                                        @* --- INICIO DE MODIFICACIÓN (TAREA 1) --- *@
-                                                <select name="TipoDocumento" class="form-select" required>
-                                                    <option value="">Seleccione...</option>
+                                <div class="card bg-light border-0 mb-3 shadow-sm">
+                                    <div class="card-body">
+                                        <h6 class="card-title text-primary mb-3">
+                                            <i class="fas fa-plus-circle me-1"></i> Agregar Documentos
+                                        </h6>
+
+                                        @* 'row g-3' da espacio horizontal y vertical entre columnas automáticamente *@
+                                        <div class="row g-3 align-items-end">
+
+                                            @* Columna 1: Archivo *@
+                                            <div class="col-md-5">
+                                                <label for="inputArchivoMasivo" class="form-label fw-bold small text-muted mb-1">
+                                                    Archivo
+                                                </label>
+                                                <input type="file" id="inputArchivoMasivo" name="archivoTemp" class="form-control" />
+                                            </div>
+
+                                            @* Columna 2: Tipo de Documento *@
+                                            <div class="col-md-5">
+                                                <label for="selectTipoMasivo" class="form-label fw-bold small text-muted mb-1">
+                                                    Tipo de Documento
+                                                </label>
+                                                <select id="selectTipoMasivo" class="form-select">
+                                                    <option value="" selected>Seleccione una opción...</option> @* Texto más claro *@
                                                     <option value="Dictamen">Dictamen</option>
                                                     <option value="Cuadro comparativo">Cuadro comparativo</option>
                                                     <option value="Fallo">Fallo</option>
@@ -320,16 +335,47 @@ else
                                                     <option value="Fianzas">Fianzas</option>
                                                     <option value="Otro">Otro</option>
                                                 </select>
-                                        @* --- FIN DE MODIFICACIÓN (TAREA 1) --- *@
-
                                             </div>
-                                            <div class="col-md-2 d-flex align-items-end">
-                                                <button type="submit" class="btn btn-success w-100">Subir</button>
+
+                                            @* Columna 3: Botón Agregar *@
+                                            <div class="col-md-2">
+                                                <div class="d-grid">
+                                                    @* d-grid estira el botón para que coincida con el ancho *@
+                                                    <button type="button" class="btn btn-secondary" id="btnAgregarCola">
+                                                        <i class="fas fa-plus me-1"></i> Agregar
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
-                                    </form>
-                                    <hr />
+
+                                        @* Tabla de cola (sin cambios, solo asegurando que el div padre esté bien) *@
+                                        <div class="mt-3" id="contenedorCola" style="display:none;">
+                                            <div class="table-responsive">
+                                                @* Agregado para móviles *@
+                                                <table class="table table-sm table-bordered bg-white mb-2">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th>Documento</th>
+                                                            <th>Tipo</th>
+                                                            <th style="width: 50px;" class="text-center"><i class="fas fa-trash"></i></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="tablaColaBody"></tbody>
+                                                </table>
+                                            </div>
+                                            <div class="d-grid">
+                                                <button type="button" id="btnSubirMasivo" class="btn btn-success">
+                                                    <i class="fas fa-cloud-upload-alt me-2"></i> Subir todos los documentos
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </form>
+                            <hr />
                         }
+                      
 
                         @if (Model.LicitacionDocumentos.Any())
                         {
@@ -342,19 +388,20 @@ else
                                                 <th>Acción</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
+                                <tbody>
                                     @foreach (var doc in Model.LicitacionDocumentos)
                                     {
-                                                    <tr>
-                                                        <td><span class="badge bg-secondary">@doc.TipoDocumento</span></td>
-                                                        <td>@doc.NombreArchivo</td>
-                                                        <td>@doc.FechaSubida.ToString("dd/MM/yyyy")</td>
-                                                        <td>
-                                                            <a href="@doc.RutaArchivo" target="_blank" class="btn btn-outline-primary btn-sm">Ver</a>
-                                                        </td>
-                                                    </tr>
+                                        <tr>
+                                            @* AGREGAMOS LA CLASE 'clase-tipo-documento' AQUÍ PARA LEERLA CON JS *@
+                                            <td><span class="badge bg-secondary clase-tipo-documento">@doc.TipoDocumento</span></td>
+                                            <td>@doc.NombreArchivo</td>
+                                            <td>@doc.FechaSubida.ToString("dd/MM/yyyy")</td>
+                                            <td>
+                                                <a href="@doc.RutaArchivo" target="_blank" class="btn btn-outline-primary btn-sm">Ver</a>
+                                            </td>
+                                        </tr>
                                     }
-                                        </tbody>
+                                </tbody>
                                     </table>
                         }
                         else
@@ -462,7 +509,122 @@ else
 
         <script>
             $(document).ready(function () {
+            let colaDocumentos = [];
 
+            // 1. Botón "Agregar" (mete el archivo al array y actualiza la tabla visual)
+            $('#btnAgregarCola').on('click', function () {
+                var fileInput = $('#inputArchivoMasivo')[0];
+                var tipoInput = $('#selectTipoMasivo');
+                var tipoValor = tipoInput.val();
+
+                // Validaciones simples
+                if (fileInput.files.length === 0) {
+                    Swal.fire('Atención', 'Selecciona un archivo primero.', 'warning');
+                    return;
+                }
+                if (!tipoValor) {
+                    Swal.fire('Atención', 'Selecciona el tipo de documento.', 'warning');
+                    return;
+                }
+
+                // Agregar al array
+                var archivo = fileInput.files[0];
+                colaDocumentos.push({
+                    file: archivo,
+                    tipo: tipoValor
+                });
+
+                // Limpiar inputs
+                $('#inputArchivoMasivo').val('');
+                tipoInput.val('');
+
+                renderizarTablaCola();
+            });
+
+            // 2. Función para pintar la tabla
+            function renderizarTablaCola() {
+                var tbody = $('#tablaColaBody');
+                tbody.empty();
+
+                if (colaDocumentos.length > 0) {
+                    $('#contenedorCola').show();
+
+                    colaDocumentos.forEach((item, index) => {
+                        var row = `
+                            <tr>
+                                <td class="small text-truncate" style="max-width: 150px;">${item.file.name}</td>
+                                <td class="small"><span class="badge bg-info text-dark">${item.tipo}</span></td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-xs btn-outline-danger btn-borrar-item" data-index="${index}">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                        tbody.append(row);
+                    });
+                } else {
+                    $('#contenedorCola').hide();
+                }
+            }
+
+            // 3. Botón borrar item de la lista (Delegación de eventos)
+            $(document).on('click', '.btn-borrar-item', function () {
+                var index = $(this).data('index');
+                colaDocumentos.splice(index, 1); // Quitar del array
+                renderizarTablaCola(); // Volver a pintar
+            });
+
+            // 4. Botón "Subir todos" (Envío AJAX al Controller)
+            $('#btnSubirMasivo').on('click', function () {
+                if (colaDocumentos.length === 0) return;
+
+                var formData = new FormData();
+                var licitacionId = @Model.LicitacionId;
+
+                // --- CAMBIO IMPORTANTE AQUÍ ---
+                // Buscamos el token SOLO dentro de nuestro formulario específico
+                var token = $('#formSubidaMasiva input[name="__RequestVerificationToken"]').val();
+                // ------------------------------
+
+                formData.append('licitacionId', licitacionId);
+                formData.append('__RequestVerificationToken', token);
+
+                colaDocumentos.forEach(item => {
+                    formData.append('archivos', item.file);
+                    formData.append('tiposDocumento', item.tipo);
+                });
+
+                let btn = $(this);
+                btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Subiendo...');
+
+                $.ajax({
+                    url: '@Url.Action("SubirDocumentosMasivos", "Licitaciones")',
+                    type: 'POST',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function (response) {
+                        Swal.fire('¡Éxito!', 'Los documentos se han subido correctamente.', 'success')
+                            .then(() => {
+                                // Usamos esto en lugar de reload() para forzar una petición limpia al servidor
+                                window.location.href = window.location.href;
+                            });
+                    },
+                    error: function (xhr) {
+                        console.error(xhr);
+                        var msg = "Error desconocido";
+                        if (xhr.responseJSON && xhr.responseJSON.mensaje) {
+                            msg = xhr.responseJSON.mensaje;
+                        } else if (xhr.responseText) {
+                            msg = xhr.responseText;
+                        }
+                        Swal.fire('Error al subir', msg, 'error');
+                        btn.prop('disabled', false).html('<i class="fas fa-cloud-upload-alt me-2"></i> Subir todos los documentos');
+                    }
+                });
+            });
+         
                 const licitacionId = @Model.LicitacionId;
 
                 // ==========================================================
@@ -541,65 +703,83 @@ else
                 // ==========================================================
                 // --- MANDAR A EJECUTAR (MODO CONTROL) ---
                 // ==========================================================
-               $('#btnMandarAEjecutar').on('click', function (e) {
-                        e.preventDefault();
+            // ==========================================================
+            // --- MANDAR A EJECUTAR (MODIFICADO) ---
+            // ==========================================================
+            $('#btnMandarAEjecutar').on('click', function (e) {
+                e.preventDefault();
 
-                        // 1. DEPURACIÓN: Verificamos qué valores está leyendo JS antes de enviar
-                        var form = $('#formMandarAEjecutar');
-                        var fechaInicio = form.find('input[name="FechaInicioEjecucion"]').val();
-                        var fechaFin = form.find('input[name="FechaFinEjecucion"]').val();
-                        var supervisor = form.find('select[name="SupervisorAsignadoID"]').val();
+                // 1. VALIDACIÓN DE FECHAS (Tu validación actual)
+                var form = $('#formMandarAEjecutar');
+                var fechaInicio = form.find('input[name="FechaInicioEjecucion"]').val();
+                var fechaFin = form.find('input[name="FechaFinEjecucion"]').val();
 
-                        console.log("--- INTENTANDO MANDAR A EJECUCIÓN ---");
-                        console.log("Fecha Inicio:", fechaInicio);
-                        console.log("Fecha Fin:", fechaFin);
-                        console.log("Supervisor ID:", supervisor);
+                if (!fechaInicio || !fechaFin) {
+                    Swal.fire('Atención', 'Por favor, selecciona las fechas de inicio y fin de ejecución.', 'warning');
+                    return;
+                }
 
-                        // Validación básica del lado del cliente para evitar recargas inútiles
-                        if (!fechaInicio || !fechaFin) {
-                            Swal.fire('Atención', 'Por favor, selecciona las fechas de inicio y fin de ejecución.', 'warning');
-                            return;
-                        }
+                // 2. NUEVA VALIDACIÓN: ¿Existe el documento "Contrato"?
+                // Buscamos en la tabla de documentos existentes si hay alguno con el texto "Contrato"
+                var existeContrato = false;
 
-                        Swal.fire({
-                            title: '¿Mandar a Ejecución?',
-                            text: "Se adjudicará la licitación y se moverá el proyecto a la fase de 'Ejecución'. ¿Estás seguro?",
-                            icon: 'question',
-                            showCancelButton: true,
-                            confirmButtonColor: '#28a745',
-                            cancelButtonColor: '#6c757d',
-                            confirmButtonText: 'Sí, mandar a ejecución',
-                            cancelButtonText: 'Cancelar'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                // 2. ENVIAR POR AJAX (Para que no se recargue y ver el error)
-                                var url = form.attr('action');
-                                var data = form.serialize(); // Empaqueta todos los inputs del form
+                // Iteramos sobre los elementos que marcamos en el HTML
+                $('.clase-tipo-documento').each(function () {
+                    if ($(this).text().trim() === 'Contrato') {
+                        existeContrato = true;
+                        return false; // Romper el bucle
+                    }
+                });
 
-                                $.post(url, data)
-                                    .done(function (response) {
-                                        // Si el servidor responde con éxito (puedes hacer que el controller devuelva JSON o Redirect)
-                                        // Como tu controller actual devuelve un Redirect, AJAX lo seguirá automáticamente.
-                                        // Si llega aquí, es que todo salió bien.
-                                        Swal.fire('¡Éxito!', 'El proyecto ha pasado a ejecución.', 'success')
-                                            .then(() => {
-                                                // Redirigir al panel de fases o recargar
-                                                window.location.href = '@Url.Action("Index", "PanelDeFases")';
-                                            });
-                                    })
-                                    .fail(function (xhr, status, error) {
-                                        // 3. AQUÍ ATRAPAMOS EL ERROR SI OCURRE
-                                        console.error("Error en servidor:", xhr.responseText);
-                                        Swal.fire({
-                                            title: 'Error al procesar',
-                                            text: 'El servidor respondió con un error. Revisa la consola (F12) para ver el detalle técnico.',
-                                            icon: 'error',
-                                            footer: 'Código de error: ' + xhr.status
-                                        });
-                                    });
-                            }
-                        });
+                if (!existeContrato) {
+                    Swal.fire({
+                        title: 'Faltan Documentos',
+                        text: 'Para mandar a ejecución, es obligatorio haber subido el documento de tipo "Contrato". Por favor súbelo antes de continuar.',
+                        icon: 'warning',
+                        confirmButtonColor: '#d33',
+                        confirmButtonText: 'Entendido'
                     });
+                    return; // Detenemos la ejecución aquí
+                }
+
+                // 3. SI PASA LAS VALIDACIONES, CONFIRMAMOS
+                Swal.fire({
+                    title: '¿Mandar a Ejecución?',
+                    text: "Se adjudicará la licitación y se moverá el proyecto a la fase de 'Ejecución'. ¿Estás seguro?",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, mandar a ejecución',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Aquí va tu código AJAX existente para enviar el formulario...
+                        var url = form.attr('action');
+                        var data = form.serialize();
+
+                        $.post(url, data)
+                            .done(function (response) {
+                                Swal.fire('¡Éxito!', 'El proyecto ha pasado a ejecución.', 'success')
+                                    .then(() => {
+                                        window.location.href = '@Url.Action("Index", "PanelDeFases")';
+                                    });
+                            })
+                            .fail(function (xhr) {
+                                console.error("Error en servidor:", xhr.responseText);
+                                var msg = "Error desconocido";
+                                if (xhr.responseJSON && xhr.responseJSON.mensaje) msg = xhr.responseJSON.mensaje; // Leer mensaje del server si existe
+                                else if (xhr.responseText) msg = xhr.responseText; // Leer texto plano
+
+                                Swal.fire({
+                                    title: 'Error al procesar',
+                                    text: msg,
+                                    icon: 'error'
+                                });
+                            });
+                    }
+                });
+            });
 
 
                 // ==========================================================

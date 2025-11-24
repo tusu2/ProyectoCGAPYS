@@ -259,12 +259,37 @@ namespace ProyectoCGAPYS.Controllers
                     return StatusCode(500, new { responseType = "text", content = $"La IA generó un SQL que falló: '{sqlQuery}'. Error: {ex.Message}" });
                 }
 
-
+                string datosExcel = ObtenerDatosDelDirectorio();
                 // --- PASO 3: RESUMIR LOS DATOS (Llamada 2 a Gemini) ---
 
                 // CAMBIO: Combinamos las instrucciones y los datos en un solo prompt para Gemini.
-                string promptSummary = $@"Eres un asistente experto de CGAPYS. Te daré datos JSON.
+                string promptSummary = $@"
+Eres un asistente experto de CGAPYS. Tienes acceso a dos fuentes de información exclusivas. Tu primera tarea es identificar sobre qué te están preguntando.
 
+--------------------------------------------------------
+FUENTE DE DATOS 1: DIRECTORIO UNIVERSITARIO (EXCEL)
+--------------------------------------------------------
+Usa estos datos SOLO si la pregunta se refiere a Facultades, Escuelas, Matrículas, Directores, Teléfonos o Ubicaciones.
+
+### DATOS DEL DIRECTORIO ###
+{datosExcel}
+############################
+
+**REGLAS ESTRICTAS PARA EL DIRECTORIO:**
+1. Busca la respuesta EXACTA en los DATOS DEL DIRECTORIO.
+2. NO inventes nada. Tu nivel de creatividad para estos datos es 0.
+3. Si te preguntan por una matrícula, director o teléfono y NO está en el texto de arriba, responde EXACTAMENTE: 'No se encontraron resultados'.
+4. No uses formato HTML para estas respuestas, solo texto plano directo y veraz.
+
+--------------------------------------------------------
+FUENTE DE DATOS 2: PROYECTOS DEL SISTEMA (JSON)
+--------------------------------------------------------
+Usa estos datos SOLO si la pregunta se refiere a Proyectos, Estatus, Presupuestos o Conteos del sistema CGAPYS.
+
+**Datos JSON:**
+{jsonData}
+
+**Reglas para Proyectos (Tu Prompt Original):**
 **Regla 1 (Listas/Conteos):**
 Si el JSON tiene 0 o más de 1 objeto, O si la pregunta original pide un conteo (ej: 'cuántos'), responde en texto plano simple.
 EJEMPLO: ""Hay 5 proyectos activos.""
@@ -291,15 +316,17 @@ Si el JSON tiene **exactamente 1 objeto** Y la pregunta NO es un conteo:
         <li class='list-group-item d-flex justify-content-between align-items-center'>Responsable: <span class='fw-bold'>[Valor Responsable]</span></li>
     </ul>
 
-**Datos JSON:**
-{jsonData}
+--------------------------------------------------------
+INSTRUCCIÓN FINAL:
+Analiza la siguiente pregunta del usuario y decide qué fuente utilizar.
+- Si es sobre el Directorio, aplica las REGLAS ESTRICTAS DEL DIRECTORIO.
+- Si es sobre Proyectos, aplica las REGLAS DE PROYECTOS (HTML o Texto).
 
-**Pregunta Original:**
+Pregunta Original:
 {request.Prompt}
+";
 
-**Tu Respuesta:**";
-
-              //  Tu Respuesta (solo texto o HTML dentro de <MODAL_HTML>):";
+                //  Tu Respuesta (solo texto o HTML dentro de <MODAL_HTML>):";
 
                 var geminiRequestSummary = new GeminiChatRequest();
                 geminiRequestSummary.Contents.Add(new GeminiContent
@@ -557,6 +584,30 @@ Si el JSON tiene **exactamente 1 objeto** Y la pregunta NO es un conteo:
             {
                 _logger.LogError(ex, "Error en EnviarReportePorCorreo");
                 return StatusCode(500, new { message = "Ocurrió un error inesperado en el servidor." });
+            }
+        }
+        // Método auxiliar para leer el archivo y convertirlo a texto para la IA
+        private string ObtenerDatosDelDirectorio()
+        {
+            // Ajusta la ruta según donde tengas guardado el archivo
+            // Si es un CSV (recomendado para rapidez):
+            string rutaArchivo = Path.Combine(_hostingEnvironment.WebRootPath, "uploads", "DIRECTORIO 2025.csv");
+
+            if (!System.IO.File.Exists(rutaArchivo))
+            {
+                return "Error: El archivo de directorio no fue encontrado.";
+            }
+
+            try
+            {
+                // Leemos todo el texto
+                string contenido = System.IO.File.ReadAllText(rutaArchivo);
+                return contenido;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error leyendo el archivo: {ex.Message}");
+                return "Error al leer los datos.";
             }
         }
     }

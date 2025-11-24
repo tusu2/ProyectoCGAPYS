@@ -223,7 +223,7 @@ public class LicitacionesController : Controller
             PresupuestoProyecto = licitacion.Proyecto?.Presupuesto ?? 0m,
             CampusNombre = licitacion.Proyecto?.Campus?.Nombre ?? "N/D",
             DependenciaNombre = licitacion.Proyecto?.Dependencia?.Nombre ?? "N/D",
-            TipoFondoNombre = licitacion.Proyecto?.TipoFondo?.Nombre ?? "N/D",
+            TipoFondoNombre = licitacion.Proyecto?.TipoFondo?.Nombre ?? "N/D", 
             // --- PROPIEDADES NUEVAS ASIGNADAS ---
             TipoProceso = licitacion.TipoProceso,
             FechaFallo = licitacion.FechaFallo,
@@ -289,7 +289,10 @@ public class LicitacionesController : Controller
     {
         new SelectListItem { Text = "Adjudicación Directa", Value = "Adjudicación Directa" },
         new SelectListItem { Text = "Invitación a cuando menos 3 personas", Value = "Invitación a cuando menos 3 personas" },
-        new SelectListItem { Text = "Licitación Pública Nacional", Value = "Licitación Pública Nacional" }
+        new SelectListItem { Text = "Licitación Pública Nacional", Value = "Licitación Pública Nacional" },
+        new SelectListItem { Text = "Adjudicación directa con 3 cotizaciones", Value = "Adjudicación directa con 3 cotizaciones" },
+        new SelectListItem { Text = "Adjudicación directa por monto", Value = "Adjudicación directa por monto" },
+   
     };
         return View(viewModel);
     }
@@ -1011,6 +1014,68 @@ public class LicitacionesController : Controller
             await transaction.RollbackAsync();
             // ERROR DE SERVIDOR: Retornamos BadRequest (400) con el detalle
             return BadRequest("Error interno del servidor: " + ex.Message);
+        }
+    }
+    // Agrega esto en LicitacionesController.cs
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [DisableRequestSizeLimit] // Evita error 400 por tamaño de archivo
+    public async Task<IActionResult> SubirDocumentosMasivos([FromForm] SubidaMasivaViewModel model)
+    {
+        // 1. Validaciones básicas
+        if (model == null) return BadRequest("No se recibieron datos.");
+
+        var licitacion = await _context.Licitaciones.FindAsync(model.LicitacionId);
+        if (licitacion == null) return NotFound("Licitación no encontrada.");
+
+        if (licitacion.Estado == "Adjudicada") return BadRequest("Licitación ya adjudicada.");
+
+        if (model.Archivos == null || model.Archivos.Count == 0) return BadRequest("Lista de archivos vacía.");
+        if (model.TiposDocumento == null || model.TiposDocumento.Count != model.Archivos.Count) return BadRequest("Discrepancia entre archivos y tipos.");
+
+        try
+        {
+            string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "licitaciones");
+            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+            for (int i = 0; i < model.Archivos.Count; i++)
+            {
+                var archivo = model.Archivos[i];
+                var tipo = model.TiposDocumento[i];
+
+                if (archivo.Length > 0)
+                {
+                    // Limpiamos el nombre del archivo para evitar caracteres raros
+                    string nombreSeguro = Path.GetFileName(archivo.FileName);
+                    string uniqueFileName = Guid.NewGuid().ToString() + "_" + nombreSeguro;
+                    string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await archivo.CopyToAsync(fileStream);
+                    }
+
+                    var documento = new LicitacionDocumento
+                    {
+                        LicitacionId = model.LicitacionId,
+                        TipoDocumento = tipo,
+                        NombreArchivo = nombreSeguro,
+                        RutaArchivo = "/uploads/licitaciones/" + uniqueFileName,
+                        FechaSubida = DateTime.Now
+                    };
+
+                    _context.LicitacionDocumentos.Add(documento);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { mensaje = "Documentos subidos correctamente." });
+        }
+        catch (Exception ex)
+        {
+            // Importante: Devolver el error real para verlo en consola
+            return StatusCode(500, new { mensaje = "Error interno: " + ex.Message });
         }
     }
 }

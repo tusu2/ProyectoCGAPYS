@@ -189,7 +189,7 @@ namespace ProyectoCGAPYS.Controllers
                     FechaInicio = DateTime.Now, // La fecha y hora actual.
                     FechaFinPropuestas = null, // Como se solicitó, se deja en null.
                     Estado = "Abierta",
-                     TipoProceso = null// Estado por defecto.
+                     TipoProceso = "Adjudicacion Directa"// Estado por defecto.
                 };
                 _context.Licitaciones.Add(nuevaLicitacion);
             }
@@ -251,7 +251,7 @@ namespace ProyectoCGAPYS.Controllers
                             FechaInicio = DateTime.Now,
                             FechaFinPropuestas = null,
                             Estado = "Abierta",
-                            TipoProceso = null
+                            TipoProceso = "Adjudicacion directa"
                         };
                         _context.Licitaciones.Add(nuevaLicitacion);
                     }

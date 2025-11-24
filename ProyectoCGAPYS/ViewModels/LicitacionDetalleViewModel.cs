@@ -58,7 +58,12 @@ namespace ProyectoCGAPYS.ViewModels
             LicitacionDocumentos = new List<LicitacionDocumentoViewModel>();
         }
     }
-
+    public class SubidaMasivaViewModel
+    {
+        public int LicitacionId { get; set; }
+        public List<IFormFile> Archivos { get; set; }
+        public List<string> TiposDocumento { get; set; }
+    }
 
 
     // Sub-modelo para representar a cada contratista en la lista.

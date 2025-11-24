@@ -127,18 +127,10 @@
                         </li>
 
                         <li class="nav-item">
-                            @* --- CONTENEDOR PARA POSICIONAR EL BADGE --- *@
-                            <div class="nav-link-container">
-                                <a class="nav-link @(currentController == "Licitaciones" ? "active" : "")" asp-controller="Licitaciones" asp-action="Index">
-                                    <i class="bi bi-briefcase-fill"></i>
-                                    <span>Licitaciones</span>
-                                </a>
-
-                                @if (notificacionesSinLeer > 0)
-                                {
-                                    <span class="notification-badge">@notificacionesSinLeer</span>
-                                }
-                            </div>
+                            <a class="nav-link @(currentController == "Licitaciones" ? "active" : "")" asp-controller="Licitaciones" asp-action="Index">
+                                <i class="bi bi-briefcase-fill"></i>
+                                <span>Licitaciones</span>
+                            </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link @(currentController == "GestionEstimaciones" ? "active" : "")" asp-controller="GestionEstimaciones" asp-action="Index">
@@ -149,7 +141,7 @@
                         <li class="nav-item">
                             <a class="nav-link @(currentController == "RecursosHumanos" ? "active" : "")" asp-controller="RecursosHumanos" asp-action="Index">
                                 <i class="bi bi-people-fill"></i>
-                                <span>Recursos Humanos</span>
+                                <span>Recursos Humano</span>
                             </a>
                         </li>
                         @if (SignInManager.IsSignedIn(User))
