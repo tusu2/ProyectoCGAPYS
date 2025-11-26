@@ -12,6 +12,9 @@ namespace ProyectoCGAPYS.Models
         {
             ContratistasParticipantes = new HashSet<LicitacionContratista>();
             LicitacionDocumentos = new HashSet<LicitacionDocumento>();
+            TieneDiferimientoPago = false;
+            TieneConvenio = false;
+            TieneSuspension = false;
         }
 
         // --- CAMPOS EXISTENTES ---
@@ -76,9 +79,24 @@ namespace ProyectoCGAPYS.Models
         public DateTime? FechaInicioEjecucion { get; set; }
         public DateTime? FechaFinEjecucion { get; set; }
 
+        // En Licitacion.cs
+        public decimal? MontoContratado { get; set; }
+        public int? PlazoDias { get; set; }
         public string? SupervisorAsignadoId { get; set; }
 
         [ForeignKey("SupervisorAsignadoId")]
         public virtual IdentityUser SupervisorAsignado { get; set; }
+
+        public bool TieneDiferimientoPago { get; set; }
+        public DateTime? FechaInicioDiferimiento { get; set; }
+        public DateTime? FechaFinDiferimiento { get; set; }
+
+        public bool TieneConvenio { get; set; }
+        public DateTime? FechaInicioConvenio { get; set; }
+        public DateTime? FechaFinConvenio { get; set; }
+
+        public bool TieneSuspension { get; set; }
+        public DateTime? FechaInicioSuspension { get; set; }
+        public DateTime? FechaFinSuspension { get; set; }
     }
 }

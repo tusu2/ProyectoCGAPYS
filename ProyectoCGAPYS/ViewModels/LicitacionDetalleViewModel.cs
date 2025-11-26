@@ -29,6 +29,8 @@ namespace ProyectoCGAPYS.ViewModels
         public decimal PresupuestoProyecto { get; set; }
         public string TipoProceso { get; set; }
 
+        public decimal? MontoContratado { get; set; }
+        public int? PlazoDias { get; set; }
         // Para los nuevos campos de control
         public DateTime? FechaFallo { get; set; }
         public string NumeroContrato { get; set; }
@@ -42,9 +44,17 @@ namespace ProyectoCGAPYS.ViewModels
         public DateTime? FechaFinEjecucion { get; set; }
         public string SupervisorAsignadoID { get; set; }
 
-        // --- PROPIEDADES EXISTENTES (Se mantienen para el Modo Gestión) ---
+        public bool TieneDiferimientoPago { get; set; }
+        public DateTime? FechaInicioDiferimiento { get; set; }
+        public DateTime? FechaFinDiferimiento { get; set; }
 
-        // Sigue existiendo para el flujo de "Licitación Pública"
+        public bool TieneConvenio { get; set; }
+        public DateTime? FechaInicioConvenio { get; set; }
+        public DateTime? FechaFinConvenio { get; set; }
+
+        public bool TieneSuspension { get; set; }
+        public DateTime? FechaInicioSuspension { get; set; }
+        public DateTime? FechaFinSuspension { get; set; }
 
 
 

@@ -2,7 +2,72 @@
 @model ProyectoCGAPYS.ViewModels.DashboardViewModel
 @{
     ViewData["Title"] = "Dashboard de Control y Seguimiento";
+    bool estaBloqueado = Model.KPIs.PresupuestoTotalAutorizado <= 0;
 }
+<style>
+    /* 1. Clase para difuminar el contenido */
+    .dashboard-blurred {
+        filter: blur(8px); /* Un poco menos de blur para que se vea más elegante */
+        pointer-events: none; /* Bloquea los clics */
+        user-select: none; /* Bloquea la selección */
+        opacity: 0.5; /* Un poco más transparente */
+        transition: all 0.8s ease; /* Transición suave */
+    }
+
+    /* 2. Animación de entrada para la alerta */
+    @@keyframes aparecerConRetraso {
+        0% {
+            opacity: 0;
+            transform: translate(-50%, -60%); /* Empieza un poco más arriba */
+        }
+
+        100% {
+            opacity: 1;
+            transform: translate(-50%, -50%); /* Termina en el centro exacto */
+        }
+    }
+
+    /* 3. Contenedor del mensaje de bloqueo (CORREGIDO) */
+    .bloqueo-overlay {
+        position: fixed;
+        top: 50%;
+        left: 50%; /* CENTRADO EXACTO: Antes estaba en 55% */
+        transform: translate(-50%, -50%); /* Esto asegura que sea el centro matemático */
+
+        z-index: 1050; /* Z-Index alto, pero cuidando no tapar el Navbar si este es mayor */
+
+        text-align: center;
+        background: rgba(255, 255, 255, 0.95); /* Fondo casi blanco sólido */
+        padding: 50px 40px;
+        border-radius: 25px;
+        /* Sombra suave y elegante */
+        box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+        border: 1px solid rgba(255,255,255,0.5);
+        max-width: 450px;
+        width: 90%;
+        /* --- AQUÍ ESTÁ EL TRUCO DEL SPLASH --- */
+        /* La animación tarda 0.8s en ejecutarse, PERO espera 2.5 segundos antes de empezar */
+        /* Ajusta '2.5s' si tu splash dura más o menos tiempo */
+        animation: aparecerConRetraso 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 2.5s backwards;
+    }
+
+    .bloqueo-icon {
+        font-size: 60px; /* Ícono más grande */
+        color: #ffc107;
+        margin-bottom: 25px;
+    }
+
+    .bloqueo-texto {
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 22px;
+        font-weight: 700;
+        color: #2c3e50;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 10px;
+    }
+</style>
+
 <link rel="stylesheet" href="~/css/Dashboard.css" asp-append-version="true" />
 <div class="espaciador-escritorio">
     <br>
@@ -12,60 +77,123 @@
 
 <h3 class="dashboard-title">@ViewData["Title"]</h3>
 
+@if (estaBloqueado)
+{
+    <div class="bloqueo-overlay">
+        <div class="bloqueo-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="bloqueo-texto">
+            Inicio de año no puesto
+        </div>
+        <p class="text-muted mt-3">
+            No se ha detectado un Presupuesto Autorizado para este año fiscal.
+        </p>
+    </div>
+}
+<div class="@(estaBloqueado ? "dashboard-blurred" : "")">
 
 
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="glass-card filter-bar-container">
+
+                <div class="filter-header">
+                    <i class="fas fa-filter text-gold"></i>
+                    <span class="filter-label">Filtros por Fondo:</span>
+                </div>
+
+                <div class="filter-options">
+
+                    @* BUCLE DINÁMICO: Recorremos los fondos de la BD *@
+                    @foreach (var fondo in Model.EstadoPorFondo)
+                    {
+                        @* Añadimos la clase 'custom-switch' para el estilo dorado *@
+                        <div class="form-check form-switch custom-switch">
+                            <input class="form-check-input filtro-fondo" type="checkbox" role="switch"
+                                   id="filtro_@fondo.NombreFondo" value="@fondo.NombreFondo">
+
+                            <label class="form-check-label" for="filtro_@fondo.NombreFondo">
+                                @fondo.NombreFondo
+                            </label>
+                        </div>
+                    }
+
+                    @* Opción estática 'Ver Todos' *@
+                    <div class="form-check form-switch custom-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="filtro_todos" checked>
+                        <label class="form-check-label fw-bold" for="filtro_todos">
+                            Ver Todos
+                        </label>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+@* --- FILA SUPERIOR: INFORMACIÓN FINANCIERA --- *@
 <div class="row mb-4">
- 
-    <div class="col-lg-4 col-md-6 mb-4">
-        <div class="glass-card kpi-card">
-            <div class="kpi-title">Proyectos Totales (2025)</div>
-            <div class="kpi-number">@Model.KPIs.ProyectosTotales</div>
-        </div>
-    </div>
 
+    @* 1. Presupuesto Autorizado *@
     <div class="col-lg-4 col-md-6 mb-4">
-        <div class="glass-card kpi-card">
-
-            <div class="kpi-title">Proyectos Activos</div>
-            <div class="kpi-number">@Model.KPIs.ProyectosActivos</div>
-        </div>
-    </div>
-
-    <div class="col-lg-4 col-md-6 mb-4">
-        <div class="glass-card kpi-card">
-            <div class="kpi-title">Monto Ejercido</div>
-            <div class="kpi-number currency">@Model.KPIs.MontoTotalEjercido.ToString("C")</div>
-        </div>
-    </div>
-
-    <div class="col-lg-4 col-md-6 mb-4">
-        <div class="glass-card kpi-card">
-            <div class="kpi-title">Presupuesto Comprometido</div>
-            <div class="kpi-comprometido currency">@Model.KPIs.PresupuestoComprometido.ToString("C")</div>
-        </div>
-    </div>
-
-    <div class="col-lg-4 col-md-6 mb-4">
-        <div class="glass-card kpi-card">
+            <div class="glass-card kpi-card gold-border">
             <div class="kpi-title">Presupuesto Autorizado</div>
-            <div class="kpi-Ejercido currency">@Model.KPIs.PresupuestoTotalAutorizado.ToString("C")</div>
-
+            @* Usamos una clase de texto azul para diferenciarlo *@
+                <div class="kpi-number text-primary" id="kpi-autorizado">@Model.KPIs.PresupuestoTotalAutorizado.ToString("C")</div>
         </div>
     </div>
 
-<div class="col-lg-4 col-md-6 mb-4">
-    <div class="glass-card kpi-card">
-        <div class="kpi-title">Presupuesto Actual</div>
-        <div class="kpi-Ejercido currency">@Model.KPIs.BalanceGeneralDisponible.ToString("C")</div>
+    @* 2. Presupuesto Contratado (NUEVO) *@
+    <div class="col-lg-4 col-md-6 mb-4">
+            <div class="glass-card kpi-card gold-border">
+            <div class="kpi-title">Presupuesto Contratado</div>
+                <div class="kpi-number" style="color: var(--color-warning);" id="kpi-contratado">@Model.KPIs.PresupuestoContratado.ToString("C")</div>
+        </div>
+    </div>
+
+    @* 3. Monto Ejercido *@
+    <div class="col-lg-4 col-md-6 mb-4">
+            <div class="glass-card kpi-card gold-border">
+            <div class="kpi-title">Monto Ejercido</div>
+                <div class="kpi-number text-success" id="kpi-ejercido">@Model.KPIs.MontoTotalEjercido.ToString("C")</div>
+        </div>
     </div>
 </div>
+
+@* --- FILA INFERIOR: BALANCE Y PROYECTOS --- *@
+<div class="row mb-4">
+
+    @* 4. Presupuesto Actual (Abajo del Autorizado) *@
+    <div class="col-lg-4 col-md-6 mb-4">
+            <div class="glass-card kpi-card blue-border">
+            <div class="kpi-title">Presupuesto Actual</div>
+                <div class="kpi-number text-info" id="kpi-disponible">@Model.KPIs.BalanceGeneralDisponible.ToString("C")</div>
+        </div>
+    </div>
+
+    @* 5. Proyectos Totales (Sin el 2025) *@
+    <div class="col-lg-4 col-md-6 mb-4">
+            <div class="glass-card kpi-card blue-border">
+            <div class="kpi-title">Proyectos Totales</div>
+                <div class="kpi-number" id="kpi-total-proy">@Model.KPIs.ProyectosTotales</div>
+        </div>
+    </div>
+
+    @* 6. Proyectos Activos *@
+    <div class="col-lg-4 col-md-6 mb-4">
+            <div class="glass-card kpi-card blue-border">
+            <div class="kpi-title">Proyectos Activos</div>
+                <div class="kpi-number" id="kpi-activos-proy">@Model.KPIs.ProyectosActivos</div>
+        </div>
+    </div>
 
 </div>
 
 <div class="row mb-4">
     <div class="col-lg-8 mb-4">
         <div class="glass-card chart-container">
-            <h5>Distribución y Uso del Presupuesto General</h5>
+            <h5>Distribución del Presupuesto</h5>
             <canvas id="donaPresupuesto" style="max-height: 350px;"></canvas>
         </div>
     </div>
@@ -77,62 +205,52 @@
     </div>
 </div>
 
-<div class="row mb-4">
-    <div class="col-12 mb-4">
-        <div class="glass-card chart-container">
-            <h5>Estado por Fuente de Financiamiento</h5>
-            <canvas id="barrasEstadoFondos" style="max-height: 300px;"></canvas>
-        </div>
+    <div class="glass-card alert-list">
+        <h5><i class="fas fa-exclamation-triangle"></i> Proyectos por Vencer</h5>
+        <ul class="list-group list-group-flush" id="lista-proyectos-vencer">
+            @if (!Model.ProyectosPorVencer.Any())
+            {
+                <li class="list-group-item" style="color: var(--color-text-secondary);">
+                    ¡Todo en orden! No hay proyectos próximos a vencer.
+                </li>
+            }
+            else
+            {
+                @foreach (var item in Model.ProyectosPorVencer)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            @* Icono de ERROR si hay conflicto de banderas *@
+                            @if (item.EsConflicto == 1)
+                            {
+                                <i class="fas fa-bug text-danger me-1"
+                                   data-bs-toggle="tooltip"
+                                   title="ERROR: Este proyecto tiene múltiples fechas de prórroga activas simultáneamente (Convenio/Suspensión/Diferimiento).">
+                                </i>
+                            }
+
+                            <a asp-controller="Proyectos" asp-action="Detalle" asp-route-id="@item.Id" asp-route-tab="resumen" class="fw-bold text-decoration-none">
+                                @item.NombreProyecto
+                            </a>
+                            <div class="small text-muted">
+                                Vence: @item.FechaVencimiento?.ToString("dd/MM/yyyy")
+                            </div>
+                        </div>
+
+                        @* Badge con el color dinámico (Verde/Amarillo/Rojo) *@
+                        <span class="badge @item.ClaseSemaforo rounded-pill">
+                            @item.DiasTranscurridos días
+                        </span>
+                    </li>
+                }
+            }
+        </>
     </div>
-</div>
 
 
-<div class="row">
-    <div class="col-lg-6 mb-4">
-        <div class="glass-card alert-list">
-            <h5><i class="fas fa-exclamation-triangle"></i> Proyectos por Vencer (Próximos 30 días)</h5>
-            <ul class="list-group list-group-flush">
-                @if (!Model.ProyectosPorVencer.Any())
-                {
-                    <li class="list-group-item" style="color: var(--color-text-secondary);">¡Felicidades! No hay proyectos próximos a vencer.</li>
-                }
-                else
-                {
-                    @foreach (var item in Model.ProyectosPorVencer)
-                    {
-                        <li class="list-group-item">
-                            @* --- ENLACE ACTUALIZADO --- *@
-                            <a asp-controller="Proyectos" asp-action="Detalle" asp-route-id="@item.Id" asp-route-tab="resumen">@item.NombreProyecto</a>
-                            <span class="badge">Vence: @item.FechaVencimiento?.ToString("dd/MM/yyyy")</span>
-                        </li>
-                    }
-                }
-            </ul>
-        </div>
-    </div>
-    <div class="col-lg-6 mb-4">
-        <div class="glass-card alert-list">
-            <h5><i class="fas fa-file-invoice-dollar"></i> Estimaciones Pendientes de Pago</h5>
-            <ul class="list-group list-group-flush">
-                @if (!Model.EstimacionesPendientes.Any())
-                {
-                    <li class="list-group-item" style="color: var(--color-text-secondary);">¡Excelente! No hay estimaciones pendientes.</li>
-                }
-                else
-                {
-                    @foreach (var item in Model.EstimacionesPendientes)
-                    {
-                        <li class="list-group-item">
-                            @* --- ENLACE ACTUALIZADO Y CONTEXTUALIZADO --- *@
-                            <a asp-controller="Proyectos" asp-action="Detalle" asp-route-id="@item.Id" asp-route-tab="financiero">@item.NombreProyecto</a>
-                            <span class="badge">Retraso: @item.DiasTranscurridos días</span>
-                        </li>
-                    }
-                }
-            </ul>
-        </div>
-    </div>
-</div>
+
+
+
 
 <div class="modal fade" id="projectListModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -147,12 +265,16 @@
     </div>
 </div>
 
-<div class="ia-robot-container" id="iaRobotTrigger">
+    @*
+    <div class="ia-robot-container" id="iaRobotTrigger">
+    *
     <div class="ia-robot-bubble">
-        ¡Hola! Soy tu asistente. ¡Presióname para hablar!
+    ¡Hola! Soy tu asistente. ¡Presióname para hablar!
     </div>
     <img src="~/Img/Asistente.png" alt="Asistente IA" class="ia-robot-image" />
-</div>
+    </div>
+    *@
+
 
 <div class="ia-chat-widget" id="iaChatWidget">
     <div class="ia-chat-header" id="iaChatHeader">
@@ -184,12 +306,145 @@
 
         </div>
     </div>
+ </div>
 </div>
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
+            // --- 4. LÓGICA DE FILTRADO DINÁMICO ---
 
+            const filtrosFondo = document.querySelectorAll('.filtro-fondo');
+            const filtroTodos = document.getElementById('filtro_todos');
+
+            // Función para formatear dinero
+            const formatMoney = (amount) => {
+                return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount);
+            };
+
+            // Función principal de actualización
+            function actualizarDashboard() {
+                // 1. Recopilar IDs seleccionados
+                let seleccionados = [];
+                if (!filtroTodos.checked) {
+                    filtrosFondo.forEach(chk => {
+                        if (chk.checked) seleccionados.push(chk.value);
+                    });
+                }
+
+                const param = (filtroTodos.checked || seleccionados.length === 0) ? "todos" : seleccionados.join(',');
+
+                document.body.style.cursor = 'wait';
+
+                // 2. Llamada AJAX
+                fetch(`/Dashboard/GetDashboardFiltered?fondos=${encodeURIComponent(param)}`)
+                    .then(response => {
+                        if (!response.ok) throw new Error("Error en la respuesta del servidor");
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log("Datos recibidos:", data); // <--- ÚTIL PARA DEPURAR
+
+                        // A. ACTUALIZAR KPIs (Verificamos que data.kpis exista)
+                        if (data.kpis) {
+                            document.getElementById('kpi-autorizado').textContent = formatMoney(data.kpis.presupuestoTotalAutorizado);
+                            document.getElementById('kpi-contratado').textContent = formatMoney(data.kpis.presupuestoContratado);
+                            document.getElementById('kpi-ejercido').textContent = formatMoney(data.kpis.montoTotalEjercido);
+                            document.getElementById('kpi-disponible').textContent = formatMoney(data.kpis.balanceGeneralDisponible);
+                            document.getElementById('kpi-total-proy').textContent = data.kpis.proyectosTotales;
+                            document.getElementById('kpi-activos-proy').textContent = data.kpis.proyectosActivos;
+
+                            // B. ACTUALIZAR GRÁFICA DE DONA
+                            // Aseguramos que donaChart existe antes de usarlo
+                            if (typeof donaChart !== 'undefined') {
+                                const totalE = data.kpis.montoTotalEjercido;
+                                const totalC = Math.max(0, data.kpis.presupuestoContratado - totalE);
+                                const totalD = data.kpis.balanceGeneralDisponible;
+
+                                donaChart.data.datasets[0].data = [totalE, totalC, totalD];
+                                donaChart.update();
+                            }
+                        }
+
+                        // C. ACTUALIZAR GRÁFICA DE BARRAS
+                        if (data.proyectosPorFase) {
+                            const nuevosLabels = data.proyectosPorFase.map(f => f.fase);
+                            const nuevosDatos = data.proyectosPorFase.map(f => f.totalProyectos);
+
+                            // Intentamos usar la variable, si falla, buscamos la instancia por ID
+                            let chartBarra = null;
+                            if (typeof barrasFaseChart !== 'undefined') {
+                                chartBarra = barrasFaseChart;
+                            } else {
+                                chartBarra = Chart.getChart("barrasProyectosFase");
+                            }
+
+                            if (chartBarra) {
+                                chartBarra.data.labels = nuevosLabels;
+                                chartBarra.data.datasets[0].data = nuevosDatos;
+                                chartBarra.update();
+                            } else {
+                                console.error("No se encontró la gráfica de barras para actualizar.");
+                            }
+                        }
+
+                        // D. ACTUALIZAR LISTA
+                        const listaUl = document.getElementById('lista-proyectos-vencer');
+                        if (listaUl && data.proyectosPorVencer) {
+                            listaUl.innerHTML = '';
+                            if (data.proyectosPorVencer.length === 0) {
+                                listaUl.innerHTML = '<li class="list-group-item text-muted">¡Todo en orden! No hay proyectos próximos a vencer.</li>';
+                            } else {
+                                data.proyectosPorVencer.forEach(p => {
+                                    const li = `
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                 <div>
+                                                    <span class="fw-bold">${p.nombreProyecto}</span>
+                                                    <div class="small text-muted">Vence: ${p.fechaVencimiento}</div>
+                                                 </div>
+                                                 <span class="badge ${p.claseSemaforo} rounded-pill">
+                                                    ${p.diasRestantes} días
+                                                 </span>
+                                            </li>`;
+                                    listaUl.innerHTML += li;
+                                });
+                            }
+                        }
+                        document.body.style.cursor = 'default';
+                    })
+                    .catch(err => {
+                        console.error("Error AJAX:", err);
+                        document.body.style.cursor = 'default';
+                        // Opcional: mostrar alerta al usuario
+                        // alert("Error al filtrar datos. Revisa la consola.");
+                    });
+            }
+
+            // Event Listeners para los Checkboxes
+            filtrosFondo.forEach(chk => {
+                chk.addEventListener('change', () => {
+                    // Si selecciono uno específico, desmarco "Todos"
+                    if (chk.checked) filtroTodos.checked = false;
+
+                    // Si desmarco todos los específicos, marco "Todos" automáticamente
+                    const algunoActivo = Array.from(filtrosFondo).some(c => c.checked);
+                    if (!algunoActivo) filtroTodos.checked = true;
+
+                    actualizarDashboard();
+                });
+            });
+
+            filtroTodos.addEventListener('change', () => {
+                if (filtroTodos.checked) {
+                    // Si marco "Todos", desmarco los específicos
+                    filtrosFondo.forEach(chk => chk.checked = false);
+                    actualizarDashboard();
+                } else {
+                    // Si desmarco "Todos" manualmente y no hay nada más, lo vuelvo a marcar (no permitir vacío total)
+                    const algunoActivo = Array.from(filtrosFondo).some(c => c.checked);
+                    if (!algunoActivo) filtroTodos.checked = true;
+                }
+            });
             // --- Configuración Global de Chart.js ---
             Chart.defaults.color = '#0A2240';
             Chart.defaults.font.family = "'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif";
@@ -216,26 +471,37 @@
             };
 
             // --- 1. GRÁFICO DE DONA: Presupuesto General (VERSIÓN FINAL) ---
+            // --- 1. GRÁFICO DE DONA: Lógica para que sume el Autorizado ---
             const ctxDona = document.getElementById('donaPresupuesto').getContext('2d');
 
-            const originalComprometido = @Json.Serialize(Model.KPIs.PresupuestoComprometido);
-            const originalDisponible = @Json.Serialize(Model.KPIs.BalanceGeneralDisponible);
+            // 1. Obtenemos los valores crudos de la base de datos
+            const totalEjercido = @Json.Serialize(Model.KPIs.MontoTotalEjercido);
+            const totalContratado = @Json.Serialize(Model.KPIs.PresupuestoContratado);
+            const totalDisponible = @Json.Serialize(Model.KPIs.BalanceGeneralDisponible);
 
+            // 2. Calculamos las rebanadas para que no se dupliquen montos
+            // Rebanada A: El dinero que ya salió (Ejercido)
+            const sliceEjercido = totalEjercido;
+
+            // Rebanada B: El dinero comprometido que AÚN NO sale (Contratado - Ejercido)
+            // Usamos Math.max(0, ...) por si acaso hay algún error de datos para que no de negativo
+            const sliceContratadoNeto = Math.max(0, totalContratado - totalEjercido);
+
+            // Rebanada C: El dinero libre (Actual)
+            const sliceDisponible = totalDisponible;
+
+            // Definición de gradientes (Igual que antes)
             const gradientGold = createGradient(ctxDona, 'rgba(212, 175, 55, 1)', 'rgba(212, 175, 55, 0.7)');
-            const gradientBlue = createGradient(ctxDona, 'rgba(58, 124, 165, 1)', 'rgba(58, 124, 165, 0.7)');
-            const gradientGrey = createGradient(ctxDona, 'rgba(108, 117, 125, 1)', 'rgba(108, 117, 125, 0.7)');
+            const gradientGrey = createGradient(ctxDona, 'rgba(108, 117, 125, 1)', 'rgba(108, 117, 125, 0.7)'); // Color para Contratado
+            const gradientBlue = createGradient(ctxDona, 'rgba(58, 124, 165, 1)', 'rgba(58, 124, 165, 0.7)'); // Color para Actual
 
             const donaChart = new Chart(ctxDona, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Monto Ejercido', 'Presupuesto Comprometido', 'Balance Disponible'],
+                    labels: ['Monto Ejercido', 'Presupuesto Contratado (Por ejercer)', 'Presupuesto Actual'],
                     datasets: [{
-                        label: 'Presupuesto General',
-                        data: [
-        @Json.Serialize(Model.KPIs.MontoTotalEjercido),
-                            originalComprometido,
-                            originalDisponible
-                        ],
+                        label: 'Distribución',
+                        data: [sliceEjercido, sliceContratadoNeto, sliceDisponible],
                         backgroundColor: [gradientGold, gradientGrey, gradientBlue],
                         borderColor: 'rgba(248, 249, 250, 1)',
                         borderWidth: 4,
@@ -245,97 +511,72 @@
                     }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false,
+                    responsive: true,
+                    maintainAspectRatio: false,
                     cutout: '70%',
                     plugins: {
-                        // --- LÓGICA DE CLIC REESCRITA DESDE CERO ---
                         legend: {
-                            onClick: (e, legendItem, legend) => {
-                                const chart = legend.chart;
-
-                                // 1. Ocultamos o mostramos el dato manualmente. Esto también tacha la leyenda.
-                                chart.toggleDataVisibility(legendItem.index);
-
-                                // 2. Si el clic fue en "Presupuesto Comprometido", recalculamos.
-                                if (legendItem.text === 'Presupuesto Comprometido') {
-                                    const balanceIndex = 2; // El índice del 'Balance Disponible'
-
-                                    // Verificamos el nuevo estado de visibilidad
-                                    const isVisible = chart.getDataVisibility(legendItem.index);
-
-                                    if (isVisible) {
-                                        // Si ahora es visible, restauramos el balance original
-                                        chart.data.datasets[0].data[balanceIndex] = originalDisponible;
-                                    } else {
-                                        // Si ahora está oculto, le sumamos el comprometido al balance
-                                        chart.data.datasets[0].data[balanceIndex] = originalDisponible + originalComprometido;
-                                    }
-                                }
-
-                                // 3. Actualizamos el gráfico para aplicar TODOS los cambios.
-                                chart.update();
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: { family: "'Segoe UI', sans-serif", size: 12 }
                             }
                         },
                         tooltip: {
-                            ...customTooltip,
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            titleColor: '#1f2937',
+                            bodyColor: '#1f2937',
+                            borderColor: 'rgba(0,0,0,0.1)',
+                            borderWidth: 1,
+                            padding: 12,
+                            boxPadding: 6,
+                            usePointStyle: true,
                             callbacks: {
                                 label: function (context) {
+                                    // Mostramos el valor formateado en moneda
                                     let value = context.raw;
                                     return context.label + ': ' + value.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
                                 }
                             }
                         }
                     }
-                }
+                },
+                plugins: [{
+                    id: 'textCenter',
+                    beforeDraw: function (chart) {
+                        var width = chart.width,
+                            height = chart.height,
+                            ctx = chart.ctx;
+
+                        ctx.restore();
+                        var fontSize = (height / 160).toFixed(2);
+                        ctx.font = "bold " + fontSize + "em sans-serif";
+                        ctx.textBaseline = "middle";
+                        ctx.fillStyle = "#333";
+
+                        // Calculamos el total real sumando las rebanadas (Debe ser igual al Autorizado)
+                        var total = chart.config.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                        var text = "Total",
+                            textX = Math.round((width - ctx.measureText(text).width) / 2),
+                            textY = height / 2.3;
+
+                        ctx.fillText(text, textX, textY);
+
+                        var text2 = total.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }),
+                            text2X = Math.round((width - ctx.measureText(text2).width) / 2),
+                            text2Y = height / 1.8;
+
+                        ctx.font = "bold " + (fontSize * 0.8).toFixed(2) + "em sans-serif";
+                        ctx.fillStyle = "#666";
+                        ctx.fillText(text2, text2X, text2Y);
+                        ctx.save();
+                    }
+                }]
             });
 
             // --- 2. GRÁFICO DE BARRAS: Estado por Fondos ---
-            const ctxBarrasFondos = document.getElementById('barrasEstadoFondos').getContext('2d');
 
-            new Chart(ctxBarrasFondos, {
-                type: 'bar',
-                data: {
-                    labels: @Json.Serialize(Model.EstadoPorFondo.Select(f => f.NombreFondo)),
-                    datasets: [
-                        {
-                            label: 'Monto Ejercido',
-                            data: @Json.Serialize(Model.EstadoPorFondo.Select(f => f.MontoEjercido)),
-                            backgroundColor: createGradient(ctxBarrasFondos, 'rgba(212, 175, 55, 0.9)', 'rgba(212, 175, 55, 0.6)'), // NUEVO: Gradiente
-                            borderRadius: 8 // NUEVO: Bordes redondeados
-                        },
-                        {
-                            label: 'Monto Disponible',
-                            data: @Json.Serialize(Model.EstadoPorFondo.Select(f => f.MontoAutorizado - f.MontoEjercido)),
-                            backgroundColor: createGradient(ctxBarrasFondos, 'rgba(58, 124, 165, 0.9)', 'rgba(58, 124, 165, 0.6)'), // NUEVO: Gradiente
-                            borderRadius: 8 // NUEVO: Bordes redondeados
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: {
-                        tooltip: {
-                            ...customTooltip, // NUEVO: Aplicamos el tooltip personalizado
-                            mode: 'index'
-                        }
-                    },
-                    scales: {
-                        x: { stacked: true, grid: { display: false } }, // NUEVO: Ocultamos la cuadrícula
-                        y: {
-                            stacked: true,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.05)', // NUEVO: Cuadrícula muy sutil si se necesita
-                                drawBorder: false
-                            },
-                            ticks: {
-                                callback: function (value) {
-                                    return (value / 1000) + 'k'; // Formato más corto (ej: 50k)
-                                }
-                            }
-                        }
-                    }
-                }
-            });
 
             // --- 3. GRÁFICO DE BARRAS HORIZONTALES: Proyectos por Fase ---
             const ctxBarrasFase = document.getElementById('barrasProyectosFase').getContext('2d');
@@ -378,25 +619,25 @@
                                     let content = '<div class="project-cards-container">';
                                     data.forEach(proyecto => {
                                         content += `
-                                <div class="project-card">
-                                    <img src="${proyecto.imagenUrl}" alt="Imagen" class="project-card-image">
+                                        <div class="project-card">
+                                            <img src="${proyecto.imagenUrl}" alt="Imagen" class="project-card-image">
 
-                                    <div class="project-card-info">
-                                        <h5 class="project-card-title">${proyecto.nombreProyecto}</h5>
-                                        <a href="/Dashboard/GenerarReporteHtmlAPdf?proyectoId=${proyecto.id}" target="_blank" class="btn btn-secondary btn-sm">
-                                            Ver Reporte
-                                        </a>
-                                    </div>
+                                            <div class="project-card-info">
+                                                <h5 class="project-card-title">${proyecto.nombreProyecto}</h5>
+                                                <a href="/Dashboard/GenerarReporteHtmlAPdf?proyectoId=${proyecto.id}" target="_blank" class="btn btn-secondary btn-sm">
+                                                    Ver Reporte
+                                                </a>
+                                            </div>
 
-                                    <div class="project-card-actions">
-                                        <div class="email-form">
-                                            <input type="email" class="form-control form-control-sm" placeholder="correo@@ejemplo.com" id="email-${proyecto.id}">
-                                            <button class="btn btn-primary btn-sm" onclick="enviarPorCorreo('${proyecto.id}')">Enviar</button>
+                                            <div class="project-card-actions">
+                                                <div class="email-form">
+                                                    <input type="email" class="form-control form-control-sm" placeholder="correo@@ejemplo.com" id="email-${proyecto.id}">
+                                                    <button class="btn btn-primary btn-sm" onclick="enviarPorCorreo('${proyecto.id}')">Enviar</button>
+                                                </div>
+                                                <span id="status-${proyecto.id}" class="d-block w-100 mt-2" style="font-size: 0.8em;"></span>
+                                            </div>
                                         </div>
-                                        <span id="status-${proyecto.id}" class="d-block w-100 mt-2" style="font-size: 0.8em;"></span>
-                                    </div>
-                                </div>
-                            `;
+                                    `;
                                     });
                                     content += '</div>';
                                     modalBody.innerHTML = content;
@@ -432,7 +673,7 @@
             const iaChatInput = document.getElementById('iaChatInput');
             const iaChatSend = document.getElementById('iaChatSend');
             // const iaChatToggle = document.getElementById('ia-chat-toggle');
-            const iaRobotTrigger = document.getElementById('iaRobotTrigger');
+            //  const iaRobotTrigger = document.getElementById('iaRobotTrigger');
             const iaChatClose = document.getElementById('ia-chat-close');
             const iaProjectModal = new bootstrap.Modal(document.getElementById('projectListModal'));
             const iaModalTitle = document.getElementById('modalProjectListTitle');
@@ -443,7 +684,7 @@
             let typingTimer;
 
 
-            iaRobotTrigger.addEventListener('click', () => {
+       /*iaRobotTrigger.addEventListener('click', () => {
                 console.log("Clic en Robot: Abriendo chat...");
 
                 iaChatWidget.classList.add('visible');    // <-- CORREGIDO
@@ -453,16 +694,16 @@
                 setTimeout(() => {
                     iaChatInput.focus();
                 }, 400); // 400ms (igual que la animación)
-            });
+            });*/
 
             // Evento para CERRAR el chat (Con Animación)
-            iaChatClose.addEventListener('click', () => {
+          /*  iaChatClose.addEventListener('click', () => {
                 console.log("Clic en Cerrar: Ocultando chat...");
 
                 iaChatWidget.classList.remove('visible');    // <-- CORREGIDO
                 iaRobotTrigger.classList.remove('hidden'); // <-- CORREGIDO
             });
-
+            */
             // 3. Lógica para enviar el mensaje
             const enviarMensajeIA = () => {
                 const prompt = iaChatInput.value.trim();

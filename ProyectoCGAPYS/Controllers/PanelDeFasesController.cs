@@ -178,6 +178,7 @@ namespace ProyectoCGAPYS.Controllers
 
             // ******************** INICIO DE LA MODIFICACIÓN ********************
             // Si la nueva fase es "En Licitación" (ID 4), creamos el registro.
+
             if (nuevaFaseId == 4)
             {
                 var nuevaLicitacion = new Licitacion
@@ -189,7 +190,18 @@ namespace ProyectoCGAPYS.Controllers
                     FechaInicio = DateTime.Now, // La fecha y hora actual.
                     FechaFinPropuestas = null, // Como se solicitó, se deja en null.
                     Estado = "Abierta",
-                     TipoProceso = "Adjudicacion Directa"// Estado por defecto.
+                     TipoProceso = "Adjudicacion Directa",
+                    TieneDiferimientoPago = false,
+                    TieneConvenio = false,
+                    TieneSuspension = false,
+
+                    // Aseguramos que las fechas sean null explícitamente
+                    FechaInicioDiferimiento = null,
+                    FechaFinDiferimiento = null,
+                    FechaInicioConvenio = null,
+                    FechaFinConvenio = null,
+                    FechaInicioSuspension = null,
+                    FechaFinSuspension = null// Estado por defecto.
                 };
                 _context.Licitaciones.Add(nuevaLicitacion);
             }
@@ -221,7 +233,6 @@ namespace ProyectoCGAPYS.Controllers
             public string Tipo { get; set; }
             public string Comentario { get; set; }
         }
-
         [HttpPost]
         public async Task<JsonResult> GuardarCambiosDeFase([FromBody] List<CambioFaseRequest> cambios)
         {
@@ -230,7 +241,6 @@ namespace ProyectoCGAPYS.Controllers
                 return Json(new { success = false, message = "No se recibieron cambios." });
             }
 
-            // ***** SOLUCIÓN 1: Obtener el ID del usuario *****
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             foreach (var cambio in cambios)
@@ -240,18 +250,29 @@ namespace ProyectoCGAPYS.Controllers
                 {
                     var faseActualId = proyecto.IdFaseFk ?? 0;
 
-                    // (Tu lógica de Licitaciones está bien)
                     if (cambio.NuevaFaseId == 4 && faseActualId != 4)
                     {
                         var nuevaLicitacion = new Licitacion
                         {
                             ProyectoId = proyecto.Id,
-                            NumeroLicitacion = $"LIC-{proyecto.Folio}-{DateTime.Now:yyyyMMdd}",
+                            // CORRECCIÓN AQUÍ: Agregamos HHmmss para evitar duplicados
+                            NumeroLicitacion = $"LIC-{proyecto.Folio}-{DateTime.Now:yyyyMMddHHmmss}",
                             Descripcion = proyecto.Descripcion,
                             FechaInicio = DateTime.Now,
                             FechaFinPropuestas = null,
                             Estado = "Abierta",
-                            TipoProceso = "Adjudicacion directa"
+                            TipoProceso = "Adjudicacion directa",
+
+                            // Los booleanos que ya tenías bien
+                            TieneDiferimientoPago = false,
+                            TieneConvenio = false,
+                            TieneSuspension = false,
+                            FechaInicioDiferimiento = null, // Explícitos para seguridad extra
+                            FechaFinDiferimiento = null,
+                            FechaInicioConvenio = null,
+                            FechaFinConvenio = null,
+                            FechaInicioSuspension = null,
+                            FechaFinSuspension = null
                         };
                         _context.Licitaciones.Add(nuevaLicitacion);
                     }
@@ -265,7 +286,6 @@ namespace ProyectoCGAPYS.Controllers
                         FaseNuevaId = cambio.NuevaFaseId,
                         TipoCambio = cambio.Tipo == "Avance" ? "Aprobado (Arrastre)" : "Devuelto (Arrastre)",
                         Comentario = cambio.Comentario,
-                        // ***** SOLUCIÓN 2: Asignar el ID del usuario *****
                         UsuarioId = userId
                     };
                     _context.HistorialFases.Add(registroHistorial);

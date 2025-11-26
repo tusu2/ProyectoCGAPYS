@@ -1,0 +1,352 @@
+﻿@model List<ProyectoCGAPYS.Models.TiposFondo>
+
+@{
+    ViewData["Title"] = "Asignación Presupuestal";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    /* --- CONTENEDOR PRINCIPAL --- */
+    .contenedor-modulo {
+        --primary-local: #0B2D48;
+        --accent-local: #00AEEF;
+        font-family: 'Poppins', sans-serif;
+        display: flex;
+        width: 100%;
+        height: calc(100vh - 80px); /* Ajusta si es necesario */
+
+        background: transparent;
+        overflow: hidden;
+        border-radius: 20px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        margin-top: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+
+    /* --- LADO IZQUIERDO (CRISTAL BLANCO) --- */
+    .panel-input {
+        width: 60%;
+        padding: 2.5rem;
+        display: flex;
+        flex-direction: column;
+        background: rgba(255, 255, 255, 0.45);
+        backdrop-filter: blur(30px);
+        -webkit-backdrop-filter: blur(30px);
+        border-right: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+        .panel-input h1 {
+            color: var(--primary-local);
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 1px rgba(255,255,255,0.5);
+        }
+
+        .panel-input .subtitle {
+            color: #444;
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+
+    .form-container {
+        flex: 1;
+        overflow-y: auto;
+        padding-right: 15px;
+        margin-bottom: 1rem;
+    }
+
+    /* Inputs */
+    .input-group {
+        background: rgba(255, 255, 255, 0.6);
+        padding: 1rem 1.5rem;
+        border-radius: 16px;
+        margin-bottom: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-left: 6px solid var(--accent-local);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.2s, background 0.3s;
+    }
+
+        .input-group:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: scale(1.01);
+        }
+
+    .label-existente {
+        color: #555;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+    }
+
+    .input-monto {
+        border: none;
+        background: transparent;
+        font-size: 1.4rem;
+        color: var(--primary-local);
+        font-weight: 700;
+        text-align: right;
+        width: 40%;
+        outline: none;
+    }
+
+    .input-nuevo-nombre {
+        border: none;
+        border-bottom: 1px solid #999;
+        background: transparent;
+        color: var(--primary-local);
+        font-weight: 700;
+        width: 60%;
+        padding: 5px 0;
+        outline: none;
+    }
+
+    /* Botones */
+    .btn-add {
+        background: rgba(255, 255, 255, 0.4);
+        border: 2px dashed #777;
+        color: #444;
+        padding: 1rem;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        margin-bottom: 1rem;
+        transition: 0.3s;
+    }
+
+        .btn-add:hover {
+            border-color: var(--accent-local);
+            color: var(--accent-local);
+            background: rgba(255,255,255,0.8);
+        }
+
+    .btn-guardar {
+        background: linear-gradient(90deg, var(--accent-local) 0%, #008BC7 100%);
+        color: #FFF;
+        border: none;
+        padding: 1.2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        text-transform: uppercase;
+        width: 100%;
+        box-shadow: 0 5px 15px rgba(0, 174, 239, 0.3);
+    }
+
+    /* --- LADO DERECHO (CRISTAL BLANCO) --- */
+    .panel-visual {
+        width: 40%;
+        background: rgba(255, 255, 255, 0.45);
+        backdrop-filter: blur(30px);
+        -webkit-backdrop-filter: blur(30px);
+        color: var(--primary-local);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Gráfica */
+    .chart-container {
+        width: 380px;
+        height: 380px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 2.5rem;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        background: conic-gradient(#FFF 0% 100%);
+    }
+
+    .chart-inner {
+        width: 280px;
+        height: 280px;
+        background-color: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(10px);
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .legend {
+        width: 85%;
+        max-height: 200px;
+        overflow-y: auto;
+        padding-right: 5px;
+    }
+
+    .legend-item {
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+        padding: 10px 0;
+        font-size: 0.95rem;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<div class="contenedor-modulo">
+
+    <div class="panel-input">
+        <h1>Asignación 2025</h1>
+        <p class="subtitle">Gestiona fondos y montos</p>
+
+        @if (TempData["Mensaje"] != null)
+        {
+            <div style="background:rgba(212, 237, 218, 0.7); color:#155724; padding:12px; border-radius:10px; margin-bottom:15px; border:1px solid #c3e6cb; backdrop-filter:blur(5px);">
+                @TempData["Mensaje"]
+            </div>
+        }
+
+        <form asp-action="GuardarAsignacion" method="post" style="display:flex; flex-direction:column; height:100%; overflow:hidden;">
+
+            <div class="form-container" id="lista-fondos">
+                @if (Model != null)
+                {
+                    for (int i = 0; i < Model.Count; i++)
+                    {
+                        <div class="input-group item-fondo">
+                            <input type="hidden" name="[@i].Id" value="@Model[i].Id" />
+                            <input type="hidden" name="[@i].Nombre" value="@Model[i].Nombre" class="input-nombre-real" />
+
+                            <div class="input-row">
+                                <span class="label-existente">@Model[i].Nombre</span>
+                                <input type="number" step="0.01" name="[@i].Monto" value="@Model[i].Monto"
+                                       class="input-monto" placeholder="$ 0.00" oninput="calcularGrafica()" />
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+            <button type="button" class="btn-add" onclick="agregarNuevoFondo()">+ Nuevo Fondo</button>
+            <button type="submit" class="btn-guardar">Guardar Asignación</button>
+        </form>
+    </div>
+
+    <div class="panel-visual">
+        <div class="chart-container" id="grafico">
+            <div class="chart-inner">
+                <span style="color:#777; font-size:0.85rem; letter-spacing:1px; font-weight:600;">TOTAL ANUAL</span>
+                <span style="font-size:2.2rem; font-weight:700; color:var(--primary-local);" id="textoTotal">$0.00</span>
+            </div>
+        </div>
+        <div class="legend" id="leyenda"></div>
+    </div>
+</div>
+
+<script>
+    let contadorIndices = @(Model != null ? Model.Count : 0);
+
+    // NUEVA PALETA DE COLORES SOLICITADA
+    const paletaColores = [
+        '#D4AF37', // 1. Oro Original
+        '#C0C0C0', // 2. Plata Original
+        '#3251AC', // 3. Azul Original
+        '#ffe296', // 4. Oro Claro (#ffe296)
+        '#dfdfdf', // 5. Plata Claro (#dfdfdf)
+        '#a1a3d6'  // 6. Azul Claro (#a1a3d6)
+    ];
+
+    function obtenerColor(i) {
+        // Usamos el operador módulo (%) para que si hay un 7mo elemento (índice 6),
+        // vuelva a empezar con el color 0 (Oro Original) y así sucesivamente.
+        return paletaColores[i % paletaColores.length];
+    }
+
+    function agregarNuevoFondo() {
+        const contenedor = document.getElementById('lista-fondos');
+        const i = contadorIndices;
+
+        const htmlNuevo = `
+                <div class="input-group item-fondo" style="animation: fadeIn 0.5s">
+                    <div class="input-row">
+                        <input type="text" name="[${i}].Nombre" class="input-nuevo-nombre input-nombre-real"
+                               placeholder="Nombre..." required oninput="calcularGrafica()" />
+                        <input type="number" step="0.01" name="[${i}].Monto" class="input-monto"
+                               placeholder="$ 0.00" oninput="calcularGrafica()" />
+                    </div>
+                </div>
+            `;
+        contenedor.insertAdjacentHTML('beforeend', htmlNuevo);
+        contadorIndices++;
+        calcularGrafica();
+
+        setTimeout(() => {
+            contenedor.lastElementChild.scrollIntoView({ behavior: 'smooth' });
+        }, 50);
+    }
+
+    function calcularGrafica() {
+        const items = document.querySelectorAll('.item-fondo');
+        let total = 0;
+        let datos = [];
+
+        items.forEach((item, index) => {
+            const inputMonto = item.querySelector('.input-monto');
+            const inputNombre = item.querySelector('.input-nombre-real');
+            const labelNombre = item.querySelector('.label-existente');
+
+            let valor = parseFloat(inputMonto.value) || 0;
+            let nombreTexto = inputNombre.value;
+            if (!nombreTexto && labelNombre) nombreTexto = labelNombre.innerText;
+            if (!nombreTexto) nombreTexto = "Nuevo";
+
+            total += valor;
+
+            const color = obtenerColor(index);
+            item.style.borderLeftColor = color;
+            datos.push({ valor, nombre: nombreTexto, color });
+        });
+
+        document.getElementById('textoTotal').innerText = new Intl.NumberFormat('es-MX', {
+            style: 'currency', currency: 'MXN'
+        }).format(total);
+
+        let gradiente = [];
+        let acumulado = 0;
+        let htmlLeyenda = '';
+
+        datos.forEach(d => {
+            const pct = total > 0 ? (d.valor / total) * 100 : 0;
+            if (pct > 0) {
+                const inicio = acumulado;
+                const fin = acumulado + pct;
+                gradiente.push(`${d.color} ${inicio}% ${fin}%`);
+                acumulado = fin;
+            }
+            htmlLeyenda += `
+                    <div class="legend-item">
+                        <span style="color:${d.color}; font-weight:700;">● ${d.nombre}</span>
+                        <span style="font-weight:500; color:#555;">${pct.toFixed(1)}%</span>
+                    </div>
+                `;
+        });
+
+        const cssGradiente = gradiente.length > 0
+            ? `conic-gradient(${gradiente.join(', ')})`
+            : 'conic-gradient(#FFFFFF 0% 100%)';
+
+        document.getElementById('grafico').style.background = cssGradiente;
+        document.getElementById('leyenda').innerHTML = htmlLeyenda;
+    }
+
+    window.onload = calcularGrafica;
+</script>

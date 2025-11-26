@@ -100,6 +100,12 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item">
+                            <a class="nav-link @(currentController == "Presupuesto" ? "active" : "")" asp-controller="Presupuesto" asp-action="Index">
+                                <i class="bi bi-kanban-fill"></i>
+                                <span>Inicio Año</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link @(currentController == "Dashboard" ? "active" : "")" asp-controller="Dashboard" asp-action="Index">
                                 <i class="bi bi-kanban-fill"></i>
                                 <span>Dashboard</span>

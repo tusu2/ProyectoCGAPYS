@@ -221,6 +221,8 @@ public class LicitacionesController : Controller
             Longitud = licitacion.Proyecto?.Longitud ?? "Ubicación no disponible",
             FolioProyecto = licitacion.Proyecto?.Folio ?? "S/F",
             PresupuestoProyecto = licitacion.Proyecto?.Presupuesto ?? 0m,
+            MontoContratado = licitacion.MontoContratado,
+            PlazoDias = licitacion.PlazoDias,
             CampusNombre = licitacion.Proyecto?.Campus?.Nombre ?? "N/D",
             DependenciaNombre = licitacion.Proyecto?.Dependencia?.Nombre ?? "N/D",
             TipoFondoNombre = licitacion.Proyecto?.TipoFondo?.Nombre ?? "N/D", 
@@ -335,7 +337,7 @@ public class LicitacionesController : Controller
     // POST: Licitaciones/ActualizarInfoGeneral
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ActualizarInfoGeneral(int licitacionId, string tipoProceso, string fondoId)
+    public async Task<IActionResult> ActualizarInfoGeneral(int licitacionId, string tipoProceso, string fondoId, decimal? montoContratado, int? plazoDias)
     {
         var licitacion = await _context.Licitaciones
                                        .Include(l => l.Proyecto)
@@ -354,7 +356,8 @@ public class LicitacionesController : Controller
         {
             licitacion.Proyecto.IdTipoFondoFk = fondoId;
         }
-
+        licitacion.MontoContratado = montoContratado;
+        licitacion.PlazoDias = plazoDias;
         _context.Update(licitacion);
         // Entity Framework detectará que modificamos licitacion.Proyecto y actualizará ambos.
 
@@ -898,10 +901,21 @@ public class LicitacionesController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MandarAEjecutar(
-     int licitacionId,
-     DateTime? FechaInicioEjecucion,
-     DateTime? FechaFinEjecucion,
-     string SupervisorAsignadoID)
+      int licitacionId,
+      DateTime? FechaInicioEjecucion,
+      DateTime? FechaFinEjecucion,
+      string SupervisorAsignadoID,
+      // --- PARAMETROS NUEVOS ---
+      bool TieneDiferimientoPago,
+      DateTime? FechaInicioDiferimiento,
+      DateTime? FechaFinDiferimiento,
+      bool TieneConvenio,
+      DateTime? FechaInicioConvenio,
+      DateTime? FechaFinConvenio,
+      bool TieneSuspension,
+      DateTime? FechaInicioSuspension,
+      DateTime? FechaFinSuspension
+      )
     {
         const int faseLicitacionId = 4;
         const int faseEjecucionId = 5;
@@ -916,33 +930,34 @@ public class LicitacionesController : Controller
 
             if (licitacion == null) return NotFound();
 
-            // --- VALIDACIONES: Aquí cambiamos los Redirect por BadRequest ---
-
+            // --- VALIDACIONES ---
             if (licitacion.ContratistaGanadorId == null)
-            {
-                // AJAX lo detectará como error y mostrará el mensaje
                 return BadRequest("No se puede mandar a ejecutar. Debe asignar un contratista ganador primero.");
-            }
 
-            // OJO AQUÍ: Esta suele ser la causa principal del fallo silencioso
             if (!licitacion.LicitacionDocumentos.Any(d => d.TipoDocumento == "Contrato"))
-            {
-                return BadRequest("Falta subir el documento 'Contrato'. Por favor súbelo en la sección de documentos.");
-            }
+                return BadRequest("Falta subir el documento 'Contrato'.");
 
-            if (licitacion.Proyecto.IdFaseFk != faseLicitacionId)
-            {
-                return BadRequest("El proyecto no se encuentra en la fase correcta (Licitación).");
-            }
-
-            // --- PROCESO DE GUARDADO ---
-
+            // --- ACTUALIZACIÓN DE DATOS PRINCIPALES ---
             licitacion.FechaInicioEjecucion = FechaInicioEjecucion;
             licitacion.FechaFinEjecucion = FechaFinEjecucion;
             licitacion.SupervisorAsignadoId = SupervisorAsignadoID;
             licitacion.Estado = "Adjudicada";
 
-            // Actualizar/Crear Invitación Ganadora
+            // --- ACTUALIZACIÓN DE INCIDENCIAS (NUEVO) ---
+            // Usamos lógica ternaria: Si el checkbox es falso, guardamos null en las fechas para limpiar basura
+            licitacion.TieneDiferimientoPago = TieneDiferimientoPago;
+            licitacion.FechaInicioDiferimiento = TieneDiferimientoPago ? FechaInicioDiferimiento : null;
+            licitacion.FechaFinDiferimiento = TieneDiferimientoPago ? FechaFinDiferimiento : null;
+
+            licitacion.TieneConvenio = TieneConvenio;
+            licitacion.FechaInicioConvenio = TieneConvenio ? FechaInicioConvenio : null;
+            licitacion.FechaFinConvenio = TieneConvenio ? FechaFinConvenio : null;
+
+            licitacion.TieneSuspension = TieneSuspension;
+            licitacion.FechaInicioSuspension = TieneSuspension ? FechaInicioSuspension : null;
+            licitacion.FechaFinSuspension = TieneSuspension ? FechaFinSuspension : null;
+
+            // --- GESTIÓN DE INVITACIÓN GANADORA ---
             var contratistaGanador = await _context.Contratistas.FindAsync(licitacion.ContratistaGanadorId.Value);
             var invitacionGanador = await _context.LicitacionContratistas
                 .FirstOrDefaultAsync(lc => lc.LicitacionId == licitacionId && lc.ContratistaId == contratistaGanador.Id);
@@ -964,7 +979,7 @@ public class LicitacionesController : Controller
                 _context.LicitacionContratistas.Update(invitacionGanador);
             }
 
-            // Notificaciones
+            // --- NOTIFICACIONES ---
             _context.Notificaciones.Add(new Notificacion
             {
                 UsuarioId = contratistaGanador.UsuarioId,
@@ -974,24 +989,13 @@ public class LicitacionesController : Controller
                 Mensaje = $"¡Felicidades! Has sido adjudicado para el proyecto '{licitacion.Proyecto.NombreProyecto}'."
             });
 
-            if (!string.IsNullOrEmpty(SupervisorAsignadoID))
-            {
-                _context.Notificaciones.Add(new Notificacion
-                {
-                    UsuarioId = SupervisorAsignadoID,
-                    Url = "/Proyectos/Detalles/" + licitacion.ProyectoId,
-                    FechaCreacion = DateTime.Now,
-                    Leida = false,
-                    Mensaje = $"Se te ha asignado como SUPERVISOR del proyecto '{licitacion.Proyecto.NombreProyecto}'."
-                });
-            }
-
+            // --- CAMBIO DE FASE Y GUARDADO ---
             _context.Licitaciones.Update(licitacion);
-
             var proyecto = licitacion.Proyecto;
             proyecto.IdFaseFk = faseEjecucionId;
             _context.Proyectos.Update(proyecto);
 
+            // Historial
             var historial = new HistorialFase
             {
                 ProyectoId = proyecto.Id,
@@ -999,20 +1003,19 @@ public class LicitacionesController : Controller
                 FaseNuevaId = faseEjecucionId,
                 FechaCambio = DateTime.Now,
                 Comentario = "Proyecto enviado a Ejecución (Adjudicación/Fallo).",
-                TipoCambio = "Aprobado"
+                TipoCambio = "Aprobado",
+                // UsuarioId = ... (Si estás usando Identity, puedes descomentar y usar User.FindFirstValue)
             };
             _context.HistorialFases.Add(historial);
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            // ÉXITO: Retornamos OK (200) para que AJAX sepa que todo salió bien
             return Ok(new { mensaje = "Proyecto enviado a ejecución correctamente." });
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            // ERROR DE SERVIDOR: Retornamos BadRequest (400) con el detalle
             return BadRequest("Error interno del servidor: " + ex.Message);
         }
     }
@@ -1076,6 +1079,48 @@ public class LicitacionesController : Controller
         {
             // Importante: Devolver el error real para verlo en consola
             return StatusCode(500, new { mensaje = "Error interno: " + ex.Message });
+        }
+    }
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ActualizarIncidencias(LicitacionDetalleViewModel model)
+    {
+        var licitacion = await _context.Licitaciones.FindAsync(model.LicitacionId);
+        if (licitacion == null) return NotFound(new { mensaje = "Licitación no encontrada." });
+
+        // Solo permitimos editar esto si NO está adjudicada aún (opcional, depende de tu regla de negocio)
+        if (licitacion.Estado == "Adjudicada")
+        {
+            // Si quieres permitir editar incluso adjudicada, quita este bloque if.
+            return BadRequest(new { mensaje = "No se pueden editar incidencias en una licitación ya adjudicada." });
+        }
+
+        try
+        {
+            // 1. Diferimiento
+            licitacion.TieneDiferimientoPago = model.TieneDiferimientoPago;
+            // Lógica de limpieza: si desmarcaron el checkbox, forzamos las fechas a null
+            licitacion.FechaInicioDiferimiento = model.TieneDiferimientoPago ? model.FechaInicioDiferimiento : null;
+            licitacion.FechaFinDiferimiento = model.TieneDiferimientoPago ? model.FechaFinDiferimiento : null;
+
+            // 2. Convenio
+            licitacion.TieneConvenio = model.TieneConvenio;
+            licitacion.FechaInicioConvenio = model.TieneConvenio ? model.FechaInicioConvenio : null;
+            licitacion.FechaFinConvenio = model.TieneConvenio ? model.FechaFinConvenio : null;
+
+            // 3. Suspensión
+            licitacion.TieneSuspension = model.TieneSuspension;
+            licitacion.FechaInicioSuspension = model.TieneSuspension ? model.FechaInicioSuspension : null;
+            licitacion.FechaFinSuspension = model.TieneSuspension ? model.FechaFinSuspension : null;
+
+            _context.Update(licitacion);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { mensaje = "Incidencias y fechas actualizadas correctamente." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { mensaje = "Error al guardar incidencias: " + ex.Message });
         }
     }
 }

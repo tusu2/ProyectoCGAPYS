@@ -72,15 +72,16 @@ namespace ProyectoCGAPYS.Controllers
                                                                 .ToListAsync();
 
             // 4. Obtener Proyectos por Vencer
-            dashboardViewModel.ProyectosPorVencer = await _context.Set<ProyectoAlertaViewModel>()
-                                                                  .FromSqlRaw("EXEC sp_GetDashboard_ProyectosPorVencer")
-                                                                  .ToListAsync();
+             dashboardViewModel.ProyectosPorVencer = await _context.Set<ProyectoAlertaViewModel>()
+                                                          .FromSqlRaw("EXEC sp_GetDashboard_ProyectosPorVencer")
+                                                               .ToListAsync();
 
             // 5. Obtener Estimaciones Pendientes
-            dashboardViewModel.EstimacionesPendientes = await _context.Set<ProyectoAlertaViewModel>()
-                                                                       .FromSqlRaw("EXEC sp_GetDashboard_EstimacionesPendientes")
-                                                                       .ToListAsync();
-
+            //     dashboardViewModel.EstimacionesPendientes = await _context.Set<ProyectoAlertaViewModel>()
+            //                                                     .FromSqlRaw("EXEC sp_GetDashboard_EstimacionesPendientes")
+            //                                                   .ToListAsync();
+          
+            dashboardViewModel.EstimacionesPendientes = new List<ProyectoAlertaViewModel>();
             // Pasamos el ViewModel completamente poblado a la vista
             return View(dashboardViewModel);
         }
@@ -610,8 +611,86 @@ Pregunta Original:
                 return "Error al leer los datos.";
             }
         }
-    }
+        [HttpGet]
+        public async Task<IActionResult> GetDashboardFiltered(string fondos)
+        {
+            // Si fondos viene vacío o dice "todos", enviamos NULL al SP
+            string paramFondo = (string.IsNullOrEmpty(fondos) || fondos == "todos") ? null : fondos;
 
+            var connectionString = _context.Database.GetConnectionString();
+            var resultado = new DashboardFilteredData();
+
+            using (var connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                using (var command = new SqlCommand("sp_GetDashboard_FilteredData", connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.Parameters.AddWithValue("@ListaFondos", (object)paramFondo ?? DBNull.Value);
+
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        // 1. Leer KPIs
+                        if (await reader.ReadAsync())
+                        {
+                            resultado.Kpis = new KPIsViewModel
+                            {
+                                PresupuestoTotalAutorizado = reader.GetDecimal(reader.GetOrdinal("PresupuestoTotalAutorizado")),
+                                PresupuestoContratado = reader.GetDecimal(reader.GetOrdinal("PresupuestoContratado")),
+                                MontoTotalEjercido = reader.GetDecimal(reader.GetOrdinal("MontoTotalEjercido")),
+                                BalanceGeneralDisponible = reader.GetDecimal(reader.GetOrdinal("BalanceGeneralDisponible")),
+                                ProyectosTotales = reader.GetInt32(reader.GetOrdinal("ProyectosTotales")),
+                                ProyectosActivos = reader.GetInt32(reader.GetOrdinal("ProyectosActivos"))
+                            };
+                        }
+
+                        // 2. Leer Gráfica de Fases
+                        await reader.NextResultAsync();
+                        resultado.ProyectosPorFase = new List<FaseViewModel>();
+                        while (await reader.ReadAsync())
+                        {
+                            resultado.ProyectosPorFase.Add(new FaseViewModel
+                            {
+                                Fase = reader.GetString(reader.GetOrdinal("Fase")),
+                                TotalProyectos = reader.GetInt32(reader.GetOrdinal("TotalProyectos"))
+                            });
+                        }
+
+                        // 3. Leer Lista de Proyectos por Vencer
+                        await reader.NextResultAsync();
+                        resultado.ProyectosPorVencer = new List<dynamic>();
+                        while (await reader.ReadAsync())
+                        {
+                            resultado.ProyectosPorVencer.Add(new
+                            {
+                                Id = reader.GetString(reader.GetOrdinal("Id")),
+                                NombreProyecto = reader.GetString(reader.GetOrdinal("NombreProyecto")),
+
+                                // --- CORRECCIÓN AQUÍ ---
+                                // Antes: reader.GetDateTime(...).ToString(...)
+                                // Ahora: reader.GetString(...) porque SQL ya lo manda formateado
+                                FechaVencimiento = reader.GetString(reader.GetOrdinal("FechaVencimiento")),
+
+                                DiasRestantes = reader.GetInt32(reader.GetOrdinal("DiasRestantes")),
+                                ClaseSemaforo = reader.GetString(reader.GetOrdinal("ClaseSemaforo"))
+                            });
+                        }
+                    }
+                }
+            }
+
+            return Json(resultado);
+        }
+
+        // Clase auxiliar DTO para enviar la respuesta JSON
+
+    }
+    public class DashboardFilteredData
+    {
+        public KPIsViewModel Kpis { get; set; }
+        public List<FaseViewModel> ProyectosPorFase { get; set; }
+        public List<dynamic> ProyectosPorVencer { get; set; }
+    }
     // Clases para enviar la solicitud a Ollama
     public class OllamaChatRequest
     {
