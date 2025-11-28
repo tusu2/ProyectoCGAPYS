@@ -3,15 +3,15 @@
     ViewData["Title"] = "Detalles de Estimación";
     var contratista = ViewBag.Contratista as Contratista;
 
-    // --- INICIO DE CORRECCIÓN (TAREA 2) ---
+    // --- INICIO MODIFICACIÓN TAREA 2 (PDF/XML) ---
     // Variables auxiliares para verificar documentos
-    // Usamos '?? new ...' para evitar errores si Model.Documentos es nulo
-    var documentos = Model.Documentos ?? new HashSet<EstimacionDocumentos>();
-
-    var tieneFacturaPDF = documentos.Any(d => d.TipoDocumento == "Factura (PDF)");
-    var tieneFacturaXLSX = Model.Documentos.Any(d => d.TipoDocumento == "Factura (XLSX)");
-    var tienePoliza = documentos.Any(d => d.TipoDocumento == "PolizaPago");
-    // --- FIN DE CORRECCIÓN ---
+    var tieneFacturaPDF = Model.Documentos.Any(d => d.TipoDocumento == "Factura (PDF)");
+    var tieneFacturaXLSX = Model.Documentos.Any(d => d.TipoDocumento == "Factura (XLSX)"); // <-- CAMBIO DE XML A XLSX
+    var tienePoliza = Model.Documentos.Any(d => d.TipoDocumento == "PolizaPago");
+    var licitacion = ViewBag.Licitacion as Licitacion;
+    int plazoDias = licitacion?.PlazoDias ?? 0;
+    decimal montoContratado = licitacion?.MontoContratado ?? 0;
+    // --- FIN MODIFICACIÓN TAREA 2 ---
 }
 
 <link rel="stylesheet" href="~/css/Estimaciones.css" asp-append-version="true" />
@@ -21,7 +21,14 @@
 <h2 class="display-4">@ViewData["Title"]</h2>
 <p class="lead">Gestión y Seguimiento de Pagos</p>
 <hr />
-
+<div class="alert alert-info">
+    <h4>🔍 Lo que ve el sistema:</h4>
+    <ul>
+        <li><strong>Estado exacto:</strong> "@Model.Estado"</li>
+        <li><strong>¿Es Anticipo?:</strong> @Model.EsAnticipo</li>
+        <li><strong>Largo del texto Estado:</strong> @Model.Estado.Length caracteres</li>
+    </ul>
+</div>
 <div class="row">
     <div class="col-md-7">
 
@@ -45,19 +52,99 @@
                         }
                         else if (Model.Estado == "Aprobado (Pendiente Factura)")
                         {
-                            <span class="badge bg-info text-dark fs-6">@Model.Estado</span>
+                            <div class="card shadow-sm mb-4">
+                                <div class="card-header bg-dark text-white">
+
+                                    <h4 class="mb-0">Acciones: Administración (Recepción de Factura)</h4>
+                                </div>
+                                <div class="card-body">
+                                    <p>Suba la Factura (PDF y XML) entregada por el contratista y la Póliza de Pago interna.</p>
+
+                                    @* --- INICIO MODIFICACIÓN TAREA 2 (PDF/XML) --- *@
+
+                                    <form class="mb-3 border p-3 rounded bg-light" asp-action="SubirDocumentoInterno" method="post" enctype="multipart/form-data">
+                                        <input type="hidden" name="estimacionId" value="@Model.Id" />
+                                        <input type="hidden" name="tipoDocumento" value="Factura (PDF)" />
+
+                                        <label class="form-label fw-bold">1. Adjuntar Factura (.pdf)</label>
+                                        @if (tieneFacturaPDF)
+                                        {
+                                            <div class="alert alert-success py-2 mb-0"><i class="fas fa-check-circle me-2"></i> Factura PDF cargada.</div>
+                                        }
+                                        else
+                                        {
+                                            <div class="input-group">
+                                                <input type="file" name="archivo" class="form-control" accept=".pdf" required />
+                                                <button type="submit" class="btn btn-primary">Subir</button>
+                                            </div>
+                                        }
+                                    </form>
+
+                                    <form class="mb-3 border p-3 rounded bg-light" asp-action="SubirDocumentoInterno" method="post" enctype="multipart/form-data">
+                                        <input type="hidden" name="estimacionId" value="@Model.Id" />
+                                        <input type="hidden" name="tipoDocumento" value="Factura (XML)" />
+
+                                        <label class="form-label fw-bold">2. Adjuntar Factura (.xml)</label>
+                                        @if (tieneFacturaXLSX)
+                                        {
+                                            <div class="alert alert-success py-2 mb-0"><i class="fas fa-check-circle me-2"></i> Factura XML cargada.</div>
+                                        }
+                                        else
+                                        {
+                                            <div class="input-group">
+                                                <input type="file" name="archivo" class="form-control" accept=".xml" required />
+                                                <button type="submit" class="btn btn-primary">Subir</button>
+                                            </div>
+                                        }
+                                    </form>
+
+                                    <form class="mb-3 border p-3 rounded bg-light" asp-action="SubirDocumentoInterno" method="post" enctype="multipart/form-data">
+                                        <input type="hidden" name="estimacionId" value="@Model.Id" />
+                                        <input type="hidden" name="tipoDocumento" value="PolizaPago" />
+                                        <label class="form-label fw-bold">3. Adjuntar Póliza de Pago (.pdf)</label>
+                                        @if (tienePoliza)
+                                        {
+                                            <div class="alert alert-success py-2 mb-0"><i class="fas fa-check-circle me-2"></i> Póliza cargada.</div>
+                                        }
+                                        else
+                                        {
+                                            <div class="input-group">
+                                                <input type="file" name="archivo" class="form-control" accept=".pdf" required />
+                                                <button type="submit" class="btn btn-primary">Subir</button>
+                                            </div>
+                                        }
+                                    </form>
+
+                                    <hr />
+                                    @* ... (Tu código existente) ... *@
+                                    <form asp-action="EnviarATesoreria" method="post" onsubmit="return confirm('¿Enviar expediente a Tesorería para pago?');">
+
+                                        <input type="hidden" name="estimacionId" value="@Model.Id" />
+
+                                        @* Lógica de deshabilitación actualizada *@
+                                        <button type="submit" class="btn btn-dark btn-lg w-100" @(!tieneFacturaPDF || !tieneFacturaXLSX || !tienePoliza ? "disabled" : "")>
+                                            <i class="fas fa-paper-plane me-2"></i> Enviar a Tesorería (Autorizar Pago)
+                                        </button>
+
+                                        @if (!tieneFacturaPDF || !tieneFacturaXLSX || !tienePoliza)
+                                        {
+                                            <small class="text-danger text-center d-block mt-2">
+                                                * Se requiere subir los 3 documentos (PDF, XML y Póliza) para continuar.
+                                            </small>
+                                        }
+                                    </form>
+                                    @* ... (Tu código existente) ... *@
+                                    @* --- FIN MODIFICACIÓN TAREA 2 --- *@
+                                </div>
+                            </div>
                         }
-                        else if (Model.Estado == "En Trámite de Pago")
+                        else if (Model.Estado != null && Model.Estado.Trim() == "En Trámite de Pago")
                         {
                             <span class="badge bg-success fs-6">@Model.Estado</span>
                         }
                         else if (Model.Estado == "En Creación" || Model.Estado == "Rechazado")
                         {
                             <span class="badge bg-warning text-dark fs-6">En Corrección / Borrador</span>
-                        }
-                        else if (Model.Estado == "Pagada")
-                        {
-                            <span class="badge bg-secondary fs-6">Pagada</span>
                         }
                         else
                         {
@@ -105,7 +192,7 @@
         }
         else if (Model.Estado == "Aprobado (Pendiente Factura)")
         {
-            @* --- INICIO DE BLOQUE CORREGIDO --- *@
+            @* --- INICIO DE BLOQUE MODIFICADO --- *@
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-dark text-white">
                     <h4 class="mb-0">Acciones: Administración (Recepción de Factura)</h4>
@@ -170,9 +257,11 @@
 
                     <form asp-action="EnviarATesoreria" method="post" onsubmit="return confirm('¿Enviar expediente a Tesorería para pago?');">
                         <input type="hidden" name="estimacionId" value="@Model.Id" />
+
                         <button type="submit" class="btn btn-dark btn-lg w-100" @(!tieneFacturaPDF || !tieneFacturaXLSX || !tienePoliza ? "disabled" : "")>
                             <i class="fas fa-paper-plane me-2"></i> Enviar a Tesorería (Autorizar Pago)
                         </button>
+
                         @if (!tieneFacturaPDF || !tieneFacturaXLSX || !tienePoliza)
                         {
                             <small class="text-danger text-center d-block mt-2">
@@ -182,28 +271,116 @@
                     </form>
                 </div>
             </div>
-            @* --- FIN DE BLOQUE CORREGIDO --- *@
+            @* --- FIN DE BLOQUE MODIFICADO --- *@
         }
         else if (Model.Estado == "En Trámite de Pago")
         {
+
+
             <div class="card shadow-sm mb-4 border-success">
                 <div class="card-header bg-success text-white">
                     <h4 class="mb-0">Acciones: Tesorería (Pago Final)</h4>
                 </div>
                 <div class="card-body">
-                    <p>El expediente está completo. Proceda con la transferencia bancaria.</p>
-                    <div class="alert alert-light border">
-                        <strong>Instrucción:</strong> Una vez realizado el depósito bancario, haga clic en el botón inferior para cerrar la estimación.
-                    </div>
 
-                    <div class="d-grid gap-2">
-                        <form asp-action="MarcarComoPagada" method="post" onsubmit="return confirm('¿Confirma que el pago ya fue realizado?');">
+                    @* === LÓGICA ESPECIAL PARA ANTICIPO === *@
+                    @if (Model.EsAnticipo)
+                    {
+                        <div class="alert alert-warning">
+                            <i class="fas fa-star me-2"></i><strong>Cierre de Anticipo:</strong>
+                            Se requiere información adicional para oficializar el inicio de obra.
+                        </div>
+
+                        <form asp-action="ConfirmarPagoAnticipo" method="post" enctype="multipart/form-data">
+                            <input type="hidden" name="estimacionId" value="@Model.Id" />
+                            <input type="hidden" name="licitacionId" value="@(licitacion?.Id)" />
+
+                            @* 1. COMPROBANTE DE TRANSFERENCIA *@
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">1. Comprobante de Transferencia (Obligatorio)</label>
+                                <input type="file" name="archivoTransferencia" class="form-control" accept=".pdf,.jpg,.png" required />
+                            </div>
+
+                            <hr />
+
+                            @* 2. SELECCIÓN DE DIFERIMIENTO *@
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">2. Gestión de Plazos y Diferimientos</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="chkAplicaDiferimiento" onchange="toggleDiferimiento()">
+                                    <label class="form-check-label" for="chkAplicaDiferimiento">¿Aplicar Diferimiento / Convenio / Suspensión?</label>
+                                </div>
+                            </div>
+
+                            <div id="panelDiferimiento" style="display:none;" class="p-3 bg-light border rounded mb-3">
+                                <label class="form-label small text-muted">Tipo de Ajuste:</label>
+                                <select name="tipoAjuste" id="selectTipoAjuste" class="form-select mb-3" onchange="toggleCamposConvenio()">
+                                    <option value="Diferimiento">Diferimiento de Pago (Normal)</option>
+                                    <option value="Convenio">Convenio Modificatorio</option>
+                                    <option value="Suspension">Suspensión de Obra</option>
+                                </select>
+
+                                @* CAMPOS DE FECHA (Cálculo Automático) *@
+                                <div class="row g-2 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Fecha de Inicio (Hoy)</label>
+                                        <input type="date" name="fechaInicio" id="fechaInicio" class="form-control"
+                                               value="@DateTime.Now.ToString("yyyy-MM-dd")" onchange="calcularFechaFin()" />
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Fecha Fin (Calculada)</label>
+                                        <div class="input-group">
+                                            <input type="date" name="fechaFin" id="fechaFin" class="form-control" readonly />
+                                            <span class="input-group-text"><i class="fas fa-calculator"></i></span>
+                                        </div>
+                                        <div class="form-text small">Basado en plazo de @plazoDias días.</div>
+                                    </div>
+                                </div>
+
+                                @* CAMPOS EXTRA SOLO PARA CONVENIO *@
+                                <div id="camposConvenio" style="display:none;" class="border-top pt-3 mt-2">
+                                    <h6 class="text-primary"><i class="fas fa-file-contract me-1"></i>Datos Financieros del Convenio</h6>
+                                    <div class="row g-2">
+                                        <div class="col-md-4">
+                                            <label class="form-label small">Monto Original</label>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" class="form-control" value="@montoContratado" readonly id="montoBase" />
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small">Monto Adicional</label>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" name="montoAdicional" id="montoAdicional" class="form-control" step="0.01" value="0" oninput="calcularTotalConvenio()" />
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small fw-bold">Nuevo Total</label>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" name="nuevoTotalConvenio" id="nuevoTotalConvenio" class="form-control fw-bold text-success" readonly />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-success btn-lg w-100 mt-3" onclick="return confirm('¿Confirmar pago y actualizar fechas del proyecto?');">
+                                <i class="fas fa-check-double me-2"></i> Confirmar Pago de Anticipo
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <p>El expediente está completo. Proceda con la transferencia bancaria.</p>
+                        <form asp-action="MarcarComoPagada" method="post">
                             <input type="hidden" name="estimacionId" value="@Model.Id" />
                             <button type="submit" class="btn btn-success btn-lg w-100">
                                 <i class="fas fa-dollar-sign me-2"></i> Confirmar Pago Realizado
                             </button>
                         </form>
-                    </div>
+                    }
                 </div>
             </div>
         }
@@ -213,20 +390,18 @@
                 <i class="fas fa-check-circle fa-2x me-3"></i>
                 <div>
                     <h4 class="alert-heading mb-1">Proceso Finalizado</h4>
-                    <p class="mb-0">Esta estimación fue pagada el <strong>@(Model.Historial?.OrderByDescending(h => h.FechaCambio).FirstOrDefault(h => h.EstadoNuevo == "Pagada")?.FechaCambio.ToString("dd 'de' MMMM 'del' yyyy") ?? "Fecha desconocida")</strong>.</p>
+                    <p class="mb-0">Esta estimación fue pagada el <strong>@Model.Historial.OrderByDescending(h => h.FechaCambio).FirstOrDefault(h => h.EstadoNuevo == "Pagada")?.FechaCambio.ToString("dd 'de' MMMM 'del' yyyy")</strong>.</p>
                 </div>
             </div>
         }
-
-        @* --- INICIO SECCIÓN NUEVA (TAREA 2: FINIQUITO) --- *@
         @if (Model.Estado == "Pagada" && Model.EsFiniquito)
         {
             // Re-calculamos los documentos para esta nueva sección
-            var tieneActaEntrega = documentos.Any(d => d.TipoDocumento == "Acta Entrega-Recepción");
-            var tieneActaFiniquito = documentos.Any(d => d.TipoDocumento == "Acta Finiquito");
+            var tieneActaEntrega = Model.Documentos.Any(d => d.TipoDocumento == "Acta Entrega-Recepción");
+            var tieneActaFiniquito = Model.Documentos.Any(d => d.TipoDocumento == "Acta Finiquito");
 
-            // Verificamos el estado final del proyecto (requiere que Proyecto esté cargado)
-            var proyectoEstaFiniquitado = Model.Proyecto?.Estatus == "Finiquitado";
+            // Verificamos el estado final del proyecto
+            var proyectoEstaFiniquitado = Model.Proyecto.Estatus == "Finiquitado";
 
             if (proyectoEstaFiniquitado)
             {
@@ -294,7 +469,6 @@
                 </div>
             }
         }
-        @* --- FIN SECCIÓN NUEVA --- *@
 
     </div>
 
@@ -305,37 +479,30 @@
                 <h5 class="mb-0">Expediente Digital</h5>
             </div>
             <ul class="list-group list-group-flush">
-                @if (documentos == null || !documentos.Any())
+                @if (!Model.Documentos.Any())
                 {
                     <li class="list-group-item text-muted fst-italic">Aún no hay documentos adjuntos.</li>
                 }
-                else
+                @foreach (var doc in Model.Documentos.OrderBy(d => d.TipoDocumento))
                 {
-                    @foreach (var doc in documentos.OrderBy(d => d.TipoDocumento))
-                    {
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div class="text-truncate me-2">
-                                @if (doc.TipoDocumento.Contains("Factura") || doc.TipoDocumento == "PolizaPago")
-                                {
-                                    <i class="fas fa-file-invoice-dollar text-success me-2"></i>
-                                }
-                                else if (doc.TipoDocumento.Contains("Acta"))
-                                {
-                                    <i class="fas fa-file-contract text-info me-2"></i>
-                                }
-                                else
-                                {
-                                    <i class="fas fa-file-pdf text-danger me-2"></i>
-                                }
-                                <strong>@doc.TipoDocumento:</strong>
-                                <br>
-                                <small class="text-muted">@doc.NombreArchivo</small>
-                            </div>
-                            <a href="@doc.RutaArchivo" target="_blank" class="btn btn-sm btn-outline-secondary text-nowrap">
-                                <i class="fas fa-download"></i> Ver
-                            </a>
-                        </li>
-                    }
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="text-truncate me-2">
+                            @if (doc.TipoDocumento == "Factura" || doc.TipoDocumento == "PolizaPago")
+                            {
+                                <i class="fas fa-file-invoice-dollar text-success me-2"></i>
+                            }
+                            else
+                            {
+                                <i class="fas fa-file-pdf text-danger me-2"></i>
+                            }
+                            <strong>@doc.TipoDocumento:</strong>
+                            <br>
+                            <small class="text-muted">@doc.NombreArchivo</small>
+                        </div>
+                        <a href="@doc.RutaArchivo" target="_blank" class="btn btn-sm btn-outline-secondary text-nowrap">
+                            <i class="fas fa-download"></i> Ver
+                        </a>
+                    </li>
                 }
             </ul>
         </div>
@@ -345,25 +512,22 @@
                 <h5 class="mb-0">Bitácora de Movimientos</h5>
             </div>
             <ul class="list-group list-group-flush small">
-                @if (Model.Historial != null)
+                @foreach (var item in Model.Historial.OrderByDescending(h => h.FechaCambio))
                 {
-                    @foreach (var item in Model.Historial.OrderByDescending(h => h.FechaCambio))
-                    {
-                        <li class="list-group-item">
-                            <div class="d-flex justify-content-between">
-                                <span class="fw-bold">@item.EstadoNuevo</span>
-                                <span class="text-muted">@item.FechaCambio.ToString("dd/MM/yy HH:mm")</span>
-                            </div>
-                            <div class="text-muted mb-1">Por: @(item.Usuario?.UserName ?? "Sistema")</div>
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <span class="fw-bold">@item.EstadoNuevo</span>
+                            <span class="text-muted">@item.FechaCambio.ToString("dd/MM/yy HH:mm")</span>
+                        </div>
+                        <div class="text-muted mb-1">Por: @(item.Usuario?.UserName ?? "Sistema")</div>
 
-                            @if (!string.IsNullOrEmpty(item.Comentario))
-                            {
-                                <div class="alert alert-secondary p-2 mb-0 mt-1 fst-italic">
-                                    <i class="fas fa-comment-alt me-1"></i> "@item.Comentario"
-                                </div>
-                            }
-                        </li>
-                    }
+                        @if (!string.IsNullOrEmpty(item.Comentario))
+                        {
+                            <div class="alert alert-secondary p-2 mb-0 mt-1 fst-italic">
+                                <i class="fas fa-comment-alt me-1"></i> "@item.Comentario"
+                            </div>
+                        }
+                    </li>
                 }
             </ul>
         </div>
@@ -400,3 +564,55 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Variable global traída de Razor
+    var plazoDiasGlobal = @plazoDias;
+
+    function toggleDiferimiento() {
+        var chk = document.getElementById("chkAplicaDiferimiento");
+        var panel = document.getElementById("panelDiferimiento");
+
+        if (chk.checked) {
+            panel.style.display = "block";
+            calcularFechaFin(); // Calcular inmediatamente al abrir
+        } else {
+            panel.style.display = "none";
+        }
+    }
+
+    function toggleCamposConvenio() {
+        var tipo = document.getElementById("selectTipoAjuste").value;
+        var divConvenio = document.getElementById("camposConvenio");
+
+        if (tipo === "Convenio") {
+            divConvenio.style.display = "block";
+            calcularTotalConvenio();
+        } else {
+            divConvenio.style.display = "none";
+        }
+    }
+
+    function calcularFechaFin() {
+        var inputInicio = document.getElementById("fechaInicio").value;
+        if (inputInicio) {
+            var fecha = new Date(inputInicio + 'T00:00:00'); // Forzar zona horaria local
+            // Sumar días
+            fecha.setDate(fecha.getDate() + plazoDiasGlobal);
+
+            // Formatear a YYYY-MM-DD
+            var dia = ("0" + fecha.getDate()).slice(-2);
+            var mes = ("0" + (fecha.getMonth() + 1)).slice(-2);
+            var anio = fecha.getFullYear();
+
+            document.getElementById("fechaFin").value = `${anio}-${mes}-${dia}`;
+        }
+    }
+
+    function calcularTotalConvenio() {
+        var base = parseFloat(document.getElementById("montoBase").value) || 0;
+        var extra = parseFloat(document.getElementById("montoAdicional").value) || 0;
+        var total = base + extra;
+        document.getElementById("nuevoTotalConvenio").value = total.toFixed(2);
+    }
+</script>

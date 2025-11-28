@@ -81,6 +81,11 @@ namespace ProyectoCGAPYS.Models
 
         // En Licitacion.cs
         public decimal? MontoContratado { get; set; }
+        public bool Anticipo { get; set; }
+        public decimal? MontoAnticipo { get; set; }
+        public bool EsContratadoBase { get; set; }
+        public bool EsContratadoMasConvenio { get; set; }
+        public decimal? MontoContratadoMasConvenio { get; set; }
         public int? PlazoDias { get; set; }
         public string? SupervisorAsignadoId { get; set; }
 

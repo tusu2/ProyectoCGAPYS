@@ -1,0 +1,61 @@
+﻿@model ProyectoCGAPYS.ViewModels.LicitacionDetalleViewModel
+
+@* Diferimiento *@
+<div class="mb-3 bg-light p-3 rounded border">
+    <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="checkDiferimiento" name="TieneDiferimientoPago" value="true" @(Model.TieneDiferimientoPago ? "checked" : "")>
+        <label class="form-check-label fw-bold" for="checkDiferimiento">Diferimiento por pago tardío</label>
+    </div>
+    <div id="fechasDiferimientoContainer" class="mt-2 ps-3 border-start border-3 border-warning" style="@(Model.TieneDiferimientoPago ? "" : "display:none;")">
+        <div class="row g-2">
+            <div class="col-6">
+                <label class="small text-muted">Inicio</label>
+                <input type="date" class="form-control form-control-sm" name="FechaInicioDiferimiento" value="@Model.FechaInicioDiferimiento?.ToString("yyyy-MM-dd")">
+            </div>
+            <div class="col-6">
+                <label class="small text-muted">Fin</label>
+                <input type="date" class="form-control form-control-sm" name="FechaFinDiferimiento" value="@Model.FechaFinDiferimiento?.ToString("yyyy-MM-dd")">
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Convenio *@
+<div class="mb-3 bg-light p-3 rounded border">
+    <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="checkConvenio" name="TieneConvenio" value="true" @(Model.TieneConvenio ? "checked" : "")>
+        <label class="form-check-label fw-bold" for="checkConvenio">Convenio</label>
+    </div>
+    <div id="fechasConvenioContainer" class="mt-2 ps-3 border-start border-3 border-info" style="@(Model.TieneConvenio ? "" : "display:none;")">
+        <div class="row g-2">
+            <div class="col-6">
+                <label class="small text-muted">Inicio</label>
+                <input type="date" class="form-control form-control-sm" name="FechaInicioConvenio" value="@Model.FechaInicioConvenio?.ToString("yyyy-MM-dd")">
+            </div>
+            <div class="col-6">
+                <label class="small text-muted">Fin</label>
+                <input type="date" class="form-control form-control-sm" name="FechaFinConvenio" value="@Model.FechaFinConvenio?.ToString("yyyy-MM-dd")">
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Suspensión *@
+<div class="mb-3 bg-light p-3 rounded border">
+    <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="checkSuspension" name="TieneSuspension" value="true" @(Model.TieneSuspension ? "checked" : "")>
+        <label class="form-check-label fw-bold text-danger" for="checkSuspension">Suspensión</label>
+    </div>
+    <div id="fechasSuspensionContainer" class="mt-2 ps-3 border-start border-3 border-danger" style="@(Model.TieneSuspension ? "" : "display:none;")">
+        <div class="row g-2">
+            <div class="col-6">
+                <label class="small text-muted">Inicio</label>
+                <input type="date" class="form-control form-control-sm" name="FechaInicioSuspension" value="@Model.FechaInicioSuspension?.ToString("yyyy-MM-dd")">
+            </div>
+            <div class="col-6">
+                <label class="small text-muted">Fin</label>
+                <input type="date" class="form-control form-control-sm" name="FechaFinSuspension" value="@Model.FechaFinSuspension?.ToString("yyyy-MM-dd")">
+            </div>
+        </div>
+    </div>
+</div>

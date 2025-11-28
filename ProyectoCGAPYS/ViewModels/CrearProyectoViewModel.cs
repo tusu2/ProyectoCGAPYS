@@ -15,8 +15,8 @@ namespace ProyectoCGAPYS.ViewModels
         [Required(ErrorMessage = "Debe seleccionar una dependencia.")]
         public string IdDependenciaFk { get; set; }
 
-        [Required(ErrorMessage = "La descripción es obligatoria.")]
-        public string Descripcion { get; set; }
+    
+        public string? Descripcion { get; set; }
 
         [Required(ErrorMessage = "La fecha de solicitud es obligatoria.")]
         [DataType(DataType.Date)]

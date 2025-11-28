@@ -1,132 +1,345 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
-.card-licitaciones {
-    /* --- INICIO: Código para el efecto de cristal --- */
-    /* 1. Fondo semitransparente. Ajusta el último valor (0.45) para más o menos transparencia. */
-    background: rgba(255, 255, 255, 0.45);
-    /* 2. El desenfoque del fondo. Es la clave del efecto. */
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px); /* Necesario para compatibilidad con navegadores como Safari */
-    /* 3. Un borde sutil que atrapa la luz, simulando el borde del cristal. */
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    /* --- FIN: Código para el efecto de cristal --- */
-    /* Mantenemos los otros estilos que ya teníamos para la tarjeta */
-    border-radius: 16px; /* Aumentamos un poco el redondeo, se ve mejor con este efecto */
-    padding: 2rem;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1); /* Sombra muy suave para dar profundidad */
-    margin-top: 25px;
-    overflow-x: auto;
+﻿/* --- VARIABLES Y TIPOGRAFÍA --- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@500&display=swap');
+
+:root {
+    /* Paleta de colores "Arquitecto Moderno" */
+    --arch-bg: #F5F7FA; /* Gris concreto claro */
+    --arch-dark: #2C3E50; /* Azul acero oscuro para texto */
+    --arch-muted: #7F8C8D; /* Gris metal para subtítulos */
+    --arch-accent: #3498DB; /* Azul brillante para acciones */
+    --arch-paper: #FFFFFF;
+    /* Colores de Estado (Inspirados en obra) */
+    --status-preparacion-color: #F39C12; /* Amarillo/Naranja seguridad (como en tu ejemplo) */
+     /* Verde "Go" */
+    --status-cerrada-color: #95A5A6; /* Gris cemento */
+    --status-adjudicada-color: #8E44AD; /* Morado premium */
+    /* Fuentes */
+    --font-main: 'Inter', sans-serif;
+    --font-tech: 'Roboto Mono', monospace; /* Para datos numéricos */
 }
+
 body {
- 
-    font-family: 'Poppins', sans-serif;
+    background-color: var(--arch-bg);
+    font-family: var(--font-main);
+    color: var(--arch-dark);
 }
 
-/* 2. Estilos para la tabla personalizada */
-.table-custom {
-    border-collapse: collapse; /* Asegura que no haya dobles bordes */
-    width: 100%;
-    margin: 0;
+/* --- LAYOUT PRINCIPAL --- */
+.licitaciones-container {
+    max-width: 95%; /* Antes era 1200px. Esto usa casi toda la pantalla */
+    margin: 40px auto;
+    padding: 20px;
 }
 
-    /* 3. Estilo para la cabecera (th) */
-    .table-custom thead th {
-        background-color: transparent; /* Hacemos el fondo transparente para que se integre con el cristal */
-        color: #111827; /* CAMBIO: Texto mucho más oscuro (casi negro) para máxima legibilidad */
-        font-weight: 600;
-        text-align: left;
-        padding: 15px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.3); /* Borde blanco traslúcido, resalta sobre el fondo */
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
+.page-title {
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 0.5rem;
+}
 
-    /* 4. Estilo para las celdas (td) */
-    .table-custom tbody td {
-        padding: 15px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.2); /* Borde muy sutil */
-        color: #1f2937; /* CAMBIO: Texto de las filas más oscuro */
-        vertical-align: middle;
-    }
-
-    /* 5. Elimina el borde de la última fila para un look más limpio */
-    .table-custom tbody tr:last-of-type td {
-        border-bottom: none;
-    }
-
-    /* 3. Efecto hover sobre las filas */
-    .table-custom tbody tr:hover {
-        background-color: rgba(255, 255, 255, 0.2); /* Un resaltado blanco semitransparente */
-    }
-
-/* 4. Estilos para las etiquetas de estado (con más contraste) */
-.status-badge {
-    padding: 6px 15px;
-    border-radius: 20px;
-    font-size: 0.85em;
+.page-subtitle {
+    color: var(--arch-muted);
+    margin-bottom: 3rem;
     font-weight: 600;
-    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.9rem;
 }
 
-/* CAMBIO: Colores más intensos y legibles */
-.status-abierta {
-    background-color: #28a745; /* Verde intenso (tipo Bootstrap Success) */
-    color: #ffffff; /* Texto blanco para buen contraste */
-    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3); /* Sombrita verde suave */
-}
-.status-cerrada {
-    background-color: #cb3234;
-    color: #ffffff; /* Texto gris oscuro */
+/* Grid Responsivo para las Tarjetas */
+.arch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+    gap: 30px;
 }
 
-.status-adjudicada {
-    background-color: #e0e7ff;
-    color: #3730a3; /* Texto índigo oscuro */
-}
-
-.status-cancelada {
-    background-color: #fee2e2;
-    color: #991b1b; /* Texto rojo oscuro */
-}
-
-
-/* 5. Estilo del botón de detalles (con más presencia) */
-.btn-details-custom {
-    /* CAMBIO: Ahora tiene un fondo sólido por defecto */
-    background-color: #2d3748; /* Un color carbón oscuro */
-    color: #ffffff; /* Texto blanco */
-    border: none;
-    padding: 8px 18px;
+/* --- DISEÑO DE LA TARJETA "PLANO" --- */
+.arch-card {
+    background: var(--arch-paper);
+    position: relative;
     border-radius: 8px;
-    text-decoration: none;
-    font-weight: 500;
-    transition: all 0.2s ease-in-out;
+    overflow: hidden; /* Importante para el borde lateral */
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
 }
 
-    .btn-details-custom:hover {
-        background-color: #D4AF37; /* Se oscurece un poco al pasar el ratón */
-        transform: translateY(-2px);
-        color: #ffffff;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    /* Efecto de elevación al pasar el mouse */
+    .arch-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.1);
     }
-.status-preparacion {
-    background-color: #6c757d; /* Un color gris o neutro */
-    color: white;
-}
-.status-badge.status-adjudicada {
-    background-color: #6c757d; /* Un color gris */
-    color: white;
+
+    /* La "Viga Estructural" lateral que indica el estado */
+    .arch-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 6px; /* Grosor de la viga */
+        height: 100%;
+        /* El color se define más abajo por las clases de estado */
+        z-index: 2;
+    }
+
+    /* Asignación de colores a la viga lateral */
+
+
+/* Patrón de fondo sutil (blueprint grid) */
+.blueprint-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* Un patrón SVG minúsculo de cuadrícula */
+    background-image: linear-gradient(rgba(44, 62, 80, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(44, 62, 80, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+    pointer-events: none;
+    z-index: 0;
 }
 
-.btn-disabled-custom {
-    display: inline-block;
-    padding: 8px 16px;
-    font-size: 14px;
+/* --- CONTENIDO INTERNO DE LA TARJETA --- */
+
+/* Header */
+.card-header {
+    padding: 20px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px dashed #E0E6ED; /* Línea punteada técnica */
+    position: relative;
+    z-index: 3;
+}
+
+.tech-id {
+    display: flex;
+    flex-direction: column;
+}
+
+    .tech-id .label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--arch-muted);
+        margin-bottom: 4px;
+    }
+
+.mono-font {
+    font-family: var(--font-tech);
     font-weight: 500;
-    text-align: center;
-    border-radius: 5px;
-    background-color: #e9ecef; /* Gris claro de fondo */
-    color: #6c757d; /* Texto gris oscuro */
-    border: 1px solid #ced4da; /* Borde sutil */
-    cursor: not-allowed; /* Muestra un cursor de "no permitido" */
+}
+
+/* Badges de Estado (Rediseñados para parecer sellos) */
+.status-badge {
+    /* Mantenemos lo anterior, pero agregamos esto: */
+    border: 2px solid currentColor; /* Borde del mismo color que el texto */
+    background: transparent !important; /* Quitamos el fondo sólido */
+    padding: 4px 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    border-radius: 4px;
+    opacity: 0.9;
+    transform: rotate(-5deg); /* EL TRUCO: Lo rotamos para que parezca estampado */
+    mask-image: url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/8399/grunge.png'); /* Opcional: textura grunge */
+    box-shadow: none !important; /* Quitamos sombras internas */
+}
+
+    .status-badge.status-preparacion {
+        background: #FFF5E6;
+        color: var(--status-preparacion-color);
+        box-shadow: inset 0 0 0 1px var(--status-preparacion-color);
+    }
+
+ 
+
+    .status-badge.status-cerrada {
+        background: #F0F3F4;
+        color: var(--status-cerrada-color);
+        box-shadow: inset 0 0 0 1px var(--status-cerrada-color);
+    }
+
+    .status-badge.status-adjudicada {
+        background: #F5EEF8;
+        color: var(--status-adjudicada-color);
+        box-shadow: inset 0 0 0 1px var(--status-adjudicada-color);
+    }
+
+
+/* Body */
+.card-body {
+    padding: 25px;
+    flex-grow: 1;
+    position: relative;
+    z-index: 3;
+}
+
+.project-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.5rem; /* Más grande */
+    color: var(--arch-dark);
+    margin: 10px 0 25px 0;
+    padding-left: 15px;
+    border-left: 4px solid var(--arch-accent); /* Una línea sólida al lado del nombre */
+    line-height: 1.2;
+}
+/* Contenedor de especificaciones (Grid interno 2 columnas) */
+.specs-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #E0E6ED;
+}
+
+.spec-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.spec-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--arch-muted);
+    margin-bottom: 8px;
+    display: block;
+}
+
+.spec-value {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+/* Badges pequeños para el tipo de proceso */
+.badge-directa, .badge-concurso {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.badge-directa {
+    background: #EBF5FB;
+    color: #2980B9;
+}
+
+.badge-concurso {
+    background: #FEF9E7;
+    color: #F1C40F;
+}
+
+
+/* Footer y Botones */
+.card-footer {
+    padding: 20px 25px;
+    background: #FAFCFF; /* Un blanco ligeramente azulado */
+    border-top: 1px solid #E0E6ED;
+    position: relative;
+    z-index: 3;
+}
+
+.btn-arch {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 14px;
+    border-radius: 6px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+}
+
+    /* Botón Principal (Inspirado en tu imagen pero más técnico) */
+    .btn-arch.primary {
+        background-color: var(--arch-dark);
+        color: white;
+        /* Una línea técnica sutil debajo del botón */
+        box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+    }
+
+        .btn-arch.primary:hover {
+            background-color: var(--arch-accent);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.2);
+            transform: translateY(2px); /* Efecto de "presionar" */
+        }
+
+    .btn-arch.disabled {
+        background-color: #E0E6ED;
+        color: #95A5A6;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+
+.icon-arrow-right {
+    margin-left: 10px;
+    font-weight: bold;
+}
+/* --- ESTADO VACÍO (Empty State) --- */
+
+.empty-state-container {
+    /* 1. Ocupar todo el ancho */
+    width: 100%;
+    grid-column: 1 / -1; /* ¡La clave! Le dice a la grid: "Expándete desde la primera hasta la última columna" */
+    max-width: none;
+    /* 2. Ocupar altura vertical (60% de la altura de la pantalla) */
+    /* Esto hace que se sienta "lleno" aunque no haya contenido */
+    min-height: 60vh;
+    /* 3. Centrar el contenido perfectamente en ese espacio grande */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Centrado vertical */
+    align-items: center; /* Centrado horizontal */
+    /* 4. Estilos visuales (Mantenemos tu estilo limpio) */
+    background-color: white;
+    border-radius: 12px;
+    border: 3px dashed #E0E6ED; /* Borde un poco más grueso para que se note en grande */
+    margin-top: 20px;
+    box-sizing: border-box; /* Asegura que el padding no rompa el ancho */
+}
+
+.empty-icon {
+    font-size: 4rem; /* Icono grande */
+    margin-bottom: 20px;
+    color: var(--arch-muted);
+    opacity: 0.5;
+    /* Un pequeño círculo de fondo para el icono */
+    background: #F5F7FA;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.empty-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--arch-dark); /* Color oscuro pero suave */
+    margin-bottom: 10px;
+}
+
+.empty-subtitle {
+    font-family: 'Inter', sans-serif;
+    color: #95A5A6; /* Gris suave (inspirado en tu imagen) */
+    font-size: 1rem;
+    line-height: 1.6;
+    max-width: 400px; /* Para que el texto no se estire demasiado */
+    margin: 0 auto;
+}
+/* RESPONSIVE: En móviles, una sola columna */
+@media (max-width: 600px) {
+    .arch-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .specs-container {
+        grid-template-columns: 1fr; /* Apilar los detalles */
+        gap: 15px;
+    }
 }

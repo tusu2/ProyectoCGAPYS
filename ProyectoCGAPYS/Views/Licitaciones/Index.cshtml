@@ -2,144 +2,228 @@
 
 @{
     ViewData["Title"] = "Listado de Licitaciones";
-    string GetStatusClass(string estado)
+
+    // 1. SEPARAMOS LA LISTA:
+// "licitacionesEjecucion": SOLO las que tienen el estado exacto "Ejecucion" [cite: 3]
+    var licitacionesEjecucion = Model.Where(x => x.Estado == "Ejecucion").ToList();
+
+    // "licitacionesAbiertas": Todo lo demás (Preparación, Activo, Cerrado, Adjudicada)
+    var licitacionesAbiertas = Model.Where(x => x.Estado != "Ejecucion").ToList();
+}
+
+<link rel="stylesheet" href="~/css/Licitaciones.css" asp-append-version="true" />
+
+@* 2. ESTILOS PERSONALIZADOS PARA EL MODO EJECUCIÓN (AMARILLO) *@
+<style>
+    /* Título de la sección */
+ 
+
+    /* Estilo Específico para Ejecución (Amarillo Construcción) */
+    .arch-card.status-ejecucion {
+        border-left: 5px solid #ffc107 !important; /* Amarillo borde */
+        background-color: #fffdf5; /* Fondo muy tenue amarillo */
+    }
+
+        .arch-card.status-ejecucion .status-badge {
+            background-color: #ffc107 !important;
+            color: #000 !important; /* Texto negro para contraste */
+            font-weight: bold;
+        }
+
+        .arch-card.status-ejecucion .project-title {
+            color: #b38600; /* Texto dorado oscuro */
+        }
+
+    .arch-card.status-abierta {
+        border-left: 5px solid #27ae60 !important; /* Amarillo borde */
+        background-color: #fffdf5; /* Fondo muy tenue amarillo */
+    }
+
+        .arch-card.status-abierta .status-badge {
+            background-color: #27ae60 !important;
+            color: #000 !important; /* Texto negro para contraste */
+            font-weight: bold;
+        }
+
+        .arch-card.status-abierta .project-title {
+            color: #1a7540; /* Texto dorado oscuro */
+        }
+</style>
+
+<div class="licitaciones-container">
+    <h1 class="page-title">@ViewData["Title"]</h1>
+    <p class="page-subtitle">Panel de Control de Proyectos y Concursos</p>
+
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+        <a asp-controller="Contratistas" asp-action="Index" class="btn-arch primary" style="width: auto; padding: 8px 20px;">
+            ⚙️ Gestionar Contratistas
+        </a>
+    </div>
+
+    @if (ViewBag.NuevasNotificaciones != null)
     {
+        <div class="alert alert-info">
+            Tienes notificaciones nuevas (Revisar lógica de layout).
+        </div>
+    }
+
+    @* ========================================== *@
+    @* SECCIÓN 1: LICITACIONES ABIERTAS / ACTIVAS *@
+    @* ========================================== *@
+
+    <h2 class="section-header">📂 Licitaciones Abiertos</h2>
+
+    <div class="arch-grid">
+        @if (!licitacionesAbiertas.Any())
+        {
+            <div class="empty-state-container">
+                <p class="empty-subtitle">No hay licitaciones en etapa de concurso actualmente.</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var item in licitacionesAbiertas)
+            {
+                var statusClass = GetStatusClass(item.Estado);
+                <article class="arch-card @statusClass">
+                    <header class="card-header">
+                        <div class="tech-id">
+                            <span class="label">LICITACIÓN Nº:</span>
+                            <span class="value mono-font">@Html.DisplayFor(modelItem => item.NumeroLicitacion)</span>
+                        </div>
+                        <span class="status-badge @statusClass">@Html.DisplayFor(modelItem => item.Estado)</span>
+                    </header>
+
+                    <div class="card-body">
+                        <h3 class="project-title">@Html.DisplayFor(modelItem => item.Proyecto.NombreProyecto)</h3>
+
+                        <div class="specs-container">
+                            <div class="spec-item process">
+                                <span class="spec-label">TIPO DE PROCESO</span>
+                                @if (item.TipoProceso == "Adjudicación Directa")
+                                {
+                                    <span class="spec-value badge-directa">@item.TipoProceso</span>
+                                }
+                                else
+                                {
+                                    <span class="spec-value badge-concurso">@item.TipoProceso</span>
+                                }
+                            </div>
+
+                            <div class="spec-item date">
+                                @if (item.FechaFinPropuestas.HasValue)
+                                {
+                                    <span class="spec-label">LÍMITE PROPUESTAS</span>
+                                    <span class="spec-value mono-font">@item.FechaFinPropuestas.Value.ToString("dd MMM, yyyy")</span>
+                                }
+                                else
+                                {
+                                    <span class="spec-label">FECHA CLAVE</span>
+                                    <span class="spec-value text-muted">No definida</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <footer class="card-footer">
+                        <a asp-action="Detalles" asp-route-id="@item.Id" class="btn-arch primary">
+                            Ver Detalles <span class="icon-arrow-right">→</span>
+                        </a>
+                    </footer>
+                    <div class="blueprint-overlay"></div>
+                </article>
+            }
+        }
+    </div>
+
+    @* ========================================== *@
+    @* SECCIÓN 2: EN EJECUCIÓN (AMARILLO)         *@
+    @* ========================================== *@
+
+    <h2 class="section-header">🚧 Proyectos en Ejecución </h2>
+
+    <div class="arch-grid">
+        @if (!licitacionesEjecucion.Any())
+        {
+            <p class="text-muted" style="grid-column: 1/-1;">No hay proyectos en fase de ejecución.</p>
+        }
+        else
+        {
+            @foreach (var item in licitacionesEjecucion)
+            {
+                // Forzamos el estado a "Ejecución" para los estilos
+                var statusClass = "status-ejecucion";
+
+                <article class="arch-card @statusClass">
+                    <header class="card-header">
+                        <div class="tech-id">
+                            <span class="label">CONTRATO:</span>
+                            <span class="value mono-font">
+                                @(string.IsNullOrEmpty(item.NumeroContrato) ? "Pendiente" : item.NumeroContrato)
+                            </span>
+                        </div>
+                        @* Aquí cambiamos el texto del badge *@
+                        <span class="status-badge @statusClass">EN EJECUCIÓN</span>
+                    </header>
+
+                    <div class="card-body">
+                        <h3 class="project-title">@Html.DisplayFor(modelItem => item.Proyecto.NombreProyecto)</h3>
+
+                        <div class="specs-container">
+                            <div class="spec-item">
+                                <span class="spec-label">GANADOR</span>
+                                <span class="spec-value" style="font-weight:bold;">
+                                    @(item.ContratistaGanador?.RazonSocial ?? "No asignado")
+                                </span>
+                            </div>
+
+                            <div class="spec-item date">
+                                @if (item.FechaInicioEjecucion.HasValue)
+                                {
+                                    <span class="spec-label">INICIO DE OBRA</span>
+                                    <span class="spec-value mono-font">@item.FechaInicioEjecucion.Value.ToString("dd MMM, yyyy")</span>
+                                }
+                                else
+                                {
+                                    <span class="spec-label">ESTADO</span>
+                                    <span class="spec-value">Adjudicado</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <footer class="card-footer">
+                        @* Habilitamos el botón para ver detalles de ejecución *@
+                        <a asp-action="Detalles" asp-route-id="@item.Id" class="btn-arch primary" style="background-color: #e0a800; border-color: #e0a800;">
+                            Panel de Ejecución <span class="icon-arrow-right">→</span>
+                        </a>
+                    </footer>
+                    <div class="blueprint-overlay"></div>
+                </article>
+            }
+        }
+    </div>
+</div>
+@functions {
+    public string GetStatusClass(string estado)
+    {
+        // Normalizamos a minúsculas para evitar errores
         switch (estado?.ToLower())
         {
             case "preparacion":
-                return "status-preparacion";
-            case "activo":    // <--- Caso existente en BD
-            case "abierta":   // <--- Caso visual por si acaso
-                return "status-abierta";
-            case "cerrado":
-                return "status-cerrada";
+                return "status-preparacion"; // Azul o Gris (según tu CSS)
+
+            case "abierta":
+                return "status-abierta";     // VERDE (Clase existente para activo)
+
             case "adjudicada":
-                return "status-adjudicada";
+                return "status-cerrada";     // Gris/Rojo (O puedes cambiarlo a 'status-abierta' si lo quieres verde)
+
+            case "ejecucion":
+                return "status-ejecucion";   // AMARILLO (Solo para ejecución)
+
             default:
                 return "status-cerrada";
         }
     }
 }
-
-<link rel="stylesheet" href="~/css/Licitaciones.css" asp-append-version="true" />
-</br>
-</br>
-</br>
-<div class="card-licitaciones">
-    <h1 class="mb-4">@ViewData["Title"]</h1>
-    @if (ViewBag.NuevasNotificaciones != null)
-    {
-        <div class="alert alert-info" role="alert">
-            <h4 class="alert-heading">¡Novedades!</h4>
-            <ul class="mb-0">
-                @foreach (var notificacion in ViewBag.NuevasNotificaciones)
-                {
-
-                    <li>@notificacion.Mensaje</li>
-                }
-            </ul>
-        </div>
-    }
-    <table class="table-custom">
-        <thead>
-            <tr>
-                <th>
-
-                    Número de Licitación
-                </th>
-                <th>
-                    Proyecto Asociado
-                </th>
-
-                @* --- COLUMNA MODIFICADA --- *@
-                <th>
-                    Fecha Clave
-                </th>
-                <th>
-                    Estado
-                </th>
-
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
-                <tr>
-
-                    <td>
-                        <strong>@Html.DisplayFor(modelItem => item.NumeroLicitacion)</strong>
-
-                        @* --- TIPO DE PROCESO AÑADIDO --- *@
-                        <br>
-                        @if (item.TipoProceso == "Adjudicación Directa")
-                        {
-                            <span class="badge bg-info">@item.TipoProceso</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-warning">@item.TipoProceso</span>
-                        }
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.Proyecto.NombreProyecto)
-
-                    </td>
-
-                    @* --- LÓGICA CONDICIONAL AÑADIDA --- *@
-                    <td>
-                        @if (item.TipoProceso == "Adjudicación Directa")
-                        {
-                            @if (item.FechaFallo.HasValue)
-                            {
-                                <small class="text-muted">(Fallo)</small>
-                                <strong>@item.FechaFallo.Value.ToString("dd MMM, yyyy")</strong>
-                            }
-                            else
-                            {
-                                <span class="text-muted">N/A (Directa)</span>
-                            }
-                        }
-                        else
-                        {
-                            @if (item.FechaFinPropuestas.HasValue)
-                            {
-                                <small class="text-muted">(Límite)</small>
-                                <strong>@item.FechaFinPropuestas.Value.ToString("dd MMM, yyyy")</strong>
-                            }
-                            else
-                            {
-                                <span class="text-muted">No definida</span>
-                            }
-                        }
-                    </td>
-
-                    <td>
-
-                        <span class="status-badge @GetStatusClass(item.Estado)">
-                            @Html.DisplayFor(modelItem => item.Estado)
-                        </span>
-                    </td>
-
-                    <td class="text-right">
-
-                        @* --- LÓGICA MODIFICADA PARA EL BOTÓN --- *@
-                        @if (item.Estado == "Adjudicada")
-                        {
-
-                            <span class="btn-disabled-custom">Adjudicada</span>
-                        }
-                        else
-                        {
-
-                            <a asp-action="Detalles" asp-route-id="@item.Id" class="btn-details-custom">Detalles</a>
-                        }
-                        @* --- FIN DE LA MODIFICACIÓN --- *@
-
-                    </td>
-
-                </tr>
-            }
-        </tbody>
-    </table>
-</div>>

@@ -2,609 +2,556 @@
 
 @{
     ViewData["Title"] = "Detalles de la Licitación";
-    bool estaAdjudicada = Model.Estado == "Adjudicada";
-    // Usamos la misma función auxiliar de la vista anterior para los badges
+
+    // Detectamos estados
+    bool estaAdjudicada = Model.Estado == "Adjudicada"; // (Por compatibilidad con datos viejos)
+    bool enEjecucion = Model.Estado == "Ejecucion";     // El nuevo estado
+
+    // Variable auxiliar para saber si el proceso ya terminó (Ejecución o Adjudicada)
+    bool procesoTerminado = estaAdjudicada || enEjecucion;
+
     string GetStatusClass(string estado)
     {
         switch (estado?.ToLower())
         {
             case "abierta": return "status-abierta";
             case "adjudicada": return "status-adjudicada";
+            case "ejecucion": return "status-ejecucion"; // <--- Agregamos estilo para Ejecución
             case "cancelada": return "status-cancelada";
             case "cerrada": return "status-cerrada";
             default: return "status-cerrada";
         }
     }
 }
+<style>
+    .status-ejecucion {
+        background-color: #ffc107;
+        color: #000;
+    }
+</style>
 <link rel="stylesheet" href="~/css/LicitacionesDetalles.css" asp-append-version="true" />
-@if (ViewBag.ModoGestionHabilitado == true && Model.TipoProceso == "Licitación Pública")
-{
-    <link rel="stylesheet" href="~/css/LicitacionesDetalles.css" asp-append-version="true" />
-    <h2 class="mb-4">@ViewData["Title"]: <strong>@Model.NumeroLicitacion</strong></h2>
 
+<br>
+<br>
+<br>
+
+<div class="container-fluid mt-4">
     <div class="row">
+
         <div class="col-lg-8">
-
-            <div class="detail-card">
-                <div class="detail-card-header">
-                    <h4>Información General</h4>
-                </div>
-                <dl class="row details-list">
-
-                    <dt class="col-sm-4">Proyecto Asociado</dt>
-                    <dd class="col-sm-8">@Model.ProyectoNombre</dd>
-
-                    <dt class="col-sm-4">Folio del Proyecto</dt>
-                    <dd class="col-sm-8">@Model.FolioProyecto</dd>
-
-                    <dt class="col-sm-4">Estado Licitación</dt>
-                    <dd class="col-sm-8">
-                        <span class="status-badge @GetStatusClass(Model.Estado)">@Model.Estado</span>
-                    </dd>
-
-                    <dt class="col-sm-4">Descripción</dt>
-                    <dd class="col-sm-8">@Model.DescripcionLicitacion</dd>
-
-                    <dt class="col-sm-4">Dependencia</dt>
-                    <dd class="col-sm-8">@Model.DependenciaNombre</dd>
-
-                    <dt class="col-sm-4">Campus</dt>
-                    <dd class="col-sm-8">@Model.CampusNombre</dd>
-
-                    <dt class="col-sm-4">Presupuesto Aprobado</dt>
-                    <dd class="col-sm-8"><strong>@Model.PresupuestoProyecto.ToString("C", new System.Globalization.CultureInfo("es-MX"))</strong></dd>
-
-                    <dt class="col-sm-4">Fuente de Financiamiento</dt>
-                    <dd class="col-sm-8">@Model.TipoFondoNombre</dd>
-
-                </dl>
-            </div>
-            <div class="detail-card">
-                <div class="detail-card-header d-flex justify-content-between align-items-center">
-                    <h4>Contratistas Participantes</h4>
-                    <button type="button" class="btn btn-primary-custom" id="btnInvitarContratista">
-                        <i class="fas fa-plus me-2"></i>Invitar
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center bg-white">
+                    <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-info-circle me-2"></i>Información General</h6>
+                    <button type="submit" form="formInfoGeneral" class="btn btn-sm btn-primary btn-pulse">
+                        <i class="fas fa-save me-1"></i> Actualizar
                     </button>
                 </div>
+                <div class="card-body">
+                    <form asp-action="ActualizarInfoGeneral" method="post" id="formInfoGeneral">
+                        <input type="hidden" name="licitacionId" value="@Model.LicitacionId" />
 
-                <table class="table-custom">
-                    <thead>
-                        <tr>
-                            <th>Razón Social</th>
-                            <th>RFC</th>
-                            <th>Invitación</th>
-                            <th>Estado</th>
-                            @if (Model.Estado == "Preparacion")
-                            {
-                                    <th class="text-end">Acciones</th>
-                            }
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (!Model.Participantes.Any())
-                        {
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted py-4">Aún no se han invitado contratistas.</td>
-                                </tr>
-                        }
-                        @foreach (var contratista in Model.Participantes)
-                        {
-                                <tr>
-                                    <td><strong>@contratista.RazonSocial</strong></td>
-                                    <td>@contratista.RFC</td>
-                                    <td>@(contratista.FechaInvitacion.HasValue ? contratista.FechaInvitacion.Value.ToShortDateString() : "--")</td>
-                                    <td>@contratista.EstadoParticipacion</td>
-
-                                @if (Model.Estado == "Preparacion")
-                                {
-                                            <td class="text-end">
-                                                <form asp-action="QuitarInvitacion" method="post" class="form-quitar-invitacion">
-                                                    <input type="hidden" name="licitacionId" value="@Model.LicitacionId" />
-                                                    <input type="hidden" name="contratistaId" value="@contratista.ContratistaId" />
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                        <i class="fas fa-trash-alt"></i> Quitar
-                                                    </button>
-                                                </form>
-                                            </td>
-                                }
-                                </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="detail-card">
-                <div class="detail-card-header">
-                    <h4>Acciones y Fechas</h4>
-                </div>
-
-                <form asp-action="ActualizarFechas" method="post" class="mb-4">
-                    <input type="hidden" name="LicitacionId" value="@Model.LicitacionId" />
-                    <div class="mb-3">
-                        <label class="form-label">Fecha de Inicio</label>
-                        @* No es necesario cambiar la fecha de inicio, pero lo hacemos por consistencia *@
-                        <input type="datetime-local" name="FechaInicio" class="form-control" value="@Model.FechaInicio.ToString("yyyy-MM-ddTHH:mm")" required />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Fecha y Hora Límite para Propuestas</label>
-
-                        @* --- CAMBIO PRINCIPAL AQUÍ --- *@
-                        <input type="datetime-local" name="FechaFinPropuestas" class="form-control"
-                               value="@(Model.FechaFinPropuestas?.ToString("yyyy-MM-ddTHH:mm"))" />
-                    </div>
-                    <button type="submit" class="btn btn-secondary w-100">Guardar Fechas</button>
-                </form>
-
-                <div class="d-grid gap-2">
-
-                    @if (Model.Estado == "Preparacion")
-                    {
-                            <form id="formActivarLicitacion" asp-action="Activar" asp-route-id="@Model.LicitacionId" method="post">
-                                <button type="button" id="btnActivarLicitacion" class="btn btn-success-custom w-100">
-                                    <i class="fas fa-check-circle me-2"></i>Activar Licitación
-                                </button>
-                            </form>
-                    }
-                    else if (Model.Estado == "Activo")
-                    {
-                            <form id="formCerrarLicitacion" asp-action="Cerrar" asp-route-id="@Model.LicitacionId" method="post">
-                                <button type="button" id="btnCerrarLicitacion" class="btn btn-warning-custom w-100 text-dark">
-                                    <i class="fas fa-lock me-2"></i>Cerrar Licitación
-                                </button>
-                            </form>
-                    }
-                    <a asp-action="VerPropuestas" asp-route-id="@Model.LicitacionId" class="btn-dorado">
-                        <i class="fas fa-eye me-2"></i>Ver Propuestas de Contratistas
-                    </a>
-                    <button type="button" class="btn btn-danger-custom" id="btnDevolverFase" @(Model.Estado == "Activo" ? "disabled" : "")>
-                        <i class="fas fa-undo me-2"></i>Devolver a Fase Anterior
-                    </button>
-
-                </div>
-            </div>
-
-            <div class="detail-card">
-                <div class="detail-card-header">
-                    <h4>Ubicación del Proyecto</h4>
-                </div>
-                <div id="mapa-proyecto" class="map-container"></div>
-            </div>
-
-            <div class="detail-card">
-                <div class="detail-card-header">
-                    <h4>Archivos del Proyecto</h4>
-                </div>
-                @if (Model.Documentos.Any())
-                {
-                        <ul class="list-unstyled">
-                        @foreach (var doc in Model.Documentos)
-                        {
-                                    <li class="file-list-item">
-                                        <a href="@doc.RutaArchivo" target="_blank">
-                                            <i class="fas fa-file-alt me-2"></i>@doc.NombreArchivo
-                                        </a>
-                                    </li>
-                        }
-                        </ul>
-                }
-                else
-                {
-                        <p class="text-muted">No hay archivos adjuntos.</p>
-                }
-            </div>
-        </div>
-    </div>
-}
-else
-{
-    @* *************************************************************** *@
-    @* --- CASO B: MODO CONTROL (TU NUEVA SOLICITUD) --- *@
-    @* *************************************************************** *@
-        <br>
-        <br>
-        <br>
-        <div class="container-fluid mt-4">
-            <div class="row">
-
-                <div class="col-lg-8">
-                    <div class="card shadow mb-4">
-            <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 font-weight-bold text-primary">Información General</h6>
-                <button type="submit" form="formInfoGeneral" class="btn btn-sm btn-primary">
-                    <i class="fas fa-save me-1"></i> Actualizar
-                </button>
-            </div>
-            <div class="card-body">
-                <form asp-action="ActualizarInfoGeneral" method="post" id="formInfoGeneral">
-                    <input type="hidden" name="licitacionId" value="@Model.LicitacionId" />
-
-                    <h4 class="mb-3 text-dark">@Model.ProyectoNombre</h4>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p class="mb-2"><strong>Folio Proyecto:</strong> @Model.FolioProyecto</p>
-
-                            <p class="mb-3"><strong>Estado Licitación:</strong> <span class="badge bg-secondary">@Model.Estado</span></p>
-
-                            <div class="mb-3">
-                                <label class="fw-bold small text-muted">Tipo Proceso:</label>
-                                <select name="tipoProceso" class="form-select form-select-sm bg-light border-0 fw-bold text-primary" 
-                                        asp-items="@(new SelectList(ViewBag.TiposProcesoLista, "Value", "Text", Model.TipoProceso))">
-                                </select>
+                        @* Título del Proyecto y Badges *@
+                        <div class="mb-4">
+                            <h4 class="text-dark mb-2 font-weight-bold">@Model.ProyectoNombre</h4>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-light text-dark border me-2">Folio: @Model.FolioProyecto</span>
+                                <span class="badge bg-@GetStatusClass(Model.Estado) me-2">Estado: @Model.Estado</span>
                             </div>
-
-                            <p class="mb-2"><strong>Descripción:</strong> @Model.DescripcionLicitacion</p>
                         </div>
-                                <div class="col-md-6">
-                                    <p class="mb-2"><strong>Dependencia:</strong> @Model.DependenciaNombre</p>
-                                    <p class="mb-2"><strong>Campus:</strong> @Model.CampusNombre</p>
 
-                                    <p class="mb-3"><strong>Presupuesto Aprobado:</strong> @Model.PresupuestoProyecto.ToString("C")</p>
+                        <div class="row g-4">
+                            @* --- COLUMNA IZQUIERDA: Datos Básicos --- *@
+                            <div class="col-lg-6 border-end-lg">
+                                <h6 class="text-muted mb-3 fw-bold text-uppercase small">Detalles del Proceso</h6>
 
-                                    <div class="mb-2">
-                                        <label class="form-label mb-0"><strong>Monto Contratado:</strong></label>
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text bg-white fw-bold">$</span>
-                                            <input type="number" step="0.01" name="montoContratado"
-                                                   class="form-control"
-                                                   placeholder="0.00"
-                                                   value="@(Model.MontoContratado?.ToString("0.00"))" />
-                                        </div>
-                                    </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small">Tipo de Proceso:</label>
+                                    <select name="tipoProceso" class="form-select form-select-sm bg-light border-0 fw-bold text-primary"
+                                            asp-items="@(new SelectList(ViewBag.TiposProcesoLista, "Value", "Text", Model.TipoProceso))">
+                                    </select>
+                                </div>
 
-                                    <div class="mb-3">
-                                        <label class="form-label mb-0"><strong>Plazo (Días):</strong></label>
-                                        <div class="input-group input-group-sm">
-                                            <input type="number" name="plazoDias"
-                                                   class="form-control"
-                                                   placeholder="Ej. 90"
-                                                   value="@Model.PlazoDias" />
-                                            <span class="input-group-text bg-white">días</span>
-                                        </div>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="fw-bold small text-muted">Fuente de Financiamiento:</label>
-                                        <select name="fondoId" class="form-select form-select-sm bg-light border-0 fw-bold">
-                                            @foreach (var fondo in ViewBag.FondosDisponibles as List<SelectListItem>)
-                                            {
-                                                if (fondo.Text == Model.TipoFondoNombre)
-                                                {
-                                                    <option value="@fondo.Value" selected>@fondo.Text</option>
-                                                }
-                                                else
-                                                {
-                                                    <option value="@fondo.Value">@fondo.Text</option>
-                                                }
-                                            }
-                                        </select>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small">Fuente de Financiamiento:</label>
+                                    <select name="fondoId" class="form-select form-select-sm bg-light border-0 fw-bold"
+                                            asp-items="@(new SelectList(ViewBag.FondosDisponibles, "Value", "Text", Model.TipoFondoNombre))">
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small">Plazo de Ejecución:</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" name="plazoDias" class="form-control fw-bold" placeholder="Ej. 90" value="@Model.PlazoDias" />
+                                        <span class="input-group-text bg-light text-muted">días naturales</span>
                                     </div>
                                 </div>
-                    </div>
-                </form>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small">Descripción de la Licitación:</label>
+                                    <textarea class="form-control form-control-sm bg-light border-0" rows="3" readonly>@Model.DescripcionLicitacion</textarea>
+                                </div>
+                            </div>
+
+                            @* --- COLUMNA DERECHA: Ubicación y Montos --- *@
+                            @* --- COLUMNA DERECHA: Ubicación y Montos --- *@
+                            <div class="col-lg-6 ps-lg-4">
+                                <h6 class="text-muted mb-3 fw-bold text-uppercase small">Ubicación y Presupuesto</h6>
+                                <ul class="list-unstyled mb-4 small">
+                                    <li class="mb-2"><i class="fas fa-building me-2 text-muted"></i><strong>Dependencia:</strong> @Model.DependenciaNombre</li>
+                                    <li class="mb-2"><i class="fas fa-university me-2 text-muted"></i><strong>Campus:</strong> @Model.CampusNombre</li>
+                                    <li class="mb-2"><i class="fas fa-money-bill-wave me-2 text-success"></i><strong>Presupuesto Base:</strong> @Model.PresupuestoProyecto.ToString("C")</li>
+                                </ul>
+
+                                <hr class="my-4">
+
+                                @* === NUEVA SECCIÓN DE SELECCIÓN DE MONTOS === *@
+                                <h6 class="text-primary mb-3 fw-bold"><i class="fas fa-coins me-2"></i>Definición de Monto Contratado</h6>
+                                <p class="text-muted small mb-3">Seleccione una de las opciones e ingrese el monto correspondiente.</p>
+
+                                @* --- Opción 1: Monto Contratado Base --- *@
+                                @* AGREGADO: position-relative *@
+                                <div class="mb-3 bg-light p-3 rounded border shadow-sm switch-monto-container position-relative" id="containerMontoBase">
+                                    <div class="form-check form-switch d-flex justify-content-between align-items-center ps-0">
+                                        <label class="form-check-label fw-bold stretched-link" for="checkContratadoBase">Monto Contratado (Base)</label>
+                                        <input class="form-check-input ms-2 check-monto-unico" type="checkbox" id="checkContratadoBase" name="EsContratadoBase" value="true" @(Model.EsContratadoBase ? "checked" : "")>
+                                    </div>
+
+                                    @* AGREGADO: style="position: relative; z-index: 2;" para que el input funcione *@
+                                    <div id="inputMontoBaseContainer" class="mt-3 ps-3 border-start border-3 border-primary" style="@(Model.EsContratadoBase ? "position: relative; z-index: 2;" : "display:none; position: relative; z-index: 2;")">
+                                        <label class="form-label small text-muted">Ingrese el importe total sin IVA:</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white text-success fw-bold">$</span>
+                                            <input type="number" step="0.01" name="montoContratado" class="form-control fw-bold" placeholder="0.00" value="@(Model.MontoContratado?.ToString("0.00"))" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @* --- Opción 2: Monto Contratado + Convenio --- *@
+                                @* AGREGADO: position-relative *@
+                                <div class="mb-3 bg-light p-3 rounded border shadow-sm switch-monto-container position-relative" id="containerMontoConvenio">
+                                    <div class="form-check form-switch d-flex justify-content-between align-items-center ps-0">
+                                        <label class="form-check-label fw-bold stretched-link" for="checkContratadoConvenio">Monto Contratado + Convenio</label>
+                                        <input class="form-check-input ms-2 check-monto-unico" type="checkbox" id="checkContratadoConvenio" name="EsContratadoMasConvenio" value="true" @(Model.EsContratadoMasConvenio ? "checked" : "")>
+                                    </div>
+
+                                    @* AGREGADO: style="position: relative; z-index: 2;" para que el input funcione *@
+                                    <div id="inputMontoConvenioContainer" class="mt-3 ps-3 border-start border-3 border-info" style="@(Model.EsContratadoMasConvenio ? "position: relative; z-index: 2;" : "display:none; position: relative; z-index: 2;")">
+                                        <label class="form-label small text-muted">Ingrese el importe total modificado sin IVA:</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white text-success fw-bold">$</span>
+                                            <input type="number" step="0.01" name="montoContratadoMasConvenio" class="form-control fw-bold" placeholder="0.00" value="@(Model.MontoContratadoMasConvenio?.ToString("0.00"))" />
+                                        </div>
+                                    </div>
+                                </div>
+                                @* --- Opción 3: Anticipo (30%) --- *@
+                                <div class="mb-3 bg-light p-3 rounded border shadow-sm switch-monto-container position-relative" id="containerAnticipo">
+                                    <div class="form-check form-switch d-flex justify-content-between align-items-center ps-0">
+                                        <label class="form-check-label fw-bold stretched-link" for="checkAnticipo">Anticipo (30%)</label>
+                                        @* El value="true" es importante para que el bool llege como true al controller *@
+                                        <input class="form-check-input ms-2"
+                                               type="checkbox"
+                                               id="checkAnticipo"
+                                               name="Anticipo"
+                                               value="true"
+                                        @(Model.Anticipo ? "checked" : "")>
+                                    </div>
+
+                                    <div id="inputAnticipoContainer" class="mt-3 ps-3 border-start border-3 border-warning" style="@(Model.Anticipo ? "position: relative; z-index: 2;" : "display:none; position: relative; z-index: 2;")">
+                                        <label class="form-label small text-muted">Monto calculado (30% del Base):</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white text-success fw-bold">$</span>
+                                            @* readonly para que el usuario no lo edite manualmente, ya que es automático *@
+                                            <input type="number" step="0.01" id="inputMontoAnticipo" name="MontoAnticipo" class="form-control fw-bold" placeholder="0.00" value="@(Model.MontoAnticipo?.ToString("0.00"))" readonly />
+                                        </div>
+                                    </div>
+                                </div>
+                                @* =========================================== *@
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </div>
 
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                            <h6 class="m-0 font-weight-bold text-primary">Contratista Ganador</h6>
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Contratista Ganador</h6>
 
-                        @if (!estaAdjudicada)
-                        {
-                                    <button type="button" class="btn-dorado" id="btnAsignarGanador">
-                                @(Model.ContratistaGanador == null ? "Asignar Ganador" : "Cambiar Ganador")
-                                    </button>
-                        }
+                    @if (!estaAdjudicada)
+                    {
+                        <button type="button" class="btn-dorado" id="btnAsignarGanador">
+                            @(Model.ContratistaGanador == null ? "Asignar Ganador" : "Cambiar Ganador")
+                        </button>
+                    }
+                </div>
+                <div class="card-body">
+                    @if (Model.ContratistaGanador != null)
+                    {
+                        <div class="alert alert-success">
+                            <h5 class="alert-heading">@Model.ContratistaGanador.RazonSocial</h5>
+                            <p class="mb-0"><strong>RFC:</strong> @Model.ContratistaGanador.RFC</p>
                         </div>
-                        <div class="card-body">
-                        @if (Model.ContratistaGanador != null)
-                        {
-                                    <div class="alert alert-success">
-                                        <h5 class="alert-heading">@Model.ContratistaGanador.RazonSocial</h5>
-                                        <p class="mb-0"><strong>RFC:</strong> @Model.ContratistaGanador.RFC</p>
-                                    </div>
-                        }
-                        else
-                        {
-                                    <div class="alert alert-warning">
-                                        <p class="mb-0">Aún no se ha asignado un contratista ganador para esta adjudicación.</p>
-                                    </div>
-                        }
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning">
+                            <p class="mb-0">Aún no se ha asignado un contratista ganador para esta adjudicación.</p>
                         </div>
-                    </div>
+                    }
+                </div>
+            </div>
 
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Documentos de Licitación (Fallo, Contrato, Fianza)</h6>
-                        </div>
-                        <div class="card-body">
-                        @if (!estaAdjudicada)
-                        {
-                            @* ENVOLVEMOS TODO EN UN FORMULARIO CON ID ESPECÍFICO *@
-                            <form id="formSubidaMasiva">
-                                @Html.AntiForgeryToken()
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Documentos de Licitación (Fallo, Contrato, Fianza)</h6>
+                </div>
+                <div class="card-body">
+                    @if (!estaAdjudicada)
+                    {
+                        @* ENVOLVEMOS TODO EN UN FORMULARIO CON ID ESPECÍFICO *@
+                        <form id="formSubidaMasiva">
+                            @Html.AntiForgeryToken()
 
-                                <div class="card bg-light border-0 mb-3 shadow-sm">
-                                    <div class="card-body">
-                                        <h6 class="card-title text-primary mb-3">
-                                            <i class="fas fa-plus-circle me-1"></i> Agregar Documentos
-                                        </h6>
+                            <div class="card bg-light border-0 mb-3 shadow-sm">
+                                <div class="card-body">
+                                    <h6 class="card-title text-primary mb-3">
+                                        <i class="fas fa-plus-circle me-1"></i> Agregar Documentos
+                                    </h6>
 
-                                        @* 'row g-3' da espacio horizontal y vertical entre columnas automáticamente *@
-                                        <div class="row g-3 align-items-end">
+                                    @* 'row g-3' da espacio horizontal y vertical entre columnas automáticamente *@
+                                    <div class="row g-3 align-items-end">
 
-                                            @* Columna 1: Archivo *@
-                                            <div class="col-md-5">
-                                                <label for="inputArchivoMasivo" class="form-label fw-bold small text-muted mb-1">
-                                                    Archivo
-                                                </label>
-                                                <input type="file" id="inputArchivoMasivo" name="archivoTemp" class="form-control" />
-                                            </div>
-
-                                            @* Columna 2: Tipo de Documento *@
-                                            <div class="col-md-5">
-                                                <label for="selectTipoMasivo" class="form-label fw-bold small text-muted mb-1">
-                                                    Tipo de Documento
-                                                </label>
-                                                <select id="selectTipoMasivo" class="form-select">
-                                                    <option value="" selected>Seleccione una opción...</option> @* Texto más claro *@
-                                                    <option value="Dictamen">Dictamen</option>
-                                                    <option value="Cuadro comparativo">Cuadro comparativo</option>
-                                                    <option value="Fallo">Fallo</option>
-                                                    <option value="Contrato">Contrato</option>
-                                                    <option value="Fianzas">Fianzas</option>
-                                                    <option value="Otro">Otro</option>
-                                                </select>
-                                            </div>
-
-                                            @* Columna 3: Botón Agregar *@
-                                            <div class="col-md-2">
-                                                <div class="d-grid">
-                                                    @* d-grid estira el botón para que coincida con el ancho *@
-                                                    <button type="button" class="btn btn-secondary" id="btnAgregarCola">
-                                                        <i class="fas fa-plus me-1"></i> Agregar
-                                                    </button>
-                                                </div>
-                                            </div>
+                                        @* Columna 1: Archivo *@
+                                        <div class="col-md-5">
+                                            <label for="inputArchivoMasivo" class="form-label fw-bold small text-muted mb-1">
+                                                Archivo
+                                            </label>
+                                            <input type="file" id="inputArchivoMasivo" name="archivoTemp" class="form-control" />
                                         </div>
 
-                                        @* Tabla de cola (sin cambios, solo asegurando que el div padre esté bien) *@
-                                        <div class="mt-3" id="contenedorCola" style="display:none;">
-                                            <div class="table-responsive">
-                                                @* Agregado para móviles *@
-                                                <table class="table table-sm table-bordered bg-white mb-2">
-                                                    <thead class="table-light">
-                                                        <tr>
-                                                            <th>Documento</th>
-                                                            <th>Tipo</th>
-                                                            <th style="width: 50px;" class="text-center"><i class="fas fa-trash"></i></th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody id="tablaColaBody"></tbody>
-                                                </table>
-                                            </div>
+                                        @* Columna 2: Tipo de Documento *@
+                                        <div class="col-md-5">
+                                            <label for="selectTipoMasivo" class="form-label fw-bold small text-muted mb-1">
+                                                Tipo de Documento
+                                            </label>
+                                            <select id="selectTipoMasivo" class="form-select">
+                                                <option value="" selected>Seleccione una opción...</option> @* Texto más claro *@
+                                                <option value="Dictamen">Dictamen</option>
+                                                <option value="Cuadro comparativo">Cuadro comparativo</option>
+                                                <option value="Fallo">Fallo</option>
+                                                <option value="Contrato">Contrato</option>
+                                                <option value="Fianzas">Fianzas</option>
+                                                <option value="Otro">Otro</option>
+                                            </select>
+                                        </div>
+
+                                        @* Columna 3: Botón Agregar *@
+                                        <div class="col-md-2">
                                             <div class="d-grid">
-                                                <button type="button" id="btnSubirMasivo" class="btn btn-success">
-                                                    <i class="fas fa-cloud-upload-alt me-2"></i> Subir todos los documentos
+                                                @* d-grid estira el botón para que coincida con el ancho *@
+                                                <button type="button" class="btn btn-secondary" id="btnAgregarCola">
+                                                    <i class="fas fa-plus me-1"></i> Agregar
                                                 </button>
                                             </div>
                                         </div>
-
                                     </div>
+
+                                    @* Tabla de cola (sin cambios, solo asegurando que el div padre esté bien) *@
+                                    <div class="mt-3" id="contenedorCola" style="display:none;">
+                                        <div class="table-responsive">
+                                            @* Agregado para móviles *@
+                                            <table class="table table-sm table-bordered bg-white mb-2">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Documento</th>
+                                                        <th>Tipo</th>
+                                                        <th style="width: 50px;" class="text-center"><i class="fas fa-trash"></i></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="tablaColaBody"></tbody>
+                                            </table>
+                                        </div>
+                                        <div class="d-grid">
+                                            <button type="button" id="btnSubirMasivo" class="btn btn-success">
+                                                <i class="fas fa-cloud-upload-alt me-2"></i> Subir todos los documentos
+                                            </button>
+                                        </div>
+                                    </div>
+
                                 </div>
-                            </form>
-                            <hr />
-                        }
-                      
+                            </div>
+                        </form>
+                        <hr />
+                    }
 
-                        @if (Model.LicitacionDocumentos.Any())
-                        {
-                                    <table class="table table-sm table-striped">
-                                        <thead>
-                                            <tr>
-                                                <th>Tipo</th>
-                                                <th>Nombre de Archivo</th>
-                                                <th>Fecha</th>
-                                                <th>Acción</th>
-                                            </tr>
-                                        </thead>
-                                <tbody>
-                                    @foreach (var doc in Model.LicitacionDocumentos)
-                                    {
-                                        <tr>
-                                            @* AGREGAMOS LA CLASE 'clase-tipo-documento' AQUÍ PARA LEERLA CON JS *@
-                                            <td><span class="badge bg-secondary clase-tipo-documento">@doc.TipoDocumento</span></td>
-                                            <td>@doc.NombreArchivo</td>
-                                            <td>@doc.FechaSubida.ToString("dd/MM/yyyy")</td>
-                                            <td>
-                                                <a href="@doc.RutaArchivo" target="_blank" class="btn btn-outline-primary btn-sm">Ver</a>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                                    </table>
-                        }
-                        else
-                        {
-                                    <p class="text-center text-muted">No hay documentos de licitación cargados.</p>
-                        }
+
+                    @if (Model.LicitacionDocumentos.Any())
+                    {
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>Nombre de Archivo</th>
+                                    <th>Fecha</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var doc in Model.LicitacionDocumentos)
+                                {
+                                    <tr>
+                                        @* AGREGAMOS LA CLASE 'clase-tipo-documento' AQUÍ PARA LEERLA CON JS *@
+                                        <td><span class="badge bg-secondary clase-tipo-documento">@doc.TipoDocumento</span></td>
+                                        <td>@doc.NombreArchivo</td>
+                                        <td>@doc.FechaSubida.ToString("dd/MM/yyyy")</td>
+                                        <td>
+                                            <a href="@doc.RutaArchivo" target="_blank" class="btn btn-outline-primary btn-sm">Ver</a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p class="text-center text-muted">No hay documentos de licitación cargados.</p>
+                    }
+                </div>
+            </div>
+
+        </div> <div class="col-lg-4">
+
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Acciones y Registro</h6>
+                </div>
+                <div class="card-body">
+                    @if (!procesoTerminado)
+                    {
+                        <form asp-action="ActualizarDatosControl" method="post">
+                            <input type="hidden" name="LicitacionId" value="@Model.LicitacionId" />
+                            <div class="mb-3">
+                                <label class="form-label">Fecha de Fallo / Adjudicación</label>
+                                <input type="date" name="FechaFallo" value="@Model.FechaFallo?.ToString("yyyy-MM-dd")" class="form-control" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Número de Contrato</label>
+                                <input type="text" name="NumeroContrato" value="@Model.NumeroContrato" class="form-control" />
+                            </div>
+                            <button type="submit" class="btn-outline-primary-custom w-100 mb-3">Guardar Datos de Registro</button>
+                        </form>
+
+                    // CASO A: AÚN NO ESTÁ EN EJECUCIÓN -> Mostrar formulario "Mandar a Ejecutar" completo
+                        <form asp-action="MandarAEjecutar" method="post" id="formMandarAEjecutar">
+                            <input type="hidden" name="LicitacionId" value="@Model.LicitacionId" />
+                            @Html.AntiForgeryToken()
+
+                            @* Fechas de Ejecución *@
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Plazo de Ejecución (Inicio)</label>
+                                <input type="date" name="FechaInicioEjecucion" value="@Model.FechaInicioEjecucion?.ToString("yyyy-MM-dd")" class="form-control" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Plazo de Ejecución (Fin)</label>
+                                <input type="date" name="FechaFinEjecucion" value="@Model.FechaFinEjecucion?.ToString("yyyy-MM-dd")" class="form-control" required />
+                            </div>
+
+                            @* Supervisor *@
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Supervisor Asignado</label>
+                                <select name="SupervisorAsignadoID" class="form-select" asp-items="@(new SelectList(ViewBag.SupervisoresDisponibles, "Value", "Text", Model.SupervisorAsignadoID))">
+                                    <option value="">(Ninguno)</option>
+                                </select>
+                            </div>
+
+                            <h6 class="text-primary fw-bold mb-3 mt-4"><i class="fas fa-calendar-alt me-1"></i> Incidencias Iniciales</h6>
+
+                            @* Renderizamos las incidencias *@
+                            @await Html.PartialAsync("_IncidenciasInputsPartial", Model)
+
+                            <button type="button" class="btn btn-success-custom w-100 btn-pulse mt-3" id="btnMandarAEjecutar">
+                                <i class="fas fa-paper-plane me-2"></i> Mandar a Fase de Ejecución
+                            </button>
+                        </form>
+
+                        <button type="button" class="btn-outline-danger-custom w-100 mt-2" id="btnDevolverFase">Devolver a Fase Anterior</button>
+                    }
+                    else if (enEjecucion)
+                    {
+                    // CASO B: YA ESTÁ EN EJECUCIÓN (AMARILLO) -> Mostrar SOLO Incidencias Editables (Imagen 2)
+
+                        <div class="alert alert-warning text-center border-warning">
+                            <h6 class="fw-bold"><i class="fas fa-hard-hat me-2"></i>EN EJECUCIÓN</h6>
+                            <small>El proyecto está activo. Puedes actualizar las incidencias abajo.</small>
                         </div>
-                    </div>
 
-                </div> <div class="col-lg-4">
+                        <form asp-action="ActualizarIncidencias" method="post" id="formActualizarIncidencias">
+                            <input type="hidden" name="LicitacionId" value="@Model.LicitacionId" />
+                            @Html.AntiForgeryToken()
 
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Acciones y Registro</h6>
+                            <h6 class="text-primary fw-bold mb-3 mt-4"><i class="fas fa-edit me-1"></i> Actualizar Incidencias</h6>
+
+                            @* Renderizamos LOS MISMOS inputs de incidencias, pero ahora actualizan *@
+                            @await Html.PartialAsync("_IncidenciasInputsPartial", Model)
+
+                            <button type="submit" class="btn btn-primary w-100 mt-3">
+                                <i class="fas fa-save me-2"></i> Guardar Cambios de Incidencias
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        // CASO C: ADJUDICADA (Vieja)
+                        <div class="alert alert-success text-center">
+                            <h5 class="mb-0">LICITACIÓN FINALIZADA</h5>
                         </div>
-                        <div class="card-body">
-
-                        @if (estaAdjudicada)
-                        {
-                                    <div class="alert alert-success text-center">
-                                        <h5 class="mb-0">LICITACIÓN ADJUDICADA</h5>
-                                        <p><small>Este proyecto ya fue enviado a Ejecución.</small></p>
-                                    </div>
-                        }
-                        else
-                        {
-                            @* Este primer formulario (ActualizarDatosControl) se queda como estaba *@
-                                    <form asp-action="ActualizarDatosControl" method="post">
-                                        <input type="hidden" name="LicitacionId" value="@Model.LicitacionId" />
-                                        <div class="mb-3">
-                                            <label class="form-label">Fecha de Fallo / Adjudicación</label>
-                                            <input type="date" name="FechaFallo" value="@Model.FechaFallo?.ToString("yyyy-MM-dd")" class="form-control" />
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Número de Contrato</label>
-                                            <input type="text" name="NumeroContrato" value="@Model.NumeroContrato" class="form-control" />
-                                        </div>
-                                        <button type="submit" class="btn-outline-primary-custom w-100 mb-3">Guardar Datos de Registro</button>
-                                    </form>
-
-                                    <hr>
-
-                                    <div class="d-grid gap-2">
-
-
-
-
-    @* --- NUEVO APARTADO: FORMULARIO INDEPENDIENTE DE INCIDENCIAS --- *@
-
-
-
-                                <form asp-action="MandarAEjecutar" method="post" id="formMandarAEjecutar">
-                                    <input type="hidden" name="LicitacionId" value="@Model.LicitacionId" />
-                                    @Html.AntiForgeryToken()
-
-                                    @* 1. SECCIÓN DE FECHAS DE EJECUCIÓN (Ya existía) *@
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-dark">Plazo de Ejecución (Inicio)</label>
-                                        <input type="date" name="FechaInicioEjecucion" value="@Model.FechaInicioEjecucion?.ToString("yyyy-MM-dd")" class="form-control" required />
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-dark">Plazo de Ejecución (Fin)</label>
-                                        <input type="date" name="FechaFinEjecucion" value="@Model.FechaFinEjecucion?.ToString("yyyy-MM-dd")" class="form-control" required />
-                                    </div>
-
-                                    @* 2. SECCIÓN DE SUPERVISOR (Ya existía) *@
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-dark">Supervisor Asignado</label>
-                                        <select name="SupervisorAsignadoID" class="form-select" asp-items="@(new SelectList(ViewBag.SupervisoresDisponibles, "Value", "Text", Model.SupervisorAsignadoID))">
-                                            <option value="">(Ninguno)</option>
-                                        </select>
-                                    </div>
-
-                                    <hr class="my-4" />
-
-                                    @* 3. NUEVA SECCIÓN: INCIDENCIAS Y CONVENIOS (Integrada aquí abajo) *@
-                                    <h6 class="text-primary fw-bold mb-3"><i class="fas fa-calendar-alt me-1"></i> Incidencias y Convenios</h6>
-
-                                    @* --- Diferimiento --- *@
-                                    <div class="mb-3 bg-light p-3 rounded border">
-                                        <div class="form-check form-switch">
-                                            @* Ojo: Eliminamos el 'checked' condicional para que por defecto aparezcan desmarcados si es nueva *@
-                                            <input class="form-check-input" type="checkbox" id="checkDiferimiento" name="TieneDiferimientoPago" value="true" @(Model.TieneDiferimientoPago ? "checked" : "")>
-                                            <label class="form-check-label fw-bold" for="checkDiferimiento">Diferimiento por pago tardío</label>
-                                        </div>
-                                        <div id="fechasDiferimientoContainer" class="mt-2 ps-3 border-start border-3 border-warning" style="@(Model.TieneDiferimientoPago ? "" : "display:none;")">
-                                            <div class="row g-2">
-                                                <div class="col-6">
-                                                    <label class="small text-muted">Inicio</label>
-                                                    <input type="date" class="form-control form-control-sm" name="FechaInicioDiferimiento" value="@Model.FechaInicioDiferimiento?.ToString("yyyy-MM-dd")">
-                                                </div>
-                                                <div class="col-6">
-                                                    <label class="small text-muted">Fin</label>
-                                                    <input type="date" class="form-control form-control-sm" name="FechaFinDiferimiento" value="@Model.FechaFinDiferimiento?.ToString("yyyy-MM-dd")">
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    @* --- Convenio --- *@
-                                    <div class="mb-3 bg-light p-3 rounded border">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" id="checkConvenio" name="TieneConvenio" value="true" @(Model.TieneConvenio ? "checked" : "")>
-                                            <label class="form-check-label fw-bold" for="checkConvenio">Convenio</label>
-                                        </div>
-                                        <div id="fechasConvenioContainer" class="mt-2 ps-3 border-start border-3 border-info" style="@(Model.TieneConvenio ? "" : "display:none;")">
-                                            <div class="row g-2">
-                                                <div class="col-6">
-                                                    <label class="small text-muted">Inicio</label>
-                                                    <input type="date" class="form-control form-control-sm" name="FechaInicioConvenio" value="@Model.FechaInicioConvenio?.ToString("yyyy-MM-dd")">
-                                                </div>
-                                                <div class="col-6">
-                                                    <label class="small text-muted">Fin</label>
-                                                    <input type="date" class="form-control form-control-sm" name="FechaFinConvenio" value="@Model.FechaFinConvenio?.ToString("yyyy-MM-dd")">
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    @* --- Suspensión --- *@
-                                    <div class="mb-3 bg-light p-3 rounded border">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" id="checkSuspension" name="TieneSuspension" value="true" @(Model.TieneSuspension ? "checked" : "")>
-                                            <label class="form-check-label fw-bold text-danger" for="checkSuspension">Suspensión</label>
-                                        </div>
-                                        <div id="fechasSuspensionContainer" class="mt-2 ps-3 border-start border-3 border-danger" style="@(Model.TieneSuspension ? "" : "display:none;")">
-                                            <div class="row g-2">
-                                                <div class="col-6">
-                                                    <label class="small text-muted">Inicio</label>
-                                                    <input type="date" class="form-control form-control-sm" name="FechaInicioSuspension" value="@Model.FechaInicioSuspension?.ToString("yyyy-MM-dd")">
-                                                </div>
-                                                <div class="col-6">
-                                                    <label class="small text-muted">Fin</label>
-                                                    <input type="date" class="form-control form-control-sm" name="FechaFinSuspension" value="@Model.FechaFinSuspension?.ToString("yyyy-MM-dd")">
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    @* 4. BOTÓN DE ENVÍO (Único para todo) *@
-                                    <button type="button" class="btn btn-success-custom w-100 btn-pulse mt-3" id="btnMandarAEjecutar">
-                                        <i class="fas fa-paper-plane me-2"></i> Mandar a Fase de Ejecución
-                                    </button>
-                                </form>
-
-
-
-                                        <button type="button" class="btn-outline-danger-custom w-100" id="btnDevolverFase">
-                                            Devolver a Fase Anterior
-                                        </button>
-                                    </div>
-                        }
-                        </div>
-                    </div>
-
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Ubicación del Proyecto</h6>
-                        </div>
-                        <div class="card-body" style="height: 300px;">
-                            <div id="mapa-proyecto" style="height: 100%;"></div>
-                            <p class="text-muted small">Lat: @Model.Latitud, Lon: @Model.Longitud</p>
-                        </div>
-                    </div>
+                    }
 
                 </div>
             </div>
+
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Ubicación del Proyecto</h6>
+                </div>
+                <div class="card-body" style="height: 300px;">
+                    <div id="mapa-proyecto" style="height: 100%;"></div>
+                    <p class="text-muted small">Lat: @Model.Latitud, Lon: @Model.Longitud</p>
+                </div>
+            </div>
+
         </div>
-}
+    </div>
+</div>
+
 <div class="mt-4">
     <a asp-action="Index"><i class="fas fa-arrow-left me-2"></i>Volver al listado</a>
 </div>
 @section Scripts {
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-              integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-              crossorigin="" />
-        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-                integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-                crossorigin=""></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
 
-        <script>
-            $(document).ready(function () {
+    <script>
+        $(document).ready(function () {
+
+            // ==========================================
+            // --- LÓGICA INTELIGENTE PARA ANTICIPO (30%) ---
+            // ==========================================
+
+            const $checkBase = $('#checkContratadoBase');
+            const $checkConvenio = $('#checkContratadoConvenio');
+            const $inputBaseContainer = $('#inputMontoBaseContainer');
+            const $inputConvenioContainer = $('#inputMontoConvenioContainer');
+            const $checkAnticipo = $('#checkAnticipo');
+            const $inputAnticipoContainer = $('#inputAnticipoContainer');
+            const $inputAnticipo = $('#inputMontoAnticipo');
+
+            // Referencias a los otros inputs y checks
+
+
+            const $inputMontoBase = $('input[name="montoContratado"]');
+            const $inputMontoConvenio = $('input[name="montoContratadoMasConvenio"]');
+
+            function calcularAnticipo() {
+                let montoReferencia = 0;
+
+                // 1. Detectamos cuál opción está seleccionada para saber de dónde sacar el dinero
+                if ($checkBase.is(':checked')) {
+                    montoReferencia = parseFloat($inputMontoBase.val());
+                } else if ($checkConvenio.is(':checked')) {
+                    montoReferencia = parseFloat($inputMontoConvenio.val());
+                }
+
+                // Validación simple para que no de NaN
+                if (isNaN(montoReferencia)) {
+                    montoReferencia = 0;
+                }
+
+                // 2. Calculamos el 30%
+                let anticipo = montoReferencia * 0.30;
+
+                // 3. Escribimos el resultado
+                $inputAnticipo.val(anticipo.toFixed(2));
+            }
+
+            // --- EVENTOS QUE DISPARAN EL CÁLCULO ---
+
+            // A. Cuando prenden/apagan el check de Anticipo
+            $checkAnticipo.on('change', function () {
+                if (this.checked) {
+                    calcularAnticipo(); // Calcular inmediatamente al abrir
+                    $inputAnticipoContainer.slideDown(200);
+                } else {
+                    $inputAnticipoContainer.slideUp(200);
+                    $inputAnticipo.val(''); // Limpiamos visualmente
+                }
+            });
+
+            // B. Cuando escriben en CUALQUIERA de los inputs de monto (Base o Convenio)
+            // Si el anticipo está activo, se recalcula en tiempo real mientras escriben
+            $inputMontoBase.add($inputMontoConvenio).on('input', function () {
+                if ($checkAnticipo.is(':checked')) {
+                    calcularAnticipo();
+                }
+            });
+
+            // C. Cuando cambian de "Monto Base" a "Convenio" (o viceversa)
+            // Si el anticipo ya estaba prendido, debemos recalcular el valor con el nuevo input activo
+            $checkBase.add($checkConvenio).on('change', function () {
+                // Esperamos un poquito (10ms) para que la lógica de toggle de los otros checks termine
+                setTimeout(function () {
+                    if ($checkAnticipo.is(':checked')) {
+                        calcularAnticipo();
+                    }
+                }, 50);
+            });
+
+
+            // Función para manejar el cambio en el check de "Monto Base"
+            $checkBase.on('change', function () {
+                if (this.checked) {
+                    // Si se activa este, desactivamos el otro y ocultamos su input
+                    $checkConvenio.prop('checked', false);
+                    $inputConvenioContainer.slideUp(200);
+                    // Mostramos el input propio
+                    $inputBaseContainer.slideDown(200);
+                } else {
+                    // Si se desactiva, ocultamos el input propio
+                    $inputBaseContainer.slideUp(200);
+                }
+            });
+
+            // Función para manejar el cambio en el check de "Monto + Convenio"
+            $checkConvenio.on('change', function () {
+                if (this.checked) {
+                    // Si se activa este, desactivamos el otro y ocultamos su input
+                    $checkBase.prop('checked', false);
+                    $inputBaseContainer.slideUp(200);
+                    // Mostramos el input propio
+                    $inputConvenioContainer.slideDown(200);
+                } else {
+                    // Si se desactiva, ocultamos el input propio
+                    $inputConvenioContainer.slideUp(200);
+                }
+            });
+
+            // Validación extra al enviar el formulario: Asegurar que al menos uno esté seleccionado si se intenta guardar.
+            $('#formInfoGeneral').on('submit', function (e) {
+                if (!$checkBase.is(':checked') && !$checkConvenio.is(':checked')) {
+                    e.preventDefault(); // Evita el envío
+                    Swal.fire({
+                        title: 'Atención',
+                        text: 'Debes seleccionar al menos una opción de Monto Contratado (Base o con Convenio) antes de guardar.',
+                        icon: 'warning',
+                        confirmButtonColor: '#3085d6',
+                    });
+                }
+            });
+
+
             let colaDocumentos = [];
 
             // 1. Botón "Agregar" (mete el archivo al array y actualiza la tabla visual)
@@ -647,16 +594,16 @@ else
 
                     colaDocumentos.forEach((item, index) => {
                         var row = `
-                            <tr>
-                                <td class="small text-truncate" style="max-width: 150px;">${item.file.name}</td>
-                                <td class="small"><span class="badge bg-info text-dark">${item.tipo}</span></td>
-                                <td class="text-center">
-                                    <button type="button" class="btn btn-xs btn-outline-danger btn-borrar-item" data-index="${index}">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
+                                    <tr>
+                                        <td class="small text-truncate" style="max-width: 150px;">${item.file.name}</td>
+                                        <td class="small"><span class="badge bg-info text-dark">${item.tipo}</span></td>
+                                        <td class="text-center">
+                                            <button type="button" class="btn btn-xs btn-outline-danger btn-borrar-item" data-index="${index}">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `;
                         tbody.append(row);
                     });
                 } else {
@@ -720,85 +667,85 @@ else
                     }
                 });
             });
-         
-                const licitacionId = @Model.LicitacionId;
 
-                // ==========================================================
-                // --- SCRIPT ÚNICO PARA EL MAPA (FUNCIONA EN AMBOS MODOS) ---
-                // ==========================================================
-                if ($('#mapa-proyecto').length > 0) {
-                    try {
-                        const latitud = parseFloat('@Model.Latitud'.replace(',', '.'));
-                        const longitud = parseFloat('@Model.Longitud'.replace(',', '.'));
-                        const nombreProyecto = "@Html.Raw(Model.ProyectoNombre.Replace("'", "\\'"))";
+            const licitacionId = @Model.LicitacionId;
 
-                        if (!isNaN(latitud) && !isNaN(longitud)) {
-                            var map = L.map('mapa-proyecto').setView([latitud, longitud], 15);
-                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                            }).addTo(map);
-                            L.marker([latitud, longitud]).addTo(map)
-                                .bindPopup(`<strong>${nombreProyecto}</strong>`)
-                                .openPopup();
-                        } else {
-                            $('#mapa-proyecto').html('<p class="text-center text-muted m-4">Ubicación no disponible.</p>');
-                        }
-                    } catch (e) {
-                        console.error("Error al inicializar el mapa: ", e);
-                        $('#mapa-proyecto').html('<p class="text-center text-danger m-4">No se pudo cargar el mapa.</p>');
+            // ==========================================================
+            // --- SCRIPT ÚNICO PARA EL MAPA (FUNCIONA EN AMBOS MODOS) ---
+            // ==========================================================
+            if ($('#mapa-proyecto').length > 0) {
+                try {
+                    const latitud = parseFloat('@Model.Latitud'.replace(',', '.'));
+                    const longitud = parseFloat('@Model.Longitud'.replace(',', '.'));
+                    const nombreProyecto = "@Html.Raw(Model.ProyectoNombre.Replace("'", "\\'"))";
+
+                    if (!isNaN(latitud) && !isNaN(longitud)) {
+                        var map = L.map('mapa-proyecto').setView([latitud, longitud], 15);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        }).addTo(map);
+                        L.marker([latitud, longitud]).addTo(map)
+                            .bindPopup(`<strong>${nombreProyecto}</strong>`)
+                            .openPopup();
+                    } else {
+                        $('#mapa-proyecto').html('<p class="text-center text-muted m-4">Ubicación no disponible.</p>');
                     }
-                } else {
-                    console.error("Error de inicialización: No se encontró el elemento con ID 'mapa-proyecto'.");
+                } catch (e) {
+                    console.error("Error al inicializar el mapa: ", e);
+                    $('#mapa-proyecto').html('<p class="text-center text-danger m-4">No se pudo cargar el mapa.</p>');
                 }
+            } else {
+                console.error("Error de inicialización: No se encontró el elemento con ID 'mapa-proyecto'.");
+            }
 
-                // ==========================================================
-                // --- DEVOLVER FASE (FUNCIONA EN AMBOS MODOS) ---
-                // ==========================================================
-                $('#btnDevolverFase').on('click', function () {
-                    Swal.fire({
-                        title: 'Devolver Proyecto',
-                        text: 'Estás a punto de regresar el proyecto a su fase anterior. Por favor, especifica el motivo.',
-                        icon: 'warning',
-                        html: '<textarea id="swal-motivo" class="swal2-textarea" placeholder="Escribe aquí el motivo de la devolución..." required></textarea>',
-                        showCancelButton: true,
-                        confirmButtonText: 'Confirmar Devolución',
-                        confirmButtonColor: '#d33',
-                        cancelButtonText: 'Cancelar',
-                        preConfirm: () => {
-                            const motivo = document.getElementById('swal-motivo').value;
-                            if (!motivo) {
-                                Swal.showValidationMessage('Por favor, ingresa un motivo.');
-                                return false;
-                            }
-                            return motivo;
+            // ==========================================================
+            // --- DEVOLVER FASE (FUNCIONA EN AMBOS MODOS) ---
+            // ==========================================================
+            $('#btnDevolverFase').on('click', function () {
+                Swal.fire({
+                    title: 'Devolver Proyecto',
+                    text: 'Estás a punto de regresar el proyecto a su fase anterior. Por favor, especifica el motivo.',
+                    icon: 'warning',
+                    html: '<textarea id="swal-motivo" class="swal2-textarea" placeholder="Escribe aquí el motivo de la devolución..." required></textarea>',
+                    showCancelButton: true,
+                    confirmButtonText: 'Confirmar Devolución',
+                    confirmButtonColor: '#d33',
+                    cancelButtonText: 'Cancelar',
+                    preConfirm: () => {
+                        const motivo = document.getElementById('swal-motivo').value;
+                        if (!motivo) {
+                            Swal.showValidationMessage('Por favor, ingresa un motivo.');
+                            return false;
                         }
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            const motivo = result.value;
-                            const token = $('input[name="__RequestVerificationToken"]').val();
-                            const data = {
-                                __RequestVerificationToken: token,
-                                licitacionId: licitacionId,
-                                comentario: motivo
-                            };
+                        return motivo;
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const motivo = result.value;
+                        const token = $('input[name="__RequestVerificationToken"]').val();
+                        const data = {
+                            __RequestVerificationToken: token,
+                            licitacionId: licitacionId,
+                            comentario: motivo
+                        };
 
-                            $.post('@Url.Action("DevolverFase", "Licitaciones")', data)
-                                .done(function (response) {
-                                    Swal.fire('¡Devuelto!', 'El proyecto ha sido regresado a la fase anterior.', 'success')
-                                        .then(() => {
-                                            window.location.href = '@Url.Action("Index", "PanelDeFases")';
-                                        });
-                                })
-                                .fail(function () {
-                                    Swal.fire('Error', 'No se pudo devolver el proyecto. Revisa la consola para más detalles.', 'error');
-                                });
-                        }
-                    });
+                        $.post('@Url.Action("DevolverFase", "Licitaciones")', data)
+                            .done(function (response) {
+                                Swal.fire('¡Devuelto!', 'El proyecto ha sido regresado a la fase anterior.', 'success')
+                                    .then(() => {
+                                        window.location.href = '@Url.Action("Index", "PanelDeFases")';
+                                    });
+                            })
+                            .fail(function () {
+                                Swal.fire('Error', 'No se pudo devolver el proyecto. Revisa la consola para más detalles.', 'error');
+                            });
+                    }
                 });
+            });
 
-                // ==========================================================
-                // --- MANDAR A EJECUTAR (MODO CONTROL) ---
-                // ==========================================================
+            // ==========================================================
+            // --- MANDAR A EJECUTAR (MODO CONTROL) ---
+            // ==========================================================
             // ==========================================================
             // --- MANDAR A EJECUTAR (MODIFICADO) ---
             // ==========================================================
@@ -878,175 +825,175 @@ else
             });
 
 
-                // ==========================================================
-                // --- ASIGNAR GANADOR (MODO CONTROL) ---
-                // ==========================================================
-                $('#btnAsignarGanador').on('click', function () {
-                    cargarContenidoModalAsignar();
-                });
-                function cargarContenidoModalAsignar(terminoBusqueda = '') {
-                    const url = '@Url.Action("_AsignarGanadorPartial", "Licitaciones", new { licitacionId = Model.LicitacionId })' + `?busqueda=${encodeURIComponent(terminoBusqueda)}`;
+            // ==========================================================
+            // --- ASIGNAR GANADOR (MODO CONTROL) ---
+            // ==========================================================
+            $('#btnAsignarGanador').on('click', function () {
+                cargarContenidoModalAsignar();
+            });
+            function cargarContenidoModalAsignar(terminoBusqueda = '') {
+                const url = '@Url.Action("_AsignarGanadorPartial", "Licitaciones", new { licitacionId = Model.LicitacionId })' + `?busqueda=${encodeURIComponent(terminoBusqueda)}`;
 
-                    $.get(url).done(function (data) {
+                $.get(url).done(function (data) {
+                    Swal.fire({
+                        title: 'Asignar Ganador',
+                        html: data,
+                        width: '800px',
+                        showConfirmButton: false,
+                        showCancelButton: true,
+                        cancelButtonText: 'Cerrar'
+                    });
+                }).fail(function () {
+                    Swal.fire('Error', 'No se pudo cargar la lista de contratistas.', 'error');
+                });
+            }
+
+            // --- ¡NUEVO MANEJADOR DE SUBMIT! ---
+            // Esto intercepta el clic en "Asignar" desde el modal
+            // --- ¡NUEVO MANEJADOR DE SUBMIT! (VERSIÓN DE DEPURACIÓN) ---
+            $(document).on('submit', '.form-asignar-ganador', function (e) {
+                e.preventDefault();
+                var form = $(this);
+
+                var token = form.find('input[name="__RequestVerificationToken"]').val();
+
+                // ***** INICIO DE LA CORRECCIÓN *****
+                // Leemos el valor del contratista (que es un string '3')
+                var contIdString = form.find('input[name="contratistaGanadorId"]').val();
+
+                // ¡LO CONVERTIMOS A NÚMERO!
+                var contIdNumero = parseInt(contIdString, 10);
+                // ***** FIN DE LA CORRECCIÓN *****
+
+                var dataObj = {
+                    __RequestVerificationToken: token,
+                    licitacionId: licitacionId,         // Esto ya es un número (14)
+                    contratistaGanadorId: contIdNumero  // Esto ahora es un número (3)
+                };
+
+                // (Puedes borrar los console.log y el debugger si quieres)
+                console.log("Datos finales (ambos números):", dataObj);
+
+                $.ajax({
+                    url: form.attr('action'),
+                    type: form.attr('method'),
+                    data: dataObj,
+                    success: function (response) {
                         Swal.fire({
-                            title: 'Asignar Ganador',
-                            html: data,
-                            width: '800px',
-                            showConfirmButton: false,
-                            showCancelButton: true,
-                            cancelButtonText: 'Cerrar'
-                        });
-                    }).fail(function () {
-                        Swal.fire('Error', 'No se pudo cargar la lista de contratistas.', 'error');
-                    });
-                }
-
-                // --- ¡NUEVO MANEJADOR DE SUBMIT! ---
-                // Esto intercepta el clic en "Asignar" desde el modal
-                // --- ¡NUEVO MANEJADOR DE SUBMIT! (VERSIÓN DE DEPURACIÓN) ---
-                $(document).on('submit', '.form-asignar-ganador', function (e) {
-                    e.preventDefault();
-                    var form = $(this);
-
-                    var token = form.find('input[name="__RequestVerificationToken"]').val();
-
-                    // ***** INICIO DE LA CORRECCIÓN *****
-                    // Leemos el valor del contratista (que es un string '3')
-                    var contIdString = form.find('input[name="contratistaGanadorId"]').val();
-
-                    // ¡LO CONVERTIMOS A NÚMERO!
-                    var contIdNumero = parseInt(contIdString, 10);
-                    // ***** FIN DE LA CORRECCIÓN *****
-
-                    var dataObj = {
-                        __RequestVerificationToken: token,
-                        licitacionId: licitacionId,         // Esto ya es un número (14)
-                        contratistaGanadorId: contIdNumero  // Esto ahora es un número (3)
-                    };
-
-                    // (Puedes borrar los console.log y el debugger si quieres)
-                    console.log("Datos finales (ambos números):", dataObj);
-
-                    $.ajax({
-                        url: form.attr('action'),
-                        type: form.attr('method'),
-                        data: dataObj,
-                        success: function (response) {
-                            Swal.fire({
-                                title: '¡Asignado!',
-                                text: 'El contratista ha sido asignado como ganador.',
-                                icon: 'success'
-                            }).then(() => {
-                                location.reload();
-                            });
-                        },
-                        error: function (xhr) {
-                            Swal.fire('Error', 'No se pudo asignar. (Error: ' + xhr.status + ')', 'error');
-                        }
-                    });
-                });
-                // --- FIN DEL NUEVO MANEJADOR ---
-
-                // (El script para el botón de búsqueda 'btnBuscarContratistaAsignar' sigue aquí...)
-                $(document).on('click', '#btnBuscarContratistaAsignar', function () {
-                    var busqueda = $('#busquedaContratistaAsignar').val();
-                    cargarContenidoModalAsignar(busqueda);
-                });
-
-
-                // ==========================================================
-                // --- SCRIPTS DE MODO GESTIÓN (No afectan al Modo Control) ---
-                // ==========================================================
-
-                // --- INVITAR CONTRATISTAS (MODO GESTIÓN) ---
-                $('#btnInvitarContratista').on('click', function () {
-                    cargarContenidoModalInvitar();
-                });
-
-                function cargarContenidoModalInvitar(terminoBusqueda = '') {
-                    const url = '@Url.Action("_InvitarContratistasPartial", "Licitaciones", new { id = Model.LicitacionId })' + `?busqueda=${encodeURIComponent(terminoBusqueda)}`;
-
-                    $.get(url).done(function (data) {
-                        Swal.fire({
-                            title: 'Invitar Contratistas',
-                            html: data,
-                            width: '800px',
-                            showConfirmButton: false,
-                            showCancelButton: true,
-                            cancelButtonText: 'Cerrar'
-                        });
-                    }).fail(function () {
-                        Swal.fire('Error', 'No se pudo cargar la lista de contratistas.', 'error');
-                    });
-                }
-
-                $(document).on('submit', '#formInvitarContratistas', function (e) {
-                    e.preventDefault();
-                    var form = $(this);
-                    $.ajax({
-                        url: form.attr('action'),
-                        type: form.attr('method'),
-                        data: form.serialize(),
-                        success: function (response) {
-                            Swal.close();
+                            title: '¡Asignado!',
+                            text: 'El contratista ha sido asignado como ganador.',
+                            icon: 'success'
+                        }).then(() => {
                             location.reload();
-                        },
-                        error: function () {
-                            Swal.fire('Error', 'Ocurrió un error al invitar.', 'error');
-                        }
-                    });
-                });
-
-                $(document).on('click', '#btnBuscarContratista', function () {
-                    var busqueda = $('#busquedaContratista').val();
-                    cargarContenidoModalInvitar(busqueda);
-                });
-
-                $(document).on('keypress', '#busquedaContratista', function (e) {
-                    if (e.which == 13) {
-                        e.preventDefault();
-                        $('#btnBuscarContratista').click();
+                        });
+                    },
+                    error: function (xhr) {
+                        Swal.fire('Error', 'No se pudo asignar. (Error: ' + xhr.status + ')', 'error');
                     }
                 });
+            });
+            // --- FIN DEL NUEVO MANEJADOR ---
 
-                // --- ACTIVAR LICITACIÓN (MODO GESTIÓN) ---
-                $('#btnActivarLicitacion').on('click', function (e) {
-                    e.preventDefault();
-                    Swal.fire({
-                        title: '¿Estás seguro?',
-                        text: "Al activar, la licitación será visible para los contratistas invitados y ya no podrás quitar participantes.",
-                        icon: 'question',
-                        showCancelButton: true,
-                        confirmButtonColor: '#28a745',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Sí, activar ahora',
-                        cancelButtonText: 'Cancelar'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            $('#formActivarLicitacion').submit();
-                        }
-                    });
-                });
+            // (El script para el botón de búsqueda 'btnBuscarContratistaAsignar' sigue aquí...)
+            $(document).on('click', '#btnBuscarContratistaAsignar', function () {
+                var busqueda = $('#busquedaContratistaAsignar').val();
+                cargarContenidoModalAsignar(busqueda);
+            });
 
-                // --- QUITAR INVITACIÓN (MODO GESTIÓN) ---
-                $('.form-quitar-invitacion').on('submit', function (e) {
-                    e.preventDefault();
-                    var form = $(this);
+
+            // ==========================================================
+            // --- SCRIPTS DE MODO GESTIÓN (No afectan al Modo Control) ---
+            // ==========================================================
+
+            // --- INVITAR CONTRATISTAS (MODO GESTIÓN) ---
+            $('#btnInvitarContratista').on('click', function () {
+                cargarContenidoModalInvitar();
+            });
+
+            function cargarContenidoModalInvitar(terminoBusqueda = '') {
+                const url = '@Url.Action("_InvitarContratistasPartial", "Licitaciones", new { id = Model.LicitacionId })' + `?busqueda=${encodeURIComponent(terminoBusqueda)}`;
+
+                $.get(url).done(function (data) {
                     Swal.fire({
-                        title: '¿Estás seguro?',
-                        text: "Se quitará al contratista de la licitación. Si ya había subido propuestas, también serán eliminadas. ¡Esta acción no se puede deshacer!",
-                        icon: 'warning',
+                        title: 'Invitar Contratistas',
+                        html: data,
+                        width: '800px',
+                        showConfirmButton: false,
                         showCancelButton: true,
-                        confirmButtonColor: '#d33',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Sí, ¡quítalo!',
-                        cancelButtonText: 'Cancelar'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            form.get(0).submit();
-                        }
+                        cancelButtonText: 'Cerrar'
                     });
+                }).fail(function () {
+                    Swal.fire('Error', 'No se pudo cargar la lista de contratistas.', 'error');
                 });
+            }
+
+            $(document).on('submit', '#formInvitarContratistas', function (e) {
+                e.preventDefault();
+                var form = $(this);
+                $.ajax({
+                    url: form.attr('action'),
+                    type: form.attr('method'),
+                    data: form.serialize(),
+                    success: function (response) {
+                        Swal.close();
+                        location.reload();
+                    },
+                    error: function () {
+                        Swal.fire('Error', 'Ocurrió un error al invitar.', 'error');
+                    }
+                });
+            });
+
+            $(document).on('click', '#btnBuscarContratista', function () {
+                var busqueda = $('#busquedaContratista').val();
+                cargarContenidoModalInvitar(busqueda);
+            });
+
+            $(document).on('keypress', '#busquedaContratista', function (e) {
+                if (e.which == 13) {
+                    e.preventDefault();
+                    $('#btnBuscarContratista').click();
+                }
+            });
+
+            // --- ACTIVAR LICITACIÓN (MODO GESTIÓN) ---
+            $('#btnActivarLicitacion').on('click', function (e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: "Al activar, la licitación será visible para los contratistas invitados y ya no podrás quitar participantes.",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, activar ahora',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $('#formActivarLicitacion').submit();
+                    }
+                });
+            });
+
+            // --- QUITAR INVITACIÓN (MODO GESTIÓN) ---
+            $('.form-quitar-invitacion').on('submit', function (e) {
+                e.preventDefault();
+                var form = $(this);
+                Swal.fire({
+                    title: '¿Estás seguro?',
+                    text: "Se quitará al contratista de la licitación. Si ya había subido propuestas, también serán eliminadas. ¡Esta acción no se puede deshacer!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, ¡quítalo!',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.get(0).submit();
+                    }
+                });
+            });
 
             $('#checkDiferimiento').change(function () {
                 $('#fechasDiferimientoContainer').slideToggle(this.checked);
@@ -1061,26 +1008,27 @@ else
             });
 
 
-          
-                // --- CERRAR LICITACIÓN (MODO GESTIÓN) ---
-                $('#btnCerrarLicitacion').on('click', function (e) {
-                    e.preventDefault();
-                    Swal.fire({
-                        title: '¿Confirmas que quieres cerrar?',
-                        text: "Una vez cerrada, los contratistas ya no podrán subir propuestas. Esta acción no se puede deshacer.",
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#dc3545',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Sí, cerrar licitación',
-                        cancelButtonText: 'Cancelar'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            $('#formCerrarLicitacion').submit();
-                        }
-                    });
-                });
 
+            // --- CERRAR LICITACIÓN (MODO GESTIÓN) ---
+            $('#btnCerrarLicitacion').on('click', function (e) {
+                e.preventDefault();
+                Swal.fire({
+                    title: '¿Confirmas que quieres cerrar?',
+                    text: "Una vez cerrada, los contratistas ya no podrán subir propuestas. Esta acción no se puede deshacer.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, cerrar licitación',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $('#formCerrarLicitacion').submit();
+                    }
+                });
             });
-        </script>
+
+        });
+    </script>
 }
+

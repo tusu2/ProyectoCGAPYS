@@ -101,8 +101,14 @@
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item">
                             <a class="nav-link @(currentController == "Presupuesto" ? "active" : "")" asp-controller="Presupuesto" asp-action="Index">
-                                <i class="bi bi-kanban-fill"></i>
-                                <span>Inicio Año</span>
+                                <i class="bi bi-cash-coin"></i>
+                                <span>Control Presupuestal</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(currentController == "RecursosHumanos" ? "active" : "")" asp-controller="RecursosHumanos" asp-action="Index">
+                                <i class="bi bi-people-fill"></i>
+                                <span>Recursos Humano</span>
                             </a>
                         </li>
                         <li class="nav-item">
@@ -116,8 +122,12 @@
                                 <i class="bi bi-grid-1x2-fill"></i>
                                 <span>Panel de fases</span>
                             </a>
-                                
-                   
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link @(currentController == "Registro" ? "active" : "")" asp-controller="Registro" asp-action="Crear">
+                                <i class="bi bi-plus-square-fill"></i>
+                                <span>Registro</span>
+                            </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link @(currentController == "Proyecto" ? "active" : "")" asp-controller="Proyecto" asp-action="Index">
@@ -126,12 +136,17 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link @(currentController == "Registro" ? "active" : "")" asp-controller="Registro" asp-action="Crear">
-                                <i class="bi bi-plus-square-fill"></i>
-                                <span>Registro</span>
+                            <a class="nav-link @(currentController == "Anteproyecto" ? "active" : "")" asp-controller="Anteproyecto" asp-action="Index">
+                                <i class="bi bi-easel-fill"></i>
+                                <span>Anteproyecto</span>
                             </a>
                         </li>
-
+                        <li class="nav-item">
+                            <a class="nav-link @(currentController == "ElaboracionPresupuesto" ? "active" : "")" asp-controller="ElaboracionPresupuesto" asp-action="Index">
+                                <i class="bi bi-calculator-fill"></i>
+                                <span>Elaboracion de presupuesto</span>
+                            </a>
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link @(currentController == "Licitaciones" ? "active" : "")" asp-controller="Licitaciones" asp-action="Index">
                                 <i class="bi bi-briefcase-fill"></i>
@@ -142,12 +157,6 @@
                             <a class="nav-link @(currentController == "GestionEstimaciones" ? "active" : "")" asp-controller="GestionEstimaciones" asp-action="Index">
                                 <i class="bi bi-plus-square-fill"></i>
                                 <span>Estimaciones</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link @(currentController == "RecursosHumanos" ? "active" : "")" asp-controller="RecursosHumanos" asp-action="Index">
-                                <i class="bi bi-people-fill"></i>
-                                <span>Recursos Humano</span>
                             </a>
                         </li>
                         @if (SignInManager.IsSignedIn(User))

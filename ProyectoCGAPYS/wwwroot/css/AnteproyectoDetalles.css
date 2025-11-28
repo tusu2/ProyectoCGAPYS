@@ -1,0 +1,236 @@
+﻿/* --- 1. Variables Globales (Coherencia con Index) --- */
+:root {
+    --oro: #D4AF37;
+    --azul-corp: #0B2D48;
+    --azul-claro: #00AEEF;
+    --texto-oscuro: #222B36;
+    --texto-tenue: #6c757d;
+    --fuente-principal: 'Poppins', sans-serif;
+    --glass-bg: rgba(255, 255, 255, 0.85); /* Un poco más opaco para que se vea más sólido */
+    --glass-border: rgba(255, 255, 255, 0.9);
+    --shadow-soft: 0 5px 20px rgba(0, 0, 0, 0.04); /* Sombra más corta */
+}
+
+body {
+    background-color: #EFF2F5;
+    font-family: var(--fuente-principal);
+    color: var(--texto-oscuro);
+    /* Asegura que no haya scroll horizontal ni espacio extra abajo */
+    min-height: 100vh;
+    padding-bottom: 20px;
+}
+
+/* --- 2. Encabezado --- */
+.header-glass {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem; /* Reducido de 2rem */
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+.titulo-detalle {
+    font-size: 1.75rem; /* Un poco más pequeño */
+    font-weight: 700;
+    color: var(--azul-corp);
+    margin: 0;
+}
+.badge-folio {
+    background: rgba(11, 45, 72, 0.05);
+    color: var(--azul-corp);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-top: 2px;
+    display: inline-block;
+}
+.btn-volver {
+    color: var(--texto-tenue);
+    padding: 6px 14px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    background: white;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+    .btn-volver:hover {
+        background: var(--azul-corp);
+        color: white;
+    }
+
+/* --- 3. Tarjetas de Cristal (Contenedores) --- */
+.card-glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    border-radius: 16px;
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-soft);
+    padding: 20px;
+    margin-bottom: 20px; /* Ajustado para dar un respiro justo */
+    /* CAMBIO IMPORTANTE AQUÍ: */
+    /* Elimina o comenta la línea: height: 80%; */
+    height: auto; /* Dejamos que la altura se ajuste al contenido real */
+}
+
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--azul-corp);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+    .section-title i {
+        color: var(--oro);
+        font-size: 1.2rem;
+    }
+
+/* --- 4. Grilla de Información (Info General) --- */
+.info-grid {
+    display: grid;
+    /* CAMBIO: Forzamos 2 columnas del mismo tamaño para que se vea ordenado */
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+.info-item {
+    background: rgba(255, 255, 255, 0.5);
+    padding: 15px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.label-dato {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #000000;
+    font-weight: 800; 
+    letter-spacing: 0.5px;
+    display: block;
+    margin-bottom: 6px; 
+}
+.valor-dato {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--azul-corp);
+    word-break: break-word;
+}
+
+/* --- 5. Mapa y Documentos --- */
+#mapa-proyecto {
+    border-radius: 16px;
+    border: 4px solid white;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+}
+
+.doc-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    transition: transform 0.2s ease;
+    border: 1px solid rgba(0,0,0,0.03);
+}
+
+    .doc-list-item:hover {
+        transform: translateX(5px);
+        border-color: var(--azul-claro);
+    }
+
+.doc-icon {
+    font-size: 1.5rem;
+    color: var(--oro);
+    margin-right: 15px;
+}
+
+/* --- 6. Zona de Carga (Upload) --- */
+.upload-zone {
+    border: 2px dashed #cbd5e0;
+    border-radius: 16px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.4);
+    transition: all 0.3s;
+}
+
+    .upload-zone:hover {
+        border-color: var(--azul-claro);
+        background: rgba(255, 255, 255, 0.8);
+    }
+
+/* --- 7. Sidebar: Control de Fase --- */
+.control-panel {
+    background: linear-gradient(145deg, rgba(255,255,255,0.9), rgba(255,255,255,0.6));
+    border-left: 4px solid var(--azul-claro);
+    /* AGREGA ESTO PARA EL EFECTO STICKY: */
+    position: -webkit-sticky; /* Para compatibilidad con Safari */
+    position: sticky;
+    top: 100px; /* Esto define qué tan abajo del borde superior se "pegará" (ajusta a tu gusto) */
+    z-index: 100;
+}
+.fase-actual-display {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: rgba(0, 174, 239, 0.05); /* Azul muy suave */
+    border-radius: 20px;
+}
+
+.fase-titulo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--azul-corp);
+}
+
+.btn-accion-grande {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    font-weight: 600;
+    border: none;
+    margin-bottom: 10px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn-aprobar {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.btn-rechazar {
+    background: white;
+    color: #dc3545;
+    border: 1px solid #dc3545;
+}
+
+.btn-aprobar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+.btn-rechazar:hover {
+    background: #dc3545;
+    color: white;
+}
+
+.full-width-item {
+    grid-column: 1 / -1; /* Esto le dice: "ocupa desde la primera hasta la última columna" */
+}
+
+/* Ajuste para celulares: que se ponga todo en 1 sola columna si la pantalla es chica */
+@media (max-width: 768px) {
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+}

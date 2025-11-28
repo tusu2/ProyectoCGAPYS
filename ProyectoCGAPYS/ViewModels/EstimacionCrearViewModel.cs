@@ -38,7 +38,8 @@ public class EstimacionCrearViewModel
     public List<string> Etiquetas { get; set; } = new List<string>();
 
     public bool EsFiniquito { get; set; }
- 
+    public bool EsAnticipo { get; set; }
+
     public EstimacionCrearViewModel()
     {
         FechaEstimacion = DateTime.Today;

@@ -1,0 +1,335 @@
+﻿@model ProyectoCGAPYS.Models.Proyectos
+@{
+    ViewData["Title"] = "Detalles del Anteproyecto";
+}
+
+<link rel="stylesheet" href="~/css/AnteproyectoDetalles.css" asp-append-version="true" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<div class="container mt-5 pt-4">
+
+    <div class="header-glass animate__animated animate__fadeInDown">
+        <div>
+            <h1 class="titulo-detalle">
+                @Model.NombreProyecto
+            </h1>
+            <div class="d-flex align-items-center gap-3">
+                <span class="badge-folio">Folio: #@Model.Folio</span>
+                @if (!string.IsNullOrEmpty(Model.Prioridad))
+                {
+
+                    // Normalizamos el texto a minúsculas para comparar fácil
+                    var texto = Model.Prioridad.ToLower();
+                    var colorClase = "bg-secondary"; // Color por defecto (gris)
+
+                    if (texto.Contains("rojo") || texto.Contains("alta"))
+                    {
+                        colorClase = "bg-danger"; // Rojo
+                    }
+                    else if (texto.Contains("amarillo") || texto.Contains("media"))
+                    {
+                        colorClase = "bg-warning text-dark"; // Amarillo (letras oscuras para que se lea bien)
+                    }
+                    else if (texto.Contains("verde") || texto.Contains("baja"))
+                    {
+                        colorClase = "bg-success"; // Verde
+                    }
+                    else if (texto.Contains("azul"))
+                    {
+                        colorClase = "bg-info text-dark"; // Azul cyan
+                    }
+
+                    <span class="badge @colorClase rounded-pill">@Model.Prioridad</span>
+                }
+            </div>
+        </div>
+        <a asp-action="Index" class="btn-volver">
+            <i class="bi bi-arrow-left"></i> Volver al Tablero
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+
+            <div class="card-glass-panel mb-4">
+                <h5 class="section-title"><i class="bi bi-info-square-fill"></i> Información del Proyecto</h5>
+
+                <div class="info-grid mb-4">
+
+                    <div class="info-item full-width-item">
+                        <span class="label-dato">Campus / Dependencia</span>
+                        <div class="valor-dato">
+                            @Model.Campus.Nombre <br>
+                            <small class="text-muted">@Model.Dependencia.Nombre</small>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <span class="label-dato">Descripción</span>
+                        <div class="valor-dato">@Model.Descripcion</div>
+                    </div>
+
+                    <div class="info-item">
+                        <span class="label-dato">Responsable</span>
+                        <div class="valor-dato">
+                            @(Model.UsuarioResponsable?.UserName ?? Model.NombreResponsable ?? "Sin Asignar")
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <span class="label-dato">Tipo de Fondo</span>
+                        <div class="valor-dato">@(Model.TipoFondo?.Nombre ?? "Null")</div>
+                    </div>
+
+                    <div class="info-item">
+                        <span class="label-dato">Fecha Solicitud</span>
+                        <div class="valor-dato">@Model.FechaSolicitud?.ToString("dd MMM yyyy")</div>
+                    </div>
+
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Latitud))
+                {
+                    <h6 class="label-dato mt-4 mb-2">Ubicación Registrada</h6>
+                    <div id="mapa-proyecto" style="height: 400px; width: 100%;"></div>
+                }
+            </div>
+
+            <div class="card-glass-panel">
+                <h5 class="section-title"><i class="bi bi-folder-fill"></i> Documentación</h5>
+
+                @if (Model.Documentos != null && Model.Documentos.Any())
+                {
+                    <div class="mb-4">
+                        @foreach (var doc in Model.Documentos)
+                        {
+                            <div class="doc-list-item">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-file-earmark-pdf-fill doc-icon"></i>
+                                    <div>
+                                        <strong>@doc.NombreArchivo</strong>
+                                        <small class="d-block text-muted">@doc.Descripcion</small>
+                                    </div>
+                                </div>
+                                <a asp-controller="PanelDeFases" asp-action="DescargarDocumento" asp-route-documentoId="@doc.Id" class="btn btn-sm btn-light border">
+                                    <i class="bi bi-download"></i> Descargar
+                                </a>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-3 text-muted">
+                        <i class="bi bi-folder-x display-6"></i>
+                        <p class="mt-2">No hay documentos adjuntos actualmente.</p>
+                    </div>
+                }
+
+                <hr class="my-4 opacity-25">
+
+                <div class="upload-zone">
+                    <h6 class="text-muted mb-3"><i class="bi bi-cloud-arrow-up-fill"></i> Añadir nuevos archivos</h6>
+
+                    <div class="row g-2 align-items-end mb-3">
+                        <div class="col-md-5">
+                            <input type="file" id="inputArchivo" class="form-control form-control-sm bg-white" />
+                        </div>
+                        <div class="col-md-5">
+                            <input type="text" id="inputEtiqueta" class="form-control form-control-sm bg-white" placeholder="Etiqueta o descripción..." />
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-sm btn-dark w-100" id="btnAgregarLista">
+                                <i class="bi bi-plus-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive rounded-3 overflow-hidden">
+                        <table class="table table-sm table-borderless mb-0 bg-white" id="tablaPendientes" style="display:none;">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3">Archivo</th>
+                                    <th>Etiqueta</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody class="align-middle"></tbody>
+                        </table>
+                    </div>
+
+                    <button type="button" class="btn btn-primary w-100 mt-3 rounded-pill shadow-sm" id="btnSubirTodos" disabled>
+                        <i class="bi bi-upload"></i> Guardar Archivos en Nube
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card-glass-panel control-panel">
+                <h5 class="section-title"><i class="bi bi-sliders"></i> Panel de Control</h5>
+
+                <div class="fase-actual-display">
+                    <span class="text-uppercase text-muted small fw-bold">Fase Actual</span>
+                    <div class="fase-titulo">@Model.Fase.Nombre</div>
+                    <div class="progress mt-2" style="height: 6px;">
+                        <div class="progress-bar bg-info" role="progressbar" style="width: 40%"></div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-3">
+                    <button id="btn-avanzar" class="btn-accion-grande btn-aprobar">
+                        <i class="bi bi-check-circle-fill"></i> Aprobar Fase
+                    </button>
+
+                    <button id="btn-rechazar" class="btn-accion-grande btn-rechazar">
+                        <i class="bi bi-x-circle"></i> Rechazar
+                    </button>
+                </div>
+
+                <div class="mt-4 pt-3 border-top">
+                    <small class="text-muted d-block text-center">
+                        <i class="bi bi-clock-history"></i> Última actualización: <br> @DateTime.Now.ToString("dd MMM HH:mm")
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // --- 1. Mapa ---
+        const mapContainer = document.getElementById('mapa-proyecto');
+        if (mapContainer) {
+            const lat = parseFloat('@Model.Latitud'.replace(',', '.'));
+            const lng = parseFloat('@Model.Longitud'.replace(',', '.'));
+            if (!isNaN(lat) && !isNaN(lng)) {
+                const mapa = L.map('mapa-proyecto').setView([lat, lng], 16);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
+                L.marker([lat, lng]).addTo(mapa);
+            }
+        }
+
+        // --- 2. Carga Masiva (Lógica idéntica, solo renderizado visual mejorado) ---
+        let archivosPendientes = [];
+        const btnSubir = document.getElementById('btnSubirTodos');
+
+        document.getElementById('btnAgregarLista').addEventListener('click', function () {
+            const inputFile = document.getElementById('inputArchivo');
+            const inputEtiqueta = document.getElementById('inputEtiqueta');
+
+            if (!inputFile.files[0]) {
+                Swal.fire('Atención', 'Selecciona un archivo', 'warning');
+                return;
+            }
+
+            archivosPendientes.push({
+                file: inputFile.files[0],
+                etiqueta: inputEtiqueta.value.trim() || "Sin etiqueta"
+            });
+
+            renderTabla();
+            inputFile.value = '';
+            inputEtiqueta.value = '';
+        });
+
+        function renderTabla() {
+            const tbody = document.querySelector('#tablaPendientes tbody');
+            const tabla = document.getElementById('tablaPendientes');
+            tbody.innerHTML = '';
+
+            if (archivosPendientes.length > 0) {
+                tabla.style.display = 'table';
+                btnSubir.disabled = false;
+                archivosPendientes.forEach((item, index) => {
+                    tbody.innerHTML += `
+                                <tr>
+                                    <td class="ps-3"><small>${item.file.name}</small></td>
+                                    <td><span class="badge bg-light text-dark border">${item.etiqueta}</span></td>
+                                    <td class="text-end pe-3">
+                                        <button class="btn btn-sm text-danger p-0" onclick="eliminar(${index})">
+                                            <i class="bi bi-x-circle-fill"></i>
+                                        </button>
+                                    </td>
+                                </tr>`;
+                });
+            } else {
+                tabla.style.display = 'none';
+                btnSubir.disabled = true;
+            }
+        }
+
+        window.eliminar = function (i) {
+            archivosPendientes.splice(i, 1);
+            renderTabla();
+        };
+
+        btnSubir.addEventListener('click', function () {
+            const formData = new FormData();
+            formData.append('proyectoId', '@Model.Id');
+            archivosPendientes.forEach(item => {
+                formData.append('archivos', item.file);
+                formData.append('etiquetas', item.etiqueta);
+            });
+
+            Swal.fire({ title: 'Subiendo...', didOpen: () => Swal.showLoading() });
+
+            fetch('/Anteproyecto/CargarDocumentosMasivos', {
+                method: 'POST',
+                body: formData
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) Swal.fire('Éxito', data.message, 'success').then(() => location.reload());
+                    else Swal.fire('Error', data.message, 'error');
+                });
+        });
+
+        // --- 3. Botones Acción (Sin cambios de lógica) ---
+        document.getElementById('btn-avanzar').addEventListener('click', function () {
+            Swal.fire({
+                title: '¿Aprobar Anteproyecto?',
+                text: "Avanzará a la siguiente fase.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                confirmButtonText: 'Sí, Aprobar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/Anteproyecto/Avanzar?proyectoId=@Model.Id`, { method: 'POST' })
+                        .then(r => r.json())
+                        .then(d => {
+                            if (d.success) Swal.fire('Aprobado', d.message, 'success').then(() => location.href = '/Anteproyecto/Index');
+                            else Swal.fire('Error', d.message, 'error');
+                        });
+                }
+            });
+        });
+
+        document.getElementById('btn-rechazar').addEventListener('click', function () {
+            Swal.fire({
+                title: 'Rechazar Anteproyecto',
+                text: "Se eliminará la prioridad del proyecto.",
+                input: 'textarea',
+                inputPlaceholder: 'Motivo...',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                confirmButtonText: 'Rechazar'
+            }).then((result) => {
+                if (result.isConfirmed && result.value) {
+                    fetch(`/Anteproyecto/Rechazar?proyectoId=@Model.Id&comentario=${encodeURIComponent(result.value)}`, { method: 'POST' })
+                        .then(r => r.json())
+                        .then(d => {
+                            if (d.success) Swal.fire('Rechazado', d.message, 'success').then(() => location.href = '/Anteproyecto/Index');
+                            else Swal.fire('Error', d.message, 'error');
+                        });
+                }
+            });
+        });
+    </script>
+}

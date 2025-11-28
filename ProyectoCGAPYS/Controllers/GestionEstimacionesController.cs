@@ -89,6 +89,7 @@ namespace ProyectoCGAPYS.Controllers
             if (licitacionGanadora != null)
             {
                 ViewBag.Contratista = licitacionGanadora.ContratistaGanador;
+                ViewBag.Licitacion = licitacionGanadora;
             }
             else
             {
@@ -266,7 +267,15 @@ namespace ProyectoCGAPYS.Controllers
               
                 estimacion.Estado = "En Creación";
                 _context.Update(estimacion);
-
+                if (estimacion.EsFiniquito)
+                {
+                    var proyecto = await _context.Proyectos.FindAsync(estimacion.IdProyectoFk);
+                    if (proyecto != null)
+                    {
+                        proyecto.IdFaseFk = 5; // Volvemos a fase 5 (Ejecución) para que puedan editar
+                        _context.Update(proyecto);
+                    }
+                }
                 // REGISTRAR HISTORIAL
                 _context.EstimacionHistorial.Add(new EstimacionHistorial
                 {
@@ -404,20 +413,46 @@ namespace ProyectoCGAPYS.Controllers
                 // CAMBIAR ESTADO (Paso 5 -> 6, Final)
                 estimacion.Estado = "Pagada";
                 _context.Update(estimacion);
-
-                // REGISTRAR HISTORIAL (El registro final)
-                _context.EstimacionHistorial.Add(new EstimacionHistorial
+                if (estimacion.EsFiniquito)
                 {
-                    EstimacionId = estimacionId,
-                    EstadoAnterior = "En Trámite de Pago",
-                    EstadoNuevo = "Pagada",
-                    Comentario = "Pago realizado por Tesorería.",
-                    UsuarioId = usuario.Id,
-                    FechaCambio = DateTime.Now
-                });
+                    // A. ACTUALIZAR EL PROYECTO (Fase 6 y Estatus Finalizado)
+                    var proyecto = await _context.Proyectos.FindAsync(estimacion.IdProyectoFk);
+                    if (proyecto != null)
+                    {
+                        proyecto.IdFaseFk = 6;           // Mueve el proyecto a la carpeta de Finalizados
+                        proyecto.Estatus = "Finalizado"; // Actualiza el texto del estatus
+                        _context.Update(proyecto);
+                    }
 
-                await _context.SaveChangesAsync();
-                TempData["Success"] = "Estimación marcada como PAGADA. El flujo ha terminado.";
+                    // B. ACTUALIZAR LA LICITACIÓN (Estado Finalizado)
+                    // Buscamos la licitación asociada a este proyecto
+                    var licitacion = await _context.Licitaciones
+                        .FirstOrDefaultAsync(l => l.ProyectoId == estimacion.IdProyectoFk);
+
+                    if (licitacion != null)
+                    {
+                        licitacion.Estado = "Finalizado"; // Cambiamos el estado de la licitación
+                        _context.Update(licitacion);
+                    }
+                
+                }
+            // REGISTRAR HISTORIAL (El registro final)
+            _context.EstimacionHistorial.Add(new EstimacionHistorial
+            {
+                EstimacionId = estimacionId,
+                EstadoAnterior = "En Trámite de Pago",
+                EstadoNuevo = "Pagada",
+                Comentario = estimacion.EsFiniquito
+              ? "PAGO FINAL REALIZADO. El Proyecto y la Licitación han sido FINALIZADOS oficialmente."
+              : "Pago realizado por Tesorería.",
+                UsuarioId = usuario.Id,
+                FechaCambio = DateTime.Now
+            });
+
+            await _context.SaveChangesAsync();
+                TempData["Success"] = estimacion.EsFiniquito
+                   ? "¡Proyecto Finalizado! Se pagó el finiquito y se cerró el proyecto."
+                   : "Estimación marcada como PAGADA.";
             }
             else
             {
@@ -458,17 +493,18 @@ namespace ProyectoCGAPYS.Controllers
 
             // 2. Obtener las estimaciones de este proyecto
             var estimaciones = await _context.Estimaciones
-                .Include(e => e.Historial)
-                .Where(e => e.IdProyectoFk == proyectoId)
-                .ToListAsync();
+                 .Include(e => e.Historial)
+                 .Where(e => e.IdProyectoFk == proyectoId)
+                 .ToListAsync();
 
             // 3. Agruparlas por estado (para el Kanban)
             var diccionarioEstimaciones = estimaciones
-                .GroupBy(e => e.Estado)
-                .ToDictionary(g => g.Key, g => g.ToList());
+                        .GroupBy(e => e.Estado)
+                        .ToDictionary(g => g.Key, g => g.ToList());
 
             bool existeFiniquito = estimaciones.Any(e => e.EsFiniquito);
-
+            bool bloqueoPorAnticipo = estimaciones.Any(e => e.EsAnticipo && e.Estado != "Pagada");
+            ViewBag.BloqueoPorAnticipo = bloqueoPorAnticipo;
             // Pasamos esta bandera a la vista
             ViewBag.YaExisteFiniquito = existeFiniquito;
             // 4. Pasar datos a la vista (IMPORTANTE: ViewBag.ProyectoId)
@@ -524,15 +560,13 @@ namespace ProyectoCGAPYS.Controllers
                 Monto = viewModel.Monto,
                 FechaEstimacion = viewModel.FechaEstimacion,
                 Descripcion = viewModel.Descripcion,
-
-                // ¡AQUÍ ESTÁ! Conservamos tu lógica de Finiquito
                 EsFiniquito = viewModel.EsFiniquito,
-
-                // Estado inicial directo a Control de Obra
+                EsAnticipo = viewModel.EsAnticipo,
                 Estado = "En Revisión Control Obra"
             };
 
             _context.Estimaciones.Add(estimacion);
+         
             await _context.SaveChangesAsync(); // Guardamos para generar el ID
 
             try
@@ -620,6 +654,87 @@ namespace ProyectoCGAPYS.Controllers
 
             _context.EstimacionDocumentos.Add(documento);
             // No hacemos SaveChanges aquí, se hace en el método principal
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Jefa,Empleado3")] // Tesorería y Jefa
+        public async Task<IActionResult> ConfirmarPagoAnticipo(
+    int estimacionId,
+    int licitacionId,
+    IFormFile archivoTransferencia,
+    string tipoAjuste, // "Diferimiento", "Convenio", "Suspension" (puede ser null si no activó el check)
+    DateTime? fechaInicio,
+    DateTime? fechaFin,
+    decimal? nuevoTotalConvenio)
+        {
+            var estimacion = await _context.Estimaciones.FindAsync(estimacionId);
+            var licitacion = await _context.Licitaciones.FindAsync(licitacionId);
+            var usuario = await _userManager.GetUserAsync(User);
+
+            if (estimacion == null || licitacion == null) return NotFound();
+
+            // 1. GUARDAR COMPROBANTE DE TRANSFERENCIA
+            if (archivoTransferencia != null)
+            {
+                await GuardarArchivoEstimacion(estimacion.Id, archivoTransferencia, "Comprobante Transferencia (Anticipo)", usuario.Id);
+            }
+
+            // 2. ACTUALIZAR LICITACIÓN (Si se seleccionó ajuste)
+            // Verificamos si fechaInicio tiene valor, lo que implica que el usuario activó el check
+            if (fechaInicio.HasValue && fechaFin.HasValue && !string.IsNullOrEmpty(tipoAjuste))
+            {
+                switch (tipoAjuste)
+                {
+                    case "Diferimiento":
+                        licitacion.TieneDiferimientoPago = true;
+                        licitacion.FechaInicioDiferimiento = fechaInicio;
+                        licitacion.FechaFinDiferimiento = fechaFin;
+                        break;
+
+                    case "Convenio":
+                        licitacion.TieneConvenio = true;
+                        licitacion.FechaInicioConvenio = fechaInicio;
+                        licitacion.FechaFinConvenio = fechaFin;
+
+                        // Actualizar montos
+                        if (nuevoTotalConvenio.HasValue)
+                        {
+                            licitacion.EsContratadoMasConvenio = true;
+                            licitacion.MontoContratadoMasConvenio = nuevoTotalConvenio.Value;
+                        }
+                        break;
+
+                    case "Suspension":
+                        licitacion.TieneSuspension = true;
+                        licitacion.FechaInicioSuspension = fechaInicio;
+                        licitacion.FechaFinSuspension = fechaFin;
+                        break;
+                }
+
+                _context.Update(licitacion);
+            }
+
+            // 3. MARCAR ESTIMACIÓN COMO PAGADA
+            estimacion.Estado = "Pagada";
+            estimacion.FechaPago = DateTime.Now; // Importante registrar fecha real de pago
+            _context.Update(estimacion);
+
+            // 4. HISTORIAL
+            _context.EstimacionHistorial.Add(new EstimacionHistorial
+            {
+                EstimacionId = estimacionId,
+                EstadoAnterior = "En Trámite de Pago",
+                EstadoNuevo = "Pagada",
+                Comentario = $"Anticipo pagado. Ajustes aplicados: {tipoAjuste ?? "Ninguno"}.",
+                UsuarioId = usuario.Id,
+                FechaCambio = DateTime.Now
+            });
+
+            await _context.SaveChangesAsync();
+            TempData["Success"] = "Anticipo pagado y datos del proyecto actualizados correctamente.";
+
+            return RedirectToAction("Index");
         }
     }
 

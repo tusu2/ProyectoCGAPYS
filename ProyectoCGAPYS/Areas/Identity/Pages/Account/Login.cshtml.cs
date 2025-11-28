@@ -131,12 +131,12 @@ namespace ProyectoCGAPYS.Areas.Identity.Pages.Account
                     }
 
                     
-                    var esContratista = await _context.Contratistas.AnyAsync(c => c.UsuarioId == user.Id);
-                    if (esContratista)
-                    {
-                        _logger.LogInformation("Usuario es Contratista. Redirigiendo a /Contratista/Index.");
-                        return RedirectToAction("Index", "Contratista");
-                    }
+                //    var esContratista = await _context.Contratistas.AnyAsync(c => c.UsuarioId == user.Id);
+               //     if (esContratista)
+                 //   {
+                //        _logger.LogInformation("Usuario es Contratista. Redirigiendo a /Contratista/Index.");
+                   //     return RedirectToAction("Index", "Contratista");
+                 //   }
 
                     // 2. ¿ES JEFA? 
                     var esJefa = await _userManager.IsInRoleAsync(user, "Jefa");

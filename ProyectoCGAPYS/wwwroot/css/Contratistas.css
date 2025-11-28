@@ -1,0 +1,225 @@
+﻿/* =========================================
+   Módulo de Gestión de Contratistas - Tema "Arquitecto/Licitaciones"
+   ========================================= */
+
+/* 1. Definición de Variables (Paleta de Colores Técnica) */
+:root {
+    --arch-blue-deep: #0A2342; /* Azul marino profundo para encabezados */
+    --arch-blue-soft: #eef2f7; /* Azul muy pálido para fondos y hovers */
+    --arch-accent-yellow: #FFC107; /* Amarillo técnico para acentos y bordes */
+    --arch-accent-teal: #008f7a; /* Verde azulado para botones de éxito */
+    --arch-text-dark: #333333; /* Color de texto principal */
+    --arch-concrete: #f8f9fa; /* Fondo general */
+    --arch-grid-line: rgba(10, 35, 66, 0.05); /* Color sutil para la cuadrícula de fondo */
+}
+
+/* 2. Estilos Generales del Contenedor Principal */
+/* Creamos un efecto de "papel milimétrico" o mesa de trabajo en el fondo */
+.container.mt-4 {
+    background-color: #ffffff;
+    /* Patrón de cuadrícula sutil */
+    background-image: linear-gradient(var(--arch-grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--arch-grid-line) 1px, transparent 1px);
+    background-size: 25px 25px; /* Tamaño de los cuadros */
+
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05); /* Sombra suave y moderna */
+    padding: 40px; /* Más espacio interno */
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+/* 3. Títulos y Encabezados */
+h2 {
+    color: var(--arch-blue-deep);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 1.75rem;
+    margin-bottom: 0;
+    position: relative;
+    display: inline-block;
+}
+
+    /* Línea de acento técnica debajo del título principal */
+    h2::after {
+        content: '';
+        display: block;
+        width: 60%; /* No ocupa todo el ancho */
+        height: 4px;
+        background-color: var(--arch-accent-yellow);
+        margin-top: 8px;
+        border-radius: 2px;
+    }
+
+/* 4. Botones (Estilo Industrial/Técnico) */
+
+/* Botón "Nuevo Contratista" */
+.btn-success {
+    background-color: var(--arch-accent-teal);
+    border: none;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    padding: 12px 24px;
+    border-radius: 4px; /* Esquinas un poco más rectas */
+    box-shadow: 0 4px 10px rgba(0, 143, 122, 0.3);
+    transition: all 0.3s ease;
+}
+
+    .btn-success:hover {
+        background-color: #007260; /* Un poco más oscuro al pasar el mouse */
+        transform: translateY(-2px); /* Pequeño efecto de elevación */
+        box-shadow: 0 6px 15px rgba(0, 143, 122, 0.4);
+    }
+
+/* Botón "Volver" */
+.btn-outline-secondary {
+    border: 2px solid #ccc;
+    color: var(--arch-text-dark);
+    font-weight: 500;
+    border-radius: 4px;
+    padding: 10px 20px;
+}
+
+    .btn-outline-secondary:hover {
+        background-color: var(--arch-blue-deep);
+        border-color: var(--arch-blue-deep);
+        color: #fff;
+    }
+
+
+/* 5. La Tarjeta y la Tabla (El "Plano de Datos") */
+
+.card.shadow-sm {
+    border: none;
+    border-radius: 8px;
+    overflow: hidden; /* Para que el encabezado de la tabla respete el borde redondeado */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08) !important; /* Sombra más definida */
+    margin-top: 30px;
+}
+
+/* Encabezado de la tabla (Inspirado en la imagen de referencia) */
+.table thead.bg-dark {
+    background-color: var(--arch-blue-deep) !important; /* Sobreescribe el dark de Bootstrap */
+    /* Borde inferior amarillo grueso, como una línea de corte en un plano */
+    border-bottom: 4px solid var(--arch-accent-yellow);
+}
+
+.table thead th {
+    color: #ffffff;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.8rem;
+    padding: 15px 20px; /* Más espacio */
+    border: none;
+}
+
+/* Cuerpo de la tabla y Filas */
+.table tbody tr {
+    transition: all 0.2s ease-in-out;
+    border-bottom: 1px solid var(--arch-blue-soft);
+}
+
+.table td {
+    padding: 15px 20px;
+    vertical-align: middle;
+    color: var(--arch-text-dark);
+    font-weight: 500;
+    font-size: 1rem;
+}
+
+/* Efecto Hover en las filas (La "Regla T") */
+.table tbody tr:hover {
+    background-color: #f8fbff !important; /* Un azul muy, muy claro */
+    /* Línea amarilla a la izquierda al pasar el mouse */
+    box-shadow: inset 5px 0 0 var(--arch-accent-yellow);
+    transform: scale(1.005); /* Un efecto de zoom casi imperceptible */
+}
+
+/* Botones de Acción dentro de la tabla */
+.table .btn-sm {
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    border: none;
+}
+
+.btn-primary.btn-sm { /* Editar */
+    background-color: var(--arch-blue-deep);
+    box-shadow: 0 2px 5px rgba(10, 35, 66, 0.3);
+}
+
+.btn-danger.btn-sm { /* Eliminar */
+    background-color: #d9534f; /* Un rojo un poco más técnico/apagado */
+    box-shadow: 0 2px 5px rgba(217, 83, 79, 0.3);
+}
+
+
+/* 6. Estilos del Modal (La ventana de edición) */
+
+.modal-content {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3); /* Sombra muy profunda para que destaque */
+}
+
+/* Encabezado del Modal */
+.modal-header {
+    background-color: var(--arch-blue-deep);
+    color: #fff;
+    /* Misma línea de acento amarilla que la tabla */
+    border-bottom: 4px solid var(--arch-accent-yellow);
+    border-radius: 8px 8px 0 0;
+    padding: 20px;
+}
+
+.modal-title {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%); /* Hace la X blanca */
+}
+
+/* Cuerpo y Formulario del Modal */
+.modal-body {
+    padding: 30px;
+    background-color: #fff;
+}
+
+.form-label {
+    color: var(--arch-blue-deep);
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+}
+
+/* Campos de entrada (Inputs) */
+.form-control {
+    border: 2px solid var(--arch-blue-soft); /* Borde más grueso */
+    border-radius: 4px;
+    padding: 12px;
+    font-size: 1rem;
+    color: var(--arch-text-dark);
+    background-color: #fcfcfc;
+    transition: border-color 0.3s;
+}
+
+    .form-control:focus {
+        /* Al enfocar, el borde se vuelve del color de acento técnico */
+        border-color: var(--arch-accent-teal);
+        box-shadow: none; /* Quitamos el brillo azul por defecto de Bootstrap */
+        background-color: #fff;
+    }
+
+/* Pie del Modal */
+.modal-footer {
+    background-color: var(--arch-concrete);
+    border-top: 1px solid var(--arch-blue-soft);
+    padding: 15px 30px;
+}

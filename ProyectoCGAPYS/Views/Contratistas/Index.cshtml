@@ -1,0 +1,135 @@
+﻿@model IEnumerable<ProyectoCGAPYS.Models.Contratista>
+
+@{
+    ViewData["Title"] = "Gestión de Contratistas";
+}
+<div class="espaciador-escritorio">
+    <br>
+    <br>
+    <br>
+</div>
+
+<link rel="stylesheet" href="~/css/Contratistas.css" asp-append-version="true" />
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📂 Catálogo de Contratistas</h2>
+        <button type="button" class="btn btn-success" onclick="abrirModal(0, '')" data-bs-toggle="modal" data-bs-target="#modalContratista">
+            + Nuevo Contratista
+        </button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-striped table-hover mb-0">
+                <thead class="bg-dark text-white">
+                    <tr>
+                        <th class="p-3">Razón Social / Nombre</th>
+                        <th class="p-3 text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="2" class="text-center p-4 text-muted">No hay contratistas registrados.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="p-3 align-middle">@item.RazonSocial</td>
+                                <td class="p-3 text-end">
+                                    <button class="btn btn-sm btn-primary me-2"
+                                            onclick="abrirModal(@item.Id, '@item.RazonSocial')"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modalContratista">
+                                        Editar
+                                    </button>
+
+                                    <button type="button" class="btn btn-sm btn-danger" onclick="confirmarEliminacion(@item.Id)">
+                                        Eliminar
+                                    </button>
+
+                                    <form id="form-eliminar-@item.Id" asp-action="Eliminar" asp-route-id="@item.Id" method="post" style="display:none;">
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a asp-controller="Licitaciones" asp-action="Index" class="btn btn-outline-secondary">← Volver a Licitaciones</a>
+    </div>
+</div>
+
+<div class="modal fade" id="modalContratista" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Guardar" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalLabel">Gestión de Contratista</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="InputId" name="Id" value="0" />
+                    <div class="mb-3">
+                        <label for="InputRazonSocial" class="form-label fw-bold">Razón Social o Nombre</label>
+                        <input type="text" class="form-control" id="InputRazonSocial" name="RazonSocial" required placeholder="Escribe el nombre aquí..." />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 1. Función para el Modal de Editar/Crear
+    function abrirModal(id, razonSocial) {
+        document.getElementById('InputId').value = id;
+        document.getElementById('InputRazonSocial').value = razonSocial;
+        var titulo = document.getElementById('modalLabel');
+        titulo.innerText = (id === 0) ? "Agregar Nuevo Contratista" : "Editar Contratista";
+    }
+
+    // 2. Función para CONFIRMAR la eliminación (Mejora visual)
+    function confirmarEliminacion(id) {
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: "Esta acción no se puede deshacer.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Si confirma, enviamos el formulario oculto correspondiente
+                document.getElementById('form-eliminar-' + id).submit();
+            }
+        })
+    }
+</script>
+
+@if (TempData["SweetAlertType"] != null)
+{
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            Swal.fire({
+                icon: '@TempData["SweetAlertType"]', // success o error
+                title: '@TempData["SweetAlertTitle"]',
+                text: '@TempData["SweetAlertMessage"]'
+            });
+        });
+    </script>
+}

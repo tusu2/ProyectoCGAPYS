@@ -23,30 +23,31 @@ namespace ProyectoCGAPYS.Controllers
         }
 
         // Método GET: Prepara y muestra el formulario vacío
-   [HttpGet]
-public async Task<IActionResult> Crear()
-{
-    var viewModel = new CrearProyectoViewModel
-    {
-        DependenciaOptions = await _context.Dependencias
-            .Select(d => new SelectListItem { Value = d.Id, Text = d.Nombre }).ToListAsync(),
-        TipoFondoOptions = await _context.TiposFondo
-            .Select(tf => new SelectListItem { Value = tf.Id, Text = tf.Nombre }).ToListAsync(),
-        TipoProyectoOptions = await _context.TiposProyecto
-            .Select(tp => new SelectListItem { Value = tp.Id, Text = tp.Nombre }).ToListAsync(),
-        CampusOptions = await _context.Campus 
-            .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Nombre }).ToListAsync(),
-        
-        // --- NUEVO: Cargar lista de usuarios ---
-        // Aquí cargamos Email o UserName para mostrar en la lista
-        UsuariosOptions = await _context.Users
-            .Select(u => new SelectListItem { 
-                Value = u.Id, 
-                Text = u.Email // O u.UserName, lo que prefieras ver
-            }).ToListAsync()
-    };
-    return View(viewModel);
-}
+        [HttpGet]
+        public async Task<IActionResult> Crear()
+        {
+            var viewModel = new CrearProyectoViewModel
+            {
+                DependenciaOptions = await _context.Dependencias
+                    .Select(d => new SelectListItem { Value = d.Id, Text = d.Nombre }).ToListAsync(),
+                TipoFondoOptions = await _context.TiposFondo
+                    .Select(tf => new SelectListItem { Value = tf.Id, Text = tf.Nombre }).ToListAsync(),
+                TipoProyectoOptions = await _context.TiposProyecto
+                    .Select(tp => new SelectListItem { Value = tp.Id, Text = tp.Nombre }).ToListAsync(),
+                CampusOptions = await _context.Campus
+                    .Select(c => new SelectListItem { Value = c.Id.ToString(), Text = c.Nombre }).ToListAsync(),
+
+                // --- CAMBIO: Filtramos solo los dos usuarios específicos ---
+                UsuariosOptions = await _context.Users
+                    .Where(u => u.Email == "roselin.salazar@uadec.edu.mx" || u.Email == "jbazald@uadec.edu.mx")
+                    .Select(u => new SelectListItem
+                    {
+                        Value = u.Id,
+                        Text = u.Email
+                    }).ToListAsync()
+            };
+            return View(viewModel);
+        }
 
         // Método POST: Recibe los datos enviados desde el formulario
 
@@ -87,7 +88,7 @@ public async Task<IActionResult> Crear()
                         Id = nuevoIdGenerado,
                         IdFaseFk = 1,
                         NombreProyecto = viewModel.NombreProyecto,
-                        Descripcion = viewModel.Descripcion,
+                        Descripcion = string.IsNullOrEmpty(viewModel.Descripcion) ? "Sin descripción detallada" : viewModel.Descripcion,
                         FechaSolicitud = viewModel.FechaSolicitud,
                         FechaFinalizacionAprox = viewModel.FechaFinalizacionAprox,
                         UsuarioResponsableId = viewModel.UsuarioResponsableId,

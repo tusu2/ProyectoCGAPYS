@@ -31,6 +31,10 @@ namespace ProyectoCGAPYS.ViewModels
 
         public decimal? MontoContratado { get; set; }
         public int? PlazoDias { get; set; }
+
+        public bool EsContratadoBase { get; set; }
+        public bool EsContratadoMasConvenio { get; set; }
+        public decimal? MontoContratadoMasConvenio { get; set; }
         // Para los nuevos campos de control
         public DateTime? FechaFallo { get; set; }
         public string NumeroContrato { get; set; }
@@ -56,7 +60,8 @@ namespace ProyectoCGAPYS.ViewModels
         public DateTime? FechaInicioSuspension { get; set; }
         public DateTime? FechaFinSuspension { get; set; }
 
-
+        public bool Anticipo { get; set; }
+        public decimal? MontoAnticipo { get; set; }
 
 
 
