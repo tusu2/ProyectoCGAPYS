@@ -356,8 +356,8 @@ namespace ProyectoCGAPYS.Controllers
             var usuario = await _userManager.GetUserAsync(User);
 
 
-            bool tieneFactura = estimacion.Documentos.Any(d => d.TipoDocumento == "Factura");
-            bool tienePoliza = estimacion.Documentos.Any(d => d.TipoDocumento == "PolizaPago");
+            bool tieneFactura = estimacion.Documentos.Any(d => d.TipoDocumento != null && d.TipoDocumento.Contains("Factura"));
+            bool tienePoliza = estimacion.Documentos.Any(d => d.TipoDocumento != null && d.TipoDocumento.Contains("PolizaPago"));
 
             if (!tieneFactura || !tienePoliza)
             {

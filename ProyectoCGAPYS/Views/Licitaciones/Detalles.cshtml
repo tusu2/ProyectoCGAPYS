@@ -995,17 +995,31 @@
                 });
             });
 
-            $('#checkDiferimiento').change(function () {
-                $('#fechasDiferimientoContainer').slideToggle(this.checked);
-            });
+        function configurarIncidencia(idCheck, idContainer) {
+                var $check = $(idCheck);
+                var $container = $(idContainer);
 
-            $('#checkConvenio').change(function () {
-                $('#fechasConvenioContainer').slideToggle(this.checked);
-            });
+                // 1. Al cargar la página: Si la BD dice que es true (está checked), mostramos el div
+                if ($check.is(':checked')) {
+                    $container.show(); // Usamos .show() directo para que aparezca sin animación al cargar
+                } else {
+                    $container.hide();
+                }
 
-            $('#checkSuspension').change(function () {
-                $('#fechasSuspensionContainer').slideToggle(this.checked);
-            });
+                // 2. Al cambiar el checkbox manualmente: Usamos animación
+                $check.on('change', function () {
+                    if (this.checked) {
+                        $container.slideDown();
+                    } else {
+                        $container.slideUp();
+                    }
+                });
+            }
+
+            // Ejecutamos la configuración para los 3 casos
+            configurarIncidencia('#checkDiferimiento', '#fechasDiferimientoContainer');
+            configurarIncidencia('#checkConvenio', '#fechasConvenioContainer');
+            configurarIncidencia('#checkSuspension', '#fechasSuspensionContainer');
 
 
 
